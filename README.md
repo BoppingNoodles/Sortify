@@ -1,0 +1,150 @@
+# Sortify ♻️
+
+Sortify is an AI-powered waste classification mobile application designed to eliminate sorting confusion at the bin. Using on-device and cloud computer vision, Sortify helps users instantly identify whether an item belongs in **Compost**, **Recycling** (Paper, Plastic, Glass), or **Landfill**, customized to local municipal disposal rules with streak and reward habit tracking.
+
+---
+
+## 🏗️ Repository Architecture
+
+Sortify is organized as a monorepo containing three core engineering components:
+
+```
+sortify/
+├── mobile/            # React Native + Expo mobile application
+├── backend/           # FastAPI backend server & Firestore integration
+├── ml/                # PyTorch model training, notebooks, & datasets
+├── docs/              # Architecture diagrams, API specs, and meeting notes
+├── IMPLEMENTATION_PLAN.md
+└── README.md
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Sub-team | Core Technologies | Primary Tools |
+|---|---|---|
+| **📱 Frontend** | React Native, Expo | Expo Go, React Navigation, `expo-camera`, `expo-location` |
+| **⚙️ Backend** | Python 3.10+, FastAPI | Uvicorn, Firebase Auth, Cloud Firestore, Docker |
+| **🤖 AI/ML** | PyTorch, Torchvision | ResNet-18 / MobileNetV2, Kaggle / TrashNet datasets |
+
+---
+
+## 🌿 Git Workflow & Branching Guidelines
+
+With a team of 12+ developers, keeping our repository stable and conflict-free is critical. **Nobody pushes directly to `main`.**
+
+### 1. The Standard Workflow
+
+```
+1. Switch to main & update   ──▶  git checkout main && git pull origin main
+2. Create your feature branch ──▶  git checkout -b feat/frontend/camera-ui
+3. ALWAYS verify latest main  ──▶  git pull origin main
+4. Commit your changes       ──▶  git commit -m "feat(camera): add viewfinder"
+5. Push to GitHub            ──▶  git push -u origin feat/frontend/camera-ui
+6. Open a Pull Request       ──▶  Request 1 sub-team review before merging
+```
+
+---
+
+> [!IMPORTANT]
+> ### 🚨 Mandatory Rule: Sync Immediately After Branching
+> Right after you create or switch to a new branch, **always pull the latest changes from `main`** to make sure you are building on top of the freshest code:
+> ```bash
+> # 1. Create and switch to your new branch
+> git checkout -b feat/<subteam>/<feature-name>
+> 
+> # 2. CRITICAL STEP: Pull the latest changes from origin main
+> git pull origin main
+> ```
+> Doing this prevents diverging branches and saves you from painful merge conflicts later.
+
+---
+
+### 2. Branch Naming Conventions
+
+Always prefix your branch by **sub-team** and **type of work**:
+
+* `feat/frontend/<feature-name>` (e.g., `feat/frontend/result-card`)
+* `feat/backend/<endpoint-name>` (e.g., `feat/backend/stats-endpoint`)
+* `feat/ml/<model-experiment>` (e.g., `feat/ml/mobilenet-transfer-learning`)
+* `fix/<subteam>/<bug-name>` (e.g., `fix/backend/cors-headers`)
+* `docs/<topic>` (e.g., `docs/api-contracts`)
+
+*(Avoid vague branch names like `caden-test`, `updates`, or `temp`.)*
+
+### 3. Pull Request (PR) Rules
+
+1. **Keep PRs small:** Target under 300 lines of code. Small PRs get reviewed and merged quickly.
+2. **Require 1 approval:** At least one sub-team peer or lead must review and approve before merging.
+3. **Squash and Merge:** Use the "Squash and Merge" button in GitHub to keep the commit history clean and readable.
+4. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
+
+---
+
+## 🚀 Quickstart Guides
+
+### 📱 Frontend Setup (`mobile/`)
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd mobile
+   npm install
+   ```
+2. Install the **Expo Go** app on your physical phone (iOS App Store or Google Play).
+3. Start the local development bundler:
+   ```bash
+   npx expo start
+   ```
+4. Scan the displayed QR code with your phone camera (iOS) or the Expo Go app (Android).
+
+### ⚙️ Backend Setup (`backend/`)
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Set up and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # macOS/Linux:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the development server:
+   ```bash
+   uvicorn main:app --reload
+   ```
+5. Interactive API documentation is available at `http://localhost:8000/docs`.
+
+### 🤖 AI/ML Setup (`ml/`)
+
+1. Navigate to the ML directory:
+   ```bash
+   cd ml
+   ```
+2. Activate your virtual environment and install PyTorch with dependencies:
+   ```bash
+   pip install torch torchvision jupyterlab matplotlib
+   ```
+3. Launch JupyterLab:
+   ```bash
+   jupyter lab
+   ```
+
+---
+
+## 📅 Roadmap & Milestones
+
+* **Week 6:** 🎤 **Mid-Semester Presentation** (Live end-to-end demo: Capture ➔ Classify ➔ Result)
+* **Weeks 7–8:** Feature Completion (Firebase Auth, scan history, streak tracker)
+* **Weeks 9–10:** Integration testing, UX polish, and bug fixes
+* **Weeks 11–12:** Stretch goals & final deployment
+* **Week 12:** 🎤 **Final Presentation**
+
+For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/IMPLEMENTATION_PLAN.md).
