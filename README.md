@@ -174,6 +174,32 @@ deactivate
 
 ---
 
+## Automated Testing & Code Quality
+
+Our repository runs automated checks via GitHub Actions on every Pull Request to ensure code quality and prevent broken code from merging:
+
+1. **Ruff Syntax & Lint Check:** Detects syntax errors, undefined variables, and broken imports in seconds.
+2. **Ruff Formatting Check:** Ensures consistent Python formatting across the team.
+3. **Smart Backend Smoke Test:** Automatically verifies that the FastAPI server can boot up without errors (runs once `backend/main.py` is present).
+4. **Smart Frontend Sanity Check:** Verifies frontend package dependencies and linting (runs once `mobile/package.json` is present).
+
+### Running Checks Locally (Before Submitting a PR)
+
+To ensure your Pull Request passes CI on the first try, run these commands with your `venv` activated:
+
+```bash
+# 1. Check for syntax errors, missing imports, and bugs:
+ruff check .
+
+# 2. Automatically fix common lint errors:
+ruff check . --fix
+
+# 3. Format all Python files according to style guidelines:
+ruff format .
+```
+
+---
+
 ## Roadmap & Milestones
 
 * **Week 6:** **Mid-Semester Presentation** (Live end-to-end demo: Capture -> Classify -> Result)

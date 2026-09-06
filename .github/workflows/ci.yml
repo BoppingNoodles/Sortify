@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+jobs:
+  python-lint-and-test:
+    name: Python Lint, Syntax & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Check Syntax & Code Quality (Ruff)
+        run: |
+          echo "Running Ruff syntax & import checks..."
+          ruff check .
+
+      - name: Check Code Formatting (Ruff)
+        run: |
+          echo "Checking code formatting with Ruff..."
+          ruff format --check .
+
+      - name: Smart Backend Smoke Test
+        run: |
+          if [ -f "backend/main.py" ]; then
+            echo "backend/main.py found! Installing dependencies and running tests..."
+            pip install -r requirements.txt
+            pytest backend/
+          else
+            echo "backend/main.py not created yet — skipping backend smoke test for now."
+          fi
+
+  frontend-check:
+    name: Frontend Sanity Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Smart Frontend Lint
+        run: |
+          if [ -f "mobile/package.json" ]; then
+            echo "mobile/package.json found! Setting up Node and running checks..."
+            cd mobile
+            npm install
+            if npm run | grep -q "lint"; then
+              npm run lint
+            else
+              echo "No lint script defined in mobile/package.json yet."
+            fi
+          else
+            echo "mobile/package.json not created yet — skipping frontend check for now."
+          fi
