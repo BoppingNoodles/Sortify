@@ -84,6 +84,55 @@ Always prefix your branch by **sub-team** and **type of work**:
 
 ## 🚀 Quickstart Guides
 
+### 🐍 Python Environment Setup (Backend & AI/ML)
+
+All backend and ML members should use a shared virtual environment (`venv`) created at the repository root to ensure identical package versions.
+
+#### 1. Create the Virtual Environment
+From the root of the repository:
+```bash
+python -m venv venv
+```
+
+#### 2. Activate the Virtual Environment
+* **Windows (PowerShell):**
+  ```powershell
+  .\venv\Scripts\Activate.ps1
+  ```
+  *(If you encounter an execution policy error on PowerShell, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned` first)*
+* **Windows (Command Prompt):**
+  ```cmd
+  venv\Scripts\activate.bat
+  ```
+* **macOS / Linux:**
+  ```bash
+  source venv/bin/activate
+  ```
+*(You will see `(venv)` appear at the beginning of your terminal prompt.)*
+
+#### 3. Upgrade Pip & Install Required Libraries
+```bash
+# Upgrade pip to latest version
+python -m pip install --upgrade pip
+
+# Install all backend and ML dependencies
+pip install -r requirements.txt
+```
+
+#### 4. Verify Installation
+Run this one-liner to verify that the core libraries load correctly:
+```bash
+python -c "import fastapi, uvicorn, pydantic, firebase_admin, PIL, torch, torchvision; print('All dependencies installed successfully!')"
+```
+
+#### 5. Deactivating the Environment
+When you are done working:
+```bash
+deactivate
+```
+
+---
+
 ### 📱 Frontend Setup (`mobile/`)
 
 1. Navigate to the frontend directory:
@@ -98,39 +147,25 @@ Always prefix your branch by **sub-team** and **type of work**:
    ```
 4. Scan the displayed QR code with your phone camera (iOS) or the Expo Go app (Android).
 
-### ⚙️ Backend Setup (`backend/`)
+---
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Set up and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   # Windows:
-   venv\Scripts\activate
-   # macOS/Linux:
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Start the development server:
-   ```bash
-   uvicorn main:app --reload
-   ```
-5. Interactive API documentation is available at `http://localhost:8000/docs`.
+### ⚙️ Running the Backend Server (`backend/`)
 
-### 🤖 AI/ML Setup (`ml/`)
-
-1. Navigate to the ML directory:
+1. Ensure your `venv` is activated from the root or backend directory.
+2. Start the FastAPI development server with auto-reload:
    ```bash
-   cd ml
+   uvicorn backend.main:app --reload
    ```
-2. Activate your virtual environment and install PyTorch with dependencies:
+3. Interactive API documentation is available at `http://localhost:8000/docs`.
+
+---
+
+### 🤖 Running AI/ML Notebooks (`ml/`)
+
+1. Ensure your `venv` is activated.
+2. Install JupyterLab (if not already installed):
    ```bash
-   pip install torch torchvision jupyterlab matplotlib
+   pip install jupyterlab matplotlib
    ```
 3. Launch JupyterLab:
    ```bash
