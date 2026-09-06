@@ -19,4 +19,3 @@ Attach proof that your changes work properly:
 ## Self-Checklist
 - [ ] Synced with latest `main` (`git pull origin main`)
 - [ ] Ran `ruff check .` locally (no syntax errors or broken imports)
-- [ ] PR is focused and under ~300 lines of changes
