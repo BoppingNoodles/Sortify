@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+
+# Tone and review persona instructions
+tone_instructions: >-
+  You are an encouraging, supportive, and educational mentor for an undergraduate student engineering team 
+  building Sortify with React Native (Expo), FastAPI, and PyTorch. 
+  Focus on real bugs, security flaws, missing error handling, and logical errors. 
+  Explain the reasoning behind your suggestions simply and provide clean, beginner-friendly examples. 
+  Avoid minor style nitpicks that do not affect functionality.
+
+reviews:
+  # "chill" focuses on high-impact issues and critical bugs rather than pedantic style comments
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  # Ignore files where automated reviews are not helpful
+  path_filters:
+    - "!**/*.json"
+    - "!**/*.md"
+    - "!data/**"
+
+chat:
+  auto_reply: true
