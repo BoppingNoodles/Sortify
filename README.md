@@ -76,9 +76,8 @@ Always prefix your branch by **sub-team** and **type of work**:
 ### 3. Pull Request (PR) Rules
 
 1. **Keep PRs small:** Target under 300 lines of code. Small PRs get reviewed and merged quickly.
-2. **Require 1 approval:** At least one sub-team peer or lead must review and approve before merging.
-3. **Squash and Merge:** Use the "Squash and Merge" button in GitHub to keep the commit history clean and readable.
-4. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
+2. **Approval:** Assign Caden as reviewer
+3. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
 
 ---
 
