@@ -1,10 +1,10 @@
-# Sortify ♻️
+# Sortify
 
 Sortify is an AI-powered waste classification mobile application designed to eliminate sorting confusion at the bin. Using on-device and cloud computer vision, Sortify helps users instantly identify whether an item belongs in **Compost**, **Recycling** (Paper, Plastic, Glass), or **Landfill**, customized to local municipal disposal rules with streak and reward habit tracking.
 
 ---
 
-## 🏗️ Repository Architecture
+## Repository Architecture
 
 Sortify is organized as a monorepo containing three core engineering components:
 
@@ -20,17 +20,17 @@ sortify/
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Sub-team | Core Technologies | Primary Tools |
 |---|---|---|
-| **📱 Frontend** | React Native, Expo | Expo Go, React Navigation, `expo-camera`, `expo-location` |
-| **⚙️ Backend** | Python 3.10+, FastAPI | Uvicorn, Firebase Auth, Cloud Firestore, Docker |
-| **🤖 AI/ML** | PyTorch, Torchvision | ResNet-18 / MobileNetV2, Kaggle / TrashNet datasets |
+| **Frontend** | React Native, Expo | Expo Go, React Navigation, `expo-camera`, `expo-location` |
+| **Backend** | Python 3.10+, FastAPI | Uvicorn, Firebase Auth, Cloud Firestore, Docker |
+| **AI/ML** | PyTorch, Torchvision | ResNet-18 / MobileNetV2, Kaggle / TrashNet datasets |
 
 ---
 
-## 🌿 Git Workflow & Branching Guidelines
+## Git Workflow & Branching Guidelines
 
 With a team of 12+ developers, keeping our repository stable and conflict-free is critical. **Nobody pushes directly to `main`.**
 
@@ -48,7 +48,7 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 ---
 
 > [!IMPORTANT]
-> ### 🚨 Mandatory Rule: Sync Immediately After Branching
+> ### Mandatory Rule: Sync Immediately After Branching
 > Right after you create or switch to a new branch, **always pull the latest changes from `main`** to make sure you are building on top of the freshest code:
 > ```bash
 > # 1. Create and switch to your new branch
@@ -82,9 +82,9 @@ Always prefix your branch by **sub-team** and **type of work**:
 
 ---
 
-## 🚀 Quickstart Guides
+## Quickstart Guides
 
-### 🐍 Python Environment Setup (Backend & AI/ML)
+### Python Environment Setup (Backend & AI/ML)
 
 All backend and ML members should use a shared virtual environment (`venv`) created at the repository root to ensure identical package versions.
 
@@ -133,7 +133,7 @@ deactivate
 
 ---
 
-### 📱 Frontend Setup (`mobile/`)
+### Frontend Setup (`mobile/`)
 
 1. Navigate to the frontend directory:
    ```bash
@@ -149,7 +149,7 @@ deactivate
 
 ---
 
-### ⚙️ Running the Backend Server (`backend/`)
+### Running the Backend Server (`backend/`)
 
 1. Ensure your `venv` is activated from the root or backend directory.
 2. Start the FastAPI development server with auto-reload:
@@ -160,7 +160,7 @@ deactivate
 
 ---
 
-### 🤖 Running AI/ML Notebooks (`ml/`)
+### Running AI/ML Notebooks (`ml/`)
 
 1. Ensure your `venv` is activated.
 2. Install JupyterLab (if not already installed):
@@ -174,12 +174,12 @@ deactivate
 
 ---
 
-## 📅 Roadmap & Milestones
+## Roadmap & Milestones
 
-* **Week 6:** 🎤 **Mid-Semester Presentation** (Live end-to-end demo: Capture ➔ Classify ➔ Result)
+* **Week 6:** **Mid-Semester Presentation** (Live end-to-end demo: Capture -> Classify -> Result)
 * **Weeks 7–8:** Feature Completion (Firebase Auth, scan history, streak tracker)
 * **Weeks 9–10:** Integration testing, UX polish, and bug fixes
 * **Weeks 11–12:** Stretch goals & final deployment
-* **Week 12:** 🎤 **Final Presentation**
+* **Week 12:** **Final Presentation**
 
 For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/IMPLEMENTATION_PLAN.md).
