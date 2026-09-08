@@ -83,6 +83,9 @@ Always prefix your branch by **sub-team** and **type of work**:
 
 ## Quickstart Guides
 
+> [!TIP]
+> **First time setting up your development machine?** Check out the step-by-step [SETUP.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/SETUP.md) for full macOS & Windows onboarding instructions (Git, SSH, VS Code, Python, Node.js, and common gotchas).
+
 ### Python Environment Setup (Backend & AI/ML)
 
 All backend and ML members should use a shared virtual environment (`venv`) created at the repository root to ensure identical package versions.
