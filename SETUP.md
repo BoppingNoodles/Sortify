@@ -70,7 +70,6 @@ Once Caden adds your account to the repository:
 
 1. Download and install your preferred code editor:
    - **Visual Studio Code:** [code.visualstudio.com](https://code.visualstudio.com/)
-   - **Antigravity IDE:** [antigravity.google](https://antigravity.google/) (Google's AI-first development environment built on VS Code)
 2. Open the `Sortify` folder in your editor (`File` $\to$ `Open Folder...`).
 3. Install recommended extensions:
    - **Python** (`ms-python.python`) — Python language support & debugger.
@@ -136,7 +135,7 @@ npm -v    # Should be v10.x or higher
 
 ---
 
-## Step 7: Next Steps $\to$ Head Over to the README!
+## Step 7: Next Steps Head Over to the README!
 
 Now that all system programs, runtimes, and the repository are set up on your machine, follow the instructions in the main repository README:
 
@@ -145,18 +144,9 @@ Now that all system programs, runtimes, and the repository are set up on your ma
 * **Frontend:** Running `npm install` inside `mobile/` and launching `npx expo start`.
 * **Testing & CI:** Running `ruff check .` and `ruff format .` before pushing code.
 
----
 
-## 🆘 Troubleshooting & Common Gotchas
-
-| Problem | Cause | Solution |
-|---|---|---|
-| `Activate.ps1 cannot be loaded because running scripts is disabled` (Windows) | PowerShell execution policy | Run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned` in PowerShell. |
-| `python` command opens the Windows Microsoft Store | Windows path alias | Go to Windows Settings $\to$ "Manage app execution aliases" $\to$ Turn OFF "App Installer" for `python.exe` and `python3.exe`. |
-| `Repository not found` or authentication prompt when cloning | Not added to repo yet | Ask Caden to make sure your GitHub account is invited to `BoppingNoodles/Sortify`. |
-| Expo Go shows "Network response timed out" on phone | Campus WiFi (eduroam / CalVisitor) device isolation | Run Expo in tunnel mode: `npx expo start --tunnel`. |
-| `torch` or `torchvision` install errors | Architecture/Python mismatch | Ensure you are on Python 3.10–3.12 and 64-bit OS. On Apple Silicon (M1/M2/M3), ensure native ARM64 terminal. |
-
----
 
 **You're all set!** Check out [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for week-by-week goals and team workflows.
+
+---
+**Note:** Reach out to Caden if you're interested in using Agentic AI tools if you're not already familiar with them
