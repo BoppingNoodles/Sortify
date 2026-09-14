@@ -109,12 +109,14 @@ If you are working on the **Frontend** sub-team (or want to run the mobile app l
 ### 1. Install Node.js LTS
 
 * **macOS:**
-  ```bash
-  brew install node
-  ```
+  - Go to [nodejs.org](https://nodejs.org/) in your browser.
+  - Click the green **LTS (Long Term Support)** button to download the macOS installer (`.pkg`).
+  - Open the downloaded `.pkg` file from your downloads and follow the installer wizard using the default settings.
+  - *(Optional: If you already use Homebrew, you can run `brew install node` instead).*
 * **Windows:**
-  - Download the **LTS (Long Term Support)** installer from [nodejs.org](https://nodejs.org/).
-  - Run the `.msi` installer with standard defaults.
+  - Go to [nodejs.org](https://nodejs.org/) in your browser.
+  - Click the green **LTS (Long Term Support)** button to download the Windows installer (`.msi`).
+  - Open the downloaded `.msi` file from your downloads and follow the setup wizard using the default settings.
 
 Verify in your terminal:
 ```bash
