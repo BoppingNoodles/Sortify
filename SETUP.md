@@ -20,7 +20,6 @@ Welcome to the **Sortify** team! This guide walks you through setting up everyth
 
 1. Go to [github.com](https://github.com) and create an account if you don't already have one.
 2. **Send your GitHub username to Caden/Arnav** so you can be added to the Sortify repository.
-3. Make sure you are in the team Slack (`#sortify-general`, `#sortify-frontend`, `#sortify-backend`, `#sortify-ml`).
 
 ---
 
