@@ -14,7 +14,6 @@ sortify/
 ├── backend/           # FastAPI backend server & Firestore integration
 ├── ml/                # PyTorch model training, notebooks, & datasets
 ├── docs/              # Architecture diagrams, API specs, and meeting notes
-├── IMPLEMENTATION_PLAN.md
 └── README.md
 ```
 
