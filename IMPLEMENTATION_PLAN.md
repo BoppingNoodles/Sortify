@@ -138,7 +138,7 @@ Week  12      🎤 FINAL PRESENTATION
 **Resources to study:**
 - [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html) — **follow this step by step**
 - [PyTorch 60 Minute Blitz](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html)
-- Dataset to explore: [TrashNet on Kaggle](https://www.kaggle.com/datasets/fedesoriano/the-trash-dataset) or [WasteNet](https://github.com/garythung/trashnet)
+- Dataset research: Search platforms like Kaggle, Hugging Face, and GitHub for open-source waste/recycling classification datasets to explore
 
 ---
 
@@ -253,11 +253,10 @@ Week  12      🎤 FINAL PRESENTATION
 ### 🤖 AI/ML
 
 **Tasks:**
-- [ ] **Dataset research and selection** — evaluate available datasets:
-  - [TrashNet](https://github.com/garythung/trashnet) (~2,500 images, 6 classes)
-  - [Waste Classification Data (Kaggle)](https://www.kaggle.com/datasets/techsash/waste-classification-data) (~25,000 images, 2 classes — needs relabeling)
-  - [TACO (Trash Annotations in Context)](http://tacodataset.org/) (1,500 images, 60 categories — great for stretch goals)
-  - Consider combining multiple datasets and remapping labels to the 5 Sortify categories: **paper, plastic, glass, compost, landfill**
+- [ ] **Dataset research and selection** — the AI/ML team will independently research, locate, and evaluate open-source waste classification datasets (e.g., via Kaggle, Hugging Face, research papers, and GitHub):
+  - Evaluate datasets based on image quality, class distribution, real-world lighting, and licensing
+  - Analyze whether candidates require relabeling, filtering, or merging
+  - Remap discovered classes to the 5 Sortify categories: **paper, plastic, glass, compost, landfill**
 - [ ] **Download and organize the dataset** into:
   ```
   data/
