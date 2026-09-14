@@ -26,26 +26,21 @@ Welcome to the **Sortify** team! This guide walks you through setting up everyth
 
 ## Step 2: Install Git
 
-### macOS
-
-1. Open **Terminal** (press `Cmd + Space`, type `Terminal`, hit `Enter`).
-2. Check if Git is installed:
-   ```bash
-   git --version
-   ```
-3. If not installed, run:
-   ```bash
-   xcode-select --install
-   ```
-
 ### Windows
 
-1. Download **Git for Windows** from [git-scm.com/download/win](https://git-scm.com/download/win).
-2. Run the installer (using default options).
-3. Verify in **PowerShell** or **Command Prompt**:
-   ```powershell
-   git --version
-   ```
+1. Open your browser and go to [git-scm.com/download/win](https://git-scm.com/download/win).
+2. Click **"Click here to download"** (or select the **64-bit Git for Windows Setup**) to download the installer (`.exe`).
+3. Open the downloaded `.exe` file from your browser's downloads folder.
+4. Click **Next** through each screen of the setup wizard (the default options are recommended and work great out of the box), then click **Install**.
+5. Once the setup completes, click **Finish**.
+
+### macOS
+
+1. Open your browser and go to [git-scm.com/download/mac](https://git-scm.com/download/mac).
+2. Click the link under **Binary installer** to download the macOS installer package from the [Git for Mac installer](https://sourceforge.net/projects/git-osx-installer/files/).
+3. Open the downloaded `.dmg` or `.pkg` file from your browser's downloads folder.
+4. Double-click the installer icon and follow the on-screen setup prompts using the default settings.
+5. Click **Close** (and move the installer to Trash) once the installation is finished.
 
 ---
 
