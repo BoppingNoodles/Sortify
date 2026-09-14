@@ -81,25 +81,24 @@ Once Caden adds your account to the repository:
 
 Backend and ML development requires Python 3.10, 3.11, or 3.12 installed on your system.
 
-### macOS
-```bash
-brew install python@3.11
-```
-
 ### Windows
-1. Download Python 3.11 installer from [python.org/downloads](https://www.python.org/downloads/).
-2. > [!CAUTION]
-   > **CRITICAL ON WINDOWS:** During installer setup, **check the box that says "Add python.exe to PATH"** before clicking Install Now. Failing to check this will prevent terminal commands from finding Python!
-3. Enable script execution for virtual environments in PowerShell:
-   ```powershell
-   Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-   ```
 
-### Verify Python
-In a new terminal window:
-```bash
-python --version   # or python3 --version
-```
+1. Open your browser and go to [python.org/downloads](https://www.python.org/downloads/).
+2. Click the yellow button to download the latest Python 3.11 or 3.12 Windows installer (`.exe`).
+3. Open the downloaded `.exe` file from your browser's downloads folder.
+4. > [!CAUTION]
+   > **CRITICAL ON WINDOWS:** At the bottom of the very first setup screen, **check the box that says "Add python.exe to PATH"** before doing anything else! If you skip this, your system will not recognize Python commands.
+5. Click **Install Now** and allow the installer to run.
+6. When finished, if you see an option to **"Disable path length limit"**, click it, then click **Close**.
+
+### macOS
+
+1. Open your browser and go to [python.org/downloads/macos](https://www.python.org/downloads/macos/).
+2. Click the **macOS 64-bit universal2 installer** package (`.pkg`) for Python 3.11 or 3.12 to download it.
+3. Open the downloaded `.pkg` file from your browser's downloads folder.
+4. Click **Continue** through the introduction, license, and destination screens, then click **Install**.
+5. When the installer finishes, a Python folder will open in Finder. Double-click the file named **`Install Certificates.command`** inside that folder (this sets up SSL certificates for Python).
+6. Click **Close** in the installer window once complete.
 
 ---
 
