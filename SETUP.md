@@ -11,8 +11,8 @@ Welcome to the **Sortify** team! This guide walks you through setting up everyth
 - [ ] **Step 3:** Clone the Repository
 - [ ] **Step 4:** IDE Setup (VS Code or Antigravity + Extensions)
 - [ ] **Step 5:** Install Python 3.10+ (Backend & AI/ML)
-- [ ] **Step 6:** Install Node.js LTS & Expo Go (Frontend & Mobile)
-- [ ] **Step 7:** Next Steps $\to$ Follow the README Quickstart
+- [ ] **Step 6:** Install Node.js LTS, Expo Go & Figma (Frontend & Mobile)
+- [ ] **Step 7:** Next Steps → Follow the README Quickstart
 
 ---
 
@@ -64,7 +64,7 @@ Once Caden adds your account to the repository:
 
 1. Download and install your preferred code editor:
    - **Visual Studio Code:** [code.visualstudio.com](https://code.visualstudio.com/)
-2. Open the `Sortify` folder in your editor (`File` $\to$ `Open Folder...`).
+2. Open the `Sortify` folder in your editor (`File` → `Open Folder...`).
 3. Install recommended extensions:
    - **Python** (`ms-python.python`) — Python language support & debugger.
    - **Pylance** (`ms-python.vscode-pylance`) — Fast type checking and auto-complete.
@@ -128,6 +128,11 @@ npm -v    # Should be v10.x or higher
 - **iOS:** Download **Expo Go** from the [Apple App Store](https://apps.apple.com/app/expo-go/id982107779).
 - **Android:** Download **Expo Go** from the [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent).
 
+### 3. Sign Up for Figma Education
+
+- Go to [figma.com/education](https://www.figma.com/education/) and sign up with your **`@berkeley.edu`** email to get free access to Figma's Education (Pro) plan.
+- The frontend team designs and wireframes all mobile screens in Figma before writing production React Native code.
+
 ---
 
 ## Step 7: Next Steps Head Over to the README!
@@ -141,7 +146,7 @@ Now that all system programs, runtimes, and the repository are set up on your ma
 
 
 
-**You're all set!** Check out the internal implementation plan for week-by-week goals and team workflows.
+**You're all set!** Check out [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for week-by-week goals and team workflows.
 
 ---
 **Note:** Reach out to Caden if you're interested in using Agentic AI tools if you're not already familiar with them
