@@ -99,7 +99,7 @@ Week  12      🎤 FINAL PRESENTATION
 **Setup:**
 - Install Python 3.10+, pip, and virtualenv (or conda)
 - Install FastAPI, Uvicorn, and Pydantic: `pip install fastapi uvicorn pydantic python-multipart`
-- Install Postman or Thunder Client (VS Code extension) for testing API endpoints
+- Install Thunder Client (VS Code extension: rangav.thunder-client) for in-editor API testing
 - Set up a Firebase project in your browser at the [Firebase Console (console.firebase.google.com)](https://console.firebase.google.com/) — click **"Add project"**, name it `sortify` (or similar), and complete the wizard (no code needed yet, you just need the cloud project container ready for Auth and Firestore)
 
 **Learning Exercise:**
@@ -107,7 +107,7 @@ Week  12      🎤 FINAL PRESENTATION
 > 1. `POST /upload-image` — accepts an image file upload, saves it locally, and returns `{"status": "received", "filename": "..."}`
 > 2. `GET /health` — returns `{"status": "ok"}`
 >
-> Test both with Postman.
+> Test both with Thunder Client in VS Code.
 >
 > **Why:** The backend's core job in MVP is receiving images and returning classification results. This exercise nails the HTTP + file upload pattern.
 
@@ -507,7 +507,7 @@ Week  12      🎤 FINAL PRESENTATION
       "landfill": "This item cannot be recycled or composted in most areas.",
   }
   ```
-- [ ] **Test the full classify flow** end-to-end with Postman — upload real images and verify correct responses
+- [ ] **Test the full classify flow** end-to-end with Thunder Client — upload real images and verify correct responses
 
 **Deliverable:** `/api/classify` returns real model predictions with confidence and tips
 
@@ -1239,7 +1239,7 @@ For interested members who want to continue:
 | **YOLOv8** (stretch) | Multi-object detection | AI/ML |
 | **GitHub** | Version control | All |
 | **Figma** | UI/UX design | Frontend |
-| **Postman** | API testing | Backend |
+| **Thunder Client** | In-editor REST API testing | Backend |
 
 ---
 
