@@ -339,13 +339,16 @@
 > **Theme:** Presentation Day with a high-quality recorded app demo video. Showcase working MVP, technical architecture, and team retrospective.
 >
 > > [!NOTE]
-> > **Demo Format:** The demo is delivered as part of the slide presentation using a **pre-recorded high-quality video** of the team demoing the app, avoiding classroom live Wi-Fi mirroring risks.
+> > **Demo Format:** The demo is delivered as part of the presentation using a **pre-recorded high-quality video** of the team demoing the app, avoiding classroom live Wi-Fi mirroring risks.
+>
+> > [!IMPORTANT]
+> > **All-Hands Slide Collaboration:** The entire team collaborates together on the presentation slide deck in Google Slides. Individual assignments below focus strictly on code, demo recording, and technical validation.
 
 ### 📱 Frontend Subteam
 * **Mong**
-  * **Task:** Design presentation slide deck & collaborate on demo video structure.
-  * **Details:** Build the Google Slides presentation deck (problem, solution, UI walkthrough, architecture, metrics). Collaborate with Carlos on structuring and timing the recorded demo video segment.
-  * **Deliverable / Branch:** Presentation Slide Deck in Google Slides.
+  * **Task:** UI responsiveness audit & demo flow styling polish.
+  * **Details:** Test and polish screen layouts across varied phone aspect ratios (ensuring camera preview and result cards look clean), polish button tap feedback and theme contrast, and prepare the UI flow walkthrough for Carlos's demo recording.
+  * **Deliverable / Branch:** `feat/frontend/mong/ui-audit-and-demo-prep`
 * **Carlos**
   * **Task:** Record, edit & narrate the mobile app demo video.
   * **Details:** Record a clear, high-resolution screen capture of the Sortify app on a physical phone: scanning real items with the camera, displaying real-time classification results, and navigating the tabs. Embed video into the slide deck and present the mobile walkthrough.
@@ -353,17 +356,17 @@
 
 ### ⚙️ Backend Subteam
 * **Janice**
-  * **Task:** Present Backend Architecture & API design slides.
-  * **Details:** Explain FastAPI async pipeline, Pydantic data schemas, and location rules integration during the presentation.
-  * **Deliverable / Branch:** Presentation delivery (Backend Architecture segment).
+  * **Task:** API resilience & error handling audit.
+  * **Details:** Verify that all endpoints (`/health`, `/api/classify`, `/api/rules`) handle edge cases cleanly (malformed inputs, slow connections) with correct HTTP status codes during demo recording, and log latency stats.
+  * **Deliverable / Branch:** `feat/backend/janice/api-resilience-audit`
 * **David**
-  * **Task:** Document backend demo environment & present live API metrics.
-  * **Details:** Verify and document the backend environment used during demo video recording, and present backend telemetry, response times, and request flow.
-  * **Deliverable / Branch:** Presentation delivery (API Metrics segment).
+  * **Task:** Demo environment setup & server monitoring.
+  * **Details:** Configure the local network environment (Wi-Fi IP routing / hotspot) for Carlos's phone to connect during demo recording, and monitor server logs and request telemetry.
+  * **Deliverable / Branch:** `feat/backend/david/demo-server-monitoring`
 * **Krish**
-  * **Task:** Present Database & Infrastructure design slides.
-  * **Details:** Present the Firebase Firestore schema, cloud scalability plan, and security considerations.
-  * **Deliverable / Branch:** Presentation delivery (Database segment).
+  * **Task:** Firestore data integrity & security verification.
+  * **Details:** Audit Firestore read/write operations during classification, verify that user and scan documents are created cleanly without orphan records, and check security rules.
+  * **Deliverable / Branch:** `feat/backend/krish/firestore-data-audit`
 * **Edward**
   * **Task:** Compile team retrospective & organize post-demo feedback.
   * **Details:** Lead the 30-minute team retrospective meeting, document team feedback, bottlenecks, and action items for Phase 2.
@@ -371,21 +374,21 @@
 
 ### 🤖 AI / ML Subteam
 * **Holly**
-  * **Task:** Present ML Architecture & Training methodology slides.
-  * **Details:** Explain transfer learning rationale, ResNet-18 vs MobileNetV2 trade-offs, and training loss/accuracy progression.
-  * **Deliverable / Branch:** Presentation delivery (ML Architecture segment).
+  * **Task:** Mid-sem model benchmark & metrics summary.
+  * **Details:** Calculate final training and validation accuracy metrics, loss curves, and parameter statistics across the baseline models, documenting findings in `ml/models/MIDSEM_METRICS.md`.
+  * **Deliverable / Branch:** `docs/ml/holly/midsem-metrics-summary`
 * **Kathleen**
-  * **Task:** Test items for demo video & curate visual slide examples.
-  * **Details:** Benchmark 8–10 real items against the model, select the 3–4 items with highest confidence for Carlos's demo recording, and prepare slide visuals showing test photos and predictions.
-  * **Deliverable / Branch:** Demo item test benchmark & slide visuals.
+  * **Task:** Physical demo items benchmark.
+  * **Details:** Benchmark 8–10 real items against the model, identify the top 3–4 items with highest confidence for Carlos's demo recording, and document classification results in a test log.
+  * **Deliverable / Branch:** `docs/ml/kathleen/demo-items-benchmark`
 * **Max**
-  * **Task:** Present Model Evaluation, Confusion Matrix & Error Analysis.
-  * **Details:** Present model evaluation metrics, explain known failure cases, and discuss data domain adaptation.
-  * **Deliverable / Branch:** Presentation delivery (Model Evaluation segment).
+  * **Task:** Error analysis & failure modes catalog.
+  * **Details:** Analyze misclassified validation items, identify specific failure patterns (e.g. shiny plastic vs glass, logos/text confusion), and catalog them in `ml/docs/FAILURE_MODES.md`.
+  * **Deliverable / Branch:** `docs/ml/max/failure-modes-catalog`
 * **Doil**
-  * **Task:** Generate ML presentation charts & coordinate rehearsal timing.
-  * **Details:** Generate clean Matplotlib/Seaborn confusion matrix and accuracy bar charts for the slide deck, author the 1-slide ML summary, and coordinate rehearsal timing.
-  * **Deliverable / Branch:** Slide charts & rehearsal coordination.
+  * **Task:** Confusion matrix & metrics visualization script.
+  * **Details:** Write `ml/scripts/generate_charts.py` to generate and save clean confusion matrix plots and per-class accuracy bar charts to `ml/visuals/`.
+  * **Deliverable / Branch:** `feat/ml/doil/metrics-visualizer-script`
 
 ---
 
@@ -603,9 +606,9 @@
 
 ### 📱 Frontend Subteam
 * **Mong**
-  * **Task:** Design final presentation slide deck & marketing assets.
-  * **Details:** Build the 15-minute final slide deck (problem, demo video structure, architecture, metrics, impact) and capture high-resolution app screenshots.
-  * **Deliverable / Branch:** Presentation Slide Deck + UI marketing graphics.
+  * **Task:** App store & portfolio visual assets, app icon & splash screen.
+  * **Details:** Design high-resolution marketing screenshots on device frames, polish the app icon (`assets/icon.png`), and design the launch splash screen (`assets/splash.png`).
+  * **Deliverable / Branch:** `feat/frontend/mong/app-assets-and-branding`
 * **Carlos**
   * **Task:** Configure standalone EAS Build (APK) & multi-item detection UI prototype.
   * **Details:** Set up Expo Application Services (`eas build --platform android --profile preview`) to generate installable APK; build prototype UI for multi-object bounding boxes in branch `feat/frontend/carlos/multi-object-ui`.
@@ -655,12 +658,15 @@
 >
 > > [!NOTE]
 > > **Demo Format:** The final app demonstration will be shown during the presentation as a **pre-recorded, polished walkthrough video** showcasing the complete end-to-end user experience.
+>
+> > [!IMPORTANT]
+> > **All-Hands Slide Collaboration:** The entire team collaborates together on the final presentation slide deck in Google Slides. Individual assignments below focus strictly on video demo production, final code polish, and repository release readiness.
 
 ### 📱 Frontend Subteam
 * **Mong**
-  * **Task:** Present UI/UX journey & lead design section of final presentation.
-  * **Details:** Deliver the presentation segment covering user research, Figma iterations, design systems, and onboarding gamification. Assemble final slide deck visuals.
-  * **Deliverable / Branch:** Final presentation delivery (UI/UX segment).
+  * **Task:** Mobile UI final polish & architecture documentation.
+  * **Details:** Audit visual consistency across all screens, verify color contrast and dark mode styling, and write `mobile/README.md` documenting component architecture and design tokens.
+  * **Deliverable / Branch:** `docs/frontend/mong/mobile-docs-and-polish`
 * **Carlos**
   * **Task:** Produce, edit & narrate final comprehensive app demo video.
   * **Details:** Record a complete end-to-end app video demonstration (auth signup/login, scanning items with live classification, location-specific tips, daily streak increment, history list, stats dashboard). Embed in the presentation deck and present the mobile walkthrough.
@@ -668,35 +674,35 @@
 
 ### ⚙️ Backend Subteam
 * **Janice**
-  * **Task:** Present System Architecture & Cloud Infrastructure.
-  * **Details:** Deliver the presentation segment covering FastAPI, Docker containerization, cloud hosting, and asynchronous inference pipeline.
-  * **Deliverable / Branch:** Final presentation delivery (Architecture segment).
+  * **Task:** Cloud production deployment health audit.
+  * **Details:** Verify live cloud container deployment (Render/Railway/GCP), test uptime of `/api/health`, and ensure production environment variables and SSL certificates are active.
+  * **Deliverable / Branch:** `feat/backend/janice/production-health-audit`
 * **David**
-  * **Task:** Present backend performance telemetry & server metrics.
-  * **Details:** Present endpoint response times, request throughput metrics, and server reliability data gathered during testing.
-  * **Deliverable / Branch:** Final presentation delivery (API Performance segment).
+  * **Task:** Backend latency & performance profiling report.
+  * **Details:** Run a series of test requests against the deployed backend to measure end-to-end response times and memory usage, documenting benchmarks in `backend/PERFORMANCE.md`.
+  * **Deliverable / Branch:** `docs/backend/david/performance-report`
 * **Krish**
   * **Task:** Coordinate branch merges, `.gitignore` audit & backend setup docs.
   * **Details:** Help review and coordinate merging open feature branches into `main`, verify `.gitignore` properly excludes `.env` and `venv/`, and write setup instructions in `backend/README.md`.
   * **Deliverable / Branch:** `docs/backend/krish/backend-setup-guide` & branch merges.
 * **Edward**
-  * **Task:** Present Location Rules Engine & coordinate presentation timing.
-  * **Details:** Deliver presentation segment on location rules engine and contamination warnings, and manage slide transitions and rehearsal timing.
-  * **Deliverable / Branch:** Final presentation delivery (Rules segment).
+  * **Task:** Rules engine audit & API setup verification.
+  * **Details:** Verify all 5 municipal city rules return accurate payloads, test edge case inputs, and author the API usage examples section in `backend/README.md`.
+  * **Deliverable / Branch:** `docs/backend/edward/rules-engine-verification`
 
 ### 🤖 AI / ML Subteam
 * **Holly**
-  * **Task:** Present ML Architecture, Transfer Learning & Optimization.
-  * **Details:** Deliver the presentation segment detailing PyTorch model training, quantization, and architectural decisions.
-  * **Deliverable / Branch:** Final presentation delivery (ML Architecture segment).
+  * **Task:** Model optimization & quantization analysis.
+  * **Details:** Benchmark the quantized PyTorch model vs unquantized weights on CPU inference speed and file size, documenting findings in `ml/docs/OPTIMIZATION.md`.
+  * **Deliverable / Branch:** `docs/ml/holly/quantization-benchmark-report`
 * **Kathleen**
-  * **Task:** Document real-world test results & co-present ML findings.
-  * **Details:** Document final real-world test results on campus items, curate visual slide examples of successes and edge cases, and co-present ML findings.
-  * **Deliverable / Branch:** Final presentation delivery (Real-World Benchmark segment).
+  * **Task:** Campus real-world testing final report.
+  * **Details:** Compile final real-world photo test benchmarks across campus waste bins into `data/campus_test/CAMPUS_BENCHMARKS.md`, documenting overall accuracy on physical items.
+  * **Deliverable / Branch:** `docs/ml/kathleen/campus-benchmark-report`
 * **Max**
-  * **Task:** Present Evaluation Metrics, Confusion Matrix & Model Evolution.
-  * **Details:** Deliver the presentation segment presenting model evolution from baseline to final release, accuracy gains, and edge cases.
-  * **Deliverable / Branch:** Final presentation delivery (Metrics segment).
+  * **Task:** Semester model evolution summary.
+  * **Details:** Generate final comparative evaluation tables showing progression from baseline ResNet-18 to the final tuned checkpoint in `ml/docs/MODEL_EVOLUTION.md`.
+  * **Deliverable / Branch:** `docs/ml/max/model-evolution-summary`
 * **Doil**
   * **Task:** Author project wrap-up summary & individual contribution log.
   * **Details:** Compile final reflections and update root `README.md` and `CONTRIBUTIONS.md` celebrating the team's achievements.
@@ -708,16 +714,16 @@
 
 | Member | Subteam | Weeks 1–3 (Onboarding & Foundation) | Weeks 4–6 (Core MVP Build & Demo Video) | Weeks 7–9 (Auth, Gamification & Hardening) | Weeks 10–12 (Polish, Deploy & Final Demo) |
 |---|---|---|---|---|---|
-| **Mong** | Frontend | W1 Camera sandbox & Figma, design tokens, Result screen UI | Home screen, location selector UI, slide deck design | Auth screens UI, Stats dashboard, accessibility & skeleton UI | Onboarding swiper, presentation slides, design presentation |
+| **Mong** | Frontend | W1 Camera sandbox & Figma, design tokens, Result screen UI | Home screen, location selector UI, UI responsiveness audit | Auth screens UI, Stats dashboard, accessibility & skeleton UI | Onboarding swiper, app branding assets, mobile UI documentation |
 | **Carlos** | Frontend | W1 Camera sandbox & Expo, navigation tabs, `services/api.js` | Live API scan integration, GPS location integration, recorded demo video | AuthContext & token storage, History screen FlatList, device lifecycle testing | Haptics & notch polish, EAS build & multi-object UI, recorded final demo video |
-| **Janice** | Backend | W1 FastAPI exercise, API contract & schemas, router scaffolding | Model singleton inference service, location rules engine, architecture presentation | Firebase Auth middleware, `GET /api/history` with pagination, integration test suite | Docker containerization, production cloud deployment, architecture presentation |
-| **David** | Backend | W1 FastAPI exercise, architecture diagrams & config, mock classify endpoint | Live `/api/classify` model integration, rules endpoint, demo environment documentation | `POST /api/history` validated logging, `GET /api/stats` aggregation, latency profiling | Health check diagnostics, multi-object API prototype, API performance presentation |
-| **Krish** | Backend | W1 FastAPI exercise, Firestore schema & test script, Firestore CRUD | Tips engine with sub-tips, request logging middleware, infrastructure presentation | User profile sync & `GET /api/user/profile`, daily streak calculator, rate limiting | Global exception handling, admin analytics endpoint, repo cleanup & backend docs |
-| **Edward** | Backend | W1 FastAPI exercise, Firebase Admin SDK setup & test, Thunder Client guide | Request validation, automated Pytest suite, retro & feedback compilation | Auth security test suite, expand rules to 5 cities with 404 validation, edge case tests | OpenAPI Swagger polish with examples, contamination warning logic, rules presentation |
-| **Holly** | AI / ML | W1 Transfer learning exercise, dataset aggregation, training pipeline script | Model fine-tuning, final MVP checkpoint selection, ML architecture presentation | Dynamic quantization, TTA experimentation, adversarial robustness testing | Docker inference validation, YOLOv8 multi-object prototype, ML presentation |
-| **Kathleen** | AI / ML | W1 Transfer learning exercise, train/val/test split script, dataloaders & augmentations | Model export packaging with classes.json, campus photo benchmark, demo item testing | Targeted dataset expansion, model log & loader helper, empirical threshold testing | Interactive demo notebook, contamination heuristics, real-world benchmark presentation |
-| **Max** | AI / ML | W1 Transfer learning exercise, preprocessing pipeline, baseline ResNet-18 training | MobileNetV2 benchmark, domain gap analysis, model evaluation presentation | Retraining expanded data, ONNX export pipeline, model comparison evaluation | Mobile inference research, final metrics comparative charts, metrics presentation |
-| **Doil** | AI / ML | W1 Transfer learning exercise, EDA notebook, confusion matrix eval script | Error analysis report, mid-sem presentation charts, rehearsal timing | Model evaluation report, ONNX to TFLite prototype, final Model Card | Retraining guide verification, future work roadmap, contributions doc & wrap-up |
+| **Janice** | Backend | W1 FastAPI exercise, API contract & schemas, router scaffolding | Model singleton inference service, location rules engine, API resilience audit | Firebase Auth middleware, `GET /api/history` with pagination, integration test suite | Docker containerization, production cloud deployment, production health audit |
+| **David** | Backend | W1 FastAPI exercise, architecture diagrams & config, mock classify endpoint | Live `/api/classify` model integration, rules endpoint, demo environment setup | `POST /api/history` validated logging, `GET /api/stats` aggregation, latency profiling | Health check diagnostics, multi-object API prototype, latency profiling report |
+| **Krish** | Backend | W1 FastAPI exercise, Firestore schema & test script, Firestore CRUD | Tips engine with sub-tips, request logging middleware, Firestore data audit | User profile sync & `GET /api/user/profile`, daily streak calculator, rate limiting | Global exception handling, admin analytics endpoint, repo cleanup & backend docs |
+| **Edward** | Backend | W1 FastAPI exercise, Firebase Admin SDK setup & test, Thunder Client guide | Request validation, automated Pytest suite, retro & feedback compilation | Auth security test suite, expand rules to 5 cities with 404 validation, edge case tests | OpenAPI Swagger polish with examples, contamination warning logic, rules engine verification |
+| **Holly** | AI / ML | W1 Transfer learning exercise, dataset aggregation, training pipeline script | Model fine-tuning, final MVP checkpoint selection, mid-sem metrics summary | Dynamic quantization, TTA experimentation, adversarial robustness testing | Docker inference validation, YOLOv8 multi-object prototype, quantization benchmark report |
+| **Kathleen** | AI / ML | W1 Transfer learning exercise, train/val/test split script, dataloaders & augmentations | Model export packaging with classes.json, campus photo benchmark, demo item testing | Targeted dataset expansion, model log & loader helper, empirical threshold testing | Interactive demo notebook, contamination heuristics, campus benchmark report |
+| **Max** | AI / ML | W1 Transfer learning exercise, preprocessing pipeline, baseline ResNet-18 training | MobileNetV2 benchmark, domain gap analysis, failure modes catalog | Retraining expanded data, ONNX export pipeline, model comparison evaluation | Mobile inference research, final metrics comparative charts, model evolution summary |
+| **Doil** | AI / ML | W1 Transfer learning exercise, EDA notebook, confusion matrix eval script | Error analysis report, metrics visualizer script, rehearsal timing | Model evaluation report, ONNX to TFLite prototype, final Model Card | Retraining guide verification, future work roadmap, contributions doc & wrap-up |
 
 ---
 
