@@ -31,7 +31,7 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 
 | Phase | Weeks | Goal | Primary Deliverable |
 |---|---|---|---|
-| 🟢 **Onboarding & Setup** | 1 | Dev tools installed, common learning exercise completed by each subteam | Camera sandbox, local FastAPI server, PyTorch transfer learning |
+| 🟢 **Onboarding & Setup** | 1 | Dev tools installed, Figma wireframing & subteam learning exercises | Figma wireframes (Expo sandbox if time permits), local FastAPI server, PyTorch transfer learning |
 | 🔵 **Design & Architecture** | 2–3 | Figma mockups, Pydantic schemas, data pipeline & baseline model training | Navigable Expo skeleton, mock API endpoints, ResNet-18 baseline |
 | 🟡 **Core MVP Build** | 4–5 | End-to-end classification flow (camera → API → PyTorch model → result) | Working camera scan, live classification, location rules engine |
 | 🔴 **Mid-Sem Demo** | 6 | Recorded MVP demo video, architecture review, and team retrospective | High-res demo video (`.mp4`), Google Slides presentation |
@@ -56,17 +56,21 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 
 ### 📱 Frontend Subteam (Mong, Carlos)
 
-**Shared Task:** Set up React Native Expo, Figma Education account, and build a sandbox Camera Capture screen using `expo-camera` to verify physical device permissions and Expo Go.
+**Shared Focus:**
+1. **Primary Deliverable:** Figma Wireframing & App User Flow. Set up Figma Education account (`@berkeley.edu`) and collaborate to design comprehensive wireframes and user journeys for the mobile app (Home, Camera Viewfinder, Result Card modal with bin colors, Profile & Daily Streak tracker, Location Rules).
+2. **Secondary / If Time Permits:** React Native + Expo Sandbox Exercise. Install Node.js LTS, VS Code, and Expo Go. Build a minimal sandbox "Camera Capture" screen using `expo-camera` to verify mobile hardware permissions, live viewfinder, and photo preview (`Retake` / `Use Photo`).
 
 * **Mong**
-  * **Objective:** Install Node.js LTS, VS Code, and Expo Go app. Sign up for Figma Education; collaborate on user flow mapping (Home → Scan → Result → Profile → Rules). Build and run the sandbox Camera screen on a physical phone with live viewfinder, shutter button, and photo preview.
+  * **Objective:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; lead wireframing for core app user flows (Home → Camera Viewfinder → Result Modal with waste bin colors → Profile/Streak → Rules). If time permits, set up Node.js LTS and Expo Go, running a minimal sandbox camera preview screen on a physical phone.
   * **Resources:**
     * [Figma for Beginners (Official Playlist)](https://www.youtube.com/playlist?list=PLXDU_eVOJTx7QHLShNqIXL1Cgbxj7HlN4)
+    * [Mobile App Wireframing Guide](https://www.figma.com/resource-library/mobile-wireframes/)
     * [React Native Basics Tutorial](https://reactnative.dev/docs/tutorial)
     * [expo-camera SDK Documentation](https://docs.expo.dev/versions/latest/sdk/camera/)
 * **Carlos**
-  * **Objective:** Initialize the mobile workspace (`sortify-app`), configure Expo dependencies, and build the sandbox Camera screen using `expo-camera` with live viewfinder and photo preview (Retake/Use Photo) verified on a physical phone.
+  * **Objective:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; collaborate on wireframe screen structure and technical feasibility review. Initialize the mobile workspace (`sortify-app`) with base dependencies. If time permits, test `expo-camera` capture screen on a physical device using Expo Go to verify hardware permissions.
   * **Resources:**
+    * [Figma Component & Layout Best Practices](https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma)
     * [Expo Get Started Guide](https://docs.expo.dev/get-started/create-a-project/)
     * [Expo Go Workflow & Testing](https://docs.expo.dev/get-started/expo-go/)
     * [expo-camera Code Example](https://docs.expo.dev/versions/latest/sdk/camera/#usage)

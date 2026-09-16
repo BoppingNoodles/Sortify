@@ -51,23 +51,20 @@
 
 ---
 
-### 📱 Frontend Subteam (React Native + Expo & Figma)
+### 📱 Frontend Subteam (Figma Wireframing & React Native Sandbox)
 
-> **Shared Learning Exercise & Objective:**  
-> Build a minimal sandbox "Camera Capture" screen in Expo to verify mobile hardware permissions and Expo Go:
-> 1. Set up Figma Education account with `@berkeley.edu` email and collaborate on initial app flow / screen wireframes.
-> 2. Use `expo-camera` to display a live camera viewfinder on a physical phone.
-> 3. Implement a "Capture" button that takes a photo using `camera.takePictureAsync()`.
-> 4. Display the captured photo in an `<Image>` component with "Retake" and "Use Photo" buttons.
+> **Shared Objective & Focus:**  
+> 1. **Primary Deliverable (Figma Wireframing):** Set up Figma Education account (`@berkeley.edu`) and collaborate to design the comprehensive wireframes and user flow for the Sortify app (Home, Camera Viewfinder, Result Card modal, Profile/Daily Streak tracker, Location Rules).
+> 2. **Extension / If Time Permits (React Native Sandbox):** Install Node.js LTS, VS Code, and Expo Go. Build a minimal sandbox "Camera Capture" screen in Expo using `expo-camera` to verify physical mobile device permissions, live viewfinder, and photo preview (`Retake` / `Use Photo`).
 
 * **Mong**
-  * **Task:** Tool setup, Figma wireframing & complete Frontend Camera Capture learning exercise.
-  * **Details:** Install Node.js LTS, VS Code, and Expo Go app. Sign up for Figma Education; collaborate on mapping user journey and low-fi wireframes (Camera Scan, Result Modal, Profile/Streak, Rules). Build and run the sandbox Camera Capture app on physical phone using `expo-camera` with live viewfinder and photo preview (Retake/Use Photo).
-  * **Deliverable / Branch:** `feat/frontend/mong/week1-camera-exercise` + Figma workspace collaboration.
+  * **Task:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits).
+  * **Details:** Sign up for Figma Education; lead wireframing for core app user flows (Home → Camera Viewfinder → Result Modal with waste bin colors → Profile/Streak → Rules). If time permits, set up Node.js LTS and Expo Go, running a minimal sandbox camera preview screen on a physical phone.
+  * **Deliverable / Branch:** Shared Figma wireframe board link + `feat/frontend/mong/week1-camera-exercise` (if sandbox completed).
 * **Carlos**
-  * **Task:** Tool setup, mobile repo structure & complete Frontend Camera Capture learning exercise.
-  * **Details:** Install Node.js LTS, VS Code, and Expo Go app. Sign up for Figma Education and review wireframes. Initialize the mobile workspace (`sortify-app`), configure `mobile/` dependencies, and build the sandbox Camera Capture screen using `expo-camera` with live viewfinder and photo preview (Retake/Use Photo) verified on physical phone.
-  * **Deliverable / Branch:** `feat/frontend/carlos/week1-camera-exercise`
+  * **Task:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits).
+  * **Details:** Sign up for Figma Education; collaborate on wireframe screen structure and technical feasibility review. Initialize the mobile workspace (`sortify-app`) with base dependencies. If time permits, test `expo-camera` capture screen on a physical device using Expo Go to verify hardware permissions.
+  * **Deliverable / Branch:** Shared Figma wireframe collaboration + `feat/frontend/carlos/week1-camera-exercise` (if sandbox completed).
 
 ---
 
@@ -714,8 +711,8 @@
 
 | Member | Subteam | Weeks 1–3 (Onboarding & Foundation) | Weeks 4–6 (Core MVP Build & Demo Video) | Weeks 7–9 (Auth, Gamification & Hardening) | Weeks 10–12 (Polish, Deploy & Final Demo) |
 |---|---|---|---|---|---|
-| **Mong** | Frontend | W1 Camera sandbox & Figma, design tokens, Result screen UI | Home screen, location selector UI, UI responsiveness audit | Auth screens UI, Stats dashboard, accessibility & skeleton UI | Onboarding swiper, app branding assets, mobile UI documentation |
-| **Carlos** | Frontend | W1 Camera sandbox & Expo, navigation tabs, `services/api.js` | Live API scan integration, GPS location integration, recorded demo video | AuthContext & token storage, History screen FlatList, device lifecycle testing | Haptics & notch polish, EAS build & multi-object UI, recorded final demo video |
+| **Mong** | Frontend | W1 Figma wireframes (React sandbox if time), design tokens, Result screen UI | Home screen, location selector UI, UI responsiveness audit | Auth screens UI, Stats dashboard, accessibility & skeleton UI | Onboarding swiper, app branding assets, mobile UI documentation |
+| **Carlos** | Frontend | W1 Figma wireframes (Expo sandbox if time), navigation tabs, `services/api.js` | Live API scan integration, GPS location integration, recorded demo video | AuthContext & token storage, History screen FlatList, device lifecycle testing | Haptics & notch polish, EAS build & multi-object UI, recorded final demo video |
 | **Janice** | Backend | W1 FastAPI exercise, API contract & schemas, router scaffolding | Model singleton inference service, location rules engine, API resilience audit | Firebase Auth middleware, `GET /api/history` with pagination, integration test suite | Docker containerization, production cloud deployment, production health audit |
 | **David** | Backend | W1 FastAPI exercise, architecture diagrams & config, mock classify endpoint | Live `/api/classify` model integration, rules endpoint, demo environment setup | `POST /api/history` validated logging, `GET /api/stats` aggregation, latency profiling | Health check diagnostics, multi-object API prototype, latency profiling report |
 | **Krish** | Backend | W1 FastAPI exercise, Firestore schema & test script, Firestore CRUD | Tips engine with sub-tips, request logging middleware, Firestore data audit | User profile sync & `GET /api/user/profile`, daily streak calculator, rate limiting | Global exception handling, admin analytics endpoint, repo cleanup & backend docs |
