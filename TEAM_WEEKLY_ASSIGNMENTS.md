@@ -57,6 +57,14 @@
 > 1. **Primary Deliverable (Figma Wireframing):** Set up Figma Education account (`@berkeley.edu`) and collaborate to design the comprehensive wireframes and user flow for the Sortify app (Home, Camera Viewfinder, Result Card modal, Profile/Daily Streak tracker, Location Rules).
 > 2. **Extension / If Time Permits (React Native Sandbox):** Install Node.js LTS, VS Code, and Expo Go. Build a minimal sandbox "Camera Capture" screen in Expo using `expo-camera` to verify physical mobile device permissions, live viewfinder, and photo preview (`Retake` / `Use Photo`).
 
+**Shared Subteam Resources:**
+* [Figma for Beginners (Official Playlist)](https://www.youtube.com/playlist?list=PLXDU_eVOJTx7QHLShNqIXL1Cgbxj7HlN4)
+* [Mobile App Wireframing Guide (Figma)](https://www.figma.com/resource-library/mobile-wireframes/)
+* [Figma Component & Auto Layout Guide](https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma)
+* [Expo Get Started Guide](https://docs.expo.dev/get-started/create-a-project/)
+* [Expo Go Workflow & Testing](https://docs.expo.dev/get-started/expo-go/)
+* [expo-camera SDK Documentation & Example](https://docs.expo.dev/versions/latest/sdk/camera/)
+
 * **Mong**
   * **Task:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits).
   * **Details:** Sign up for Figma Education; lead wireframing for core app user flows (Home → Camera Viewfinder → Result Modal with waste bin colors → Profile/Streak → Rules). If time permits, set up Node.js LTS and Expo Go, running a minimal sandbox camera preview screen on a physical phone.
@@ -75,6 +83,14 @@
 > 1. `GET /health` — returns `{"status": "ok"}`
 > 2. `POST /upload-image` — accepts an image file upload via multipart/form-data, saves it locally, and returns `{"status": "received", "filename": "..."}`
 > 3. Verify both endpoints using Thunder Client in VS Code and ensure Firebase console project is created.
+
+**Shared Subteam Resources:**
+* [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
+* [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
+* [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
+* [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
+* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
+* [Firebase Console Overview](https://console.firebase.google.com/)
 
 * **Janice**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
@@ -103,6 +119,14 @@
 > 2. Replace the final classification layer to output 5 classes (paper, plastic, glass, compost, landfill).
 > 3. Train it on a tiny sample dataset (50 images) for 2–3 epochs.
 > 4. Run inference on a single test image and print the predicted class and confidence probability.
+
+**Shared Subteam Resources:**
+* [PyTorch Deep Learning 60-Minute Blitz](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html)
+* [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html)
+* [torchvision.models Official Documentation](https://pytorch.org/vision/stable/models.html)
+* [PyTorch Training a Classifier (CIFAR-10 Example)](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html)
+* [PyTorch Real-Time Inference Guidelines](https://pytorch.org/tutorials/intermediate/realtime_rpi.html)
+* [JupyterLab Documentation](https://jupyterlab.readthedocs.io/en/stable/)
 
 * **Holly**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.

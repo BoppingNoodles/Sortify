@@ -60,20 +60,20 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 1. **Primary Deliverable:** Figma Wireframing & App User Flow. Set up Figma Education account (`@berkeley.edu`) and collaborate to design comprehensive wireframes and user journeys for the mobile app (Home, Camera Viewfinder, Result Card modal with bin colors, Profile & Daily Streak tracker, Location Rules).
 2. **Secondary / If Time Permits:** React Native + Expo Sandbox Exercise. Install Node.js LTS, VS Code, and Expo Go. Build a minimal sandbox "Camera Capture" screen using `expo-camera` to verify mobile hardware permissions, live viewfinder, and photo preview (`Retake` / `Use Photo`).
 
+**Shared Subteam Resources:**
+* [Figma for Beginners (Official Playlist)](https://www.youtube.com/playlist?list=PLXDU_eVOJTx7QHLShNqIXL1Cgbxj7HlN4)
+* [Mobile App Wireframing Guide (Figma)](https://www.figma.com/resource-library/mobile-wireframes/)
+* [Figma Component & Auto Layout Guide](https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma)
+* [Expo Get Started Guide](https://docs.expo.dev/get-started/create-a-project/)
+* [Expo Go Workflow & Testing](https://docs.expo.dev/get-started/expo-go/)
+* [expo-camera SDK Documentation & Example](https://docs.expo.dev/versions/latest/sdk/camera/)
+
 * **Mong**
   * **Objective:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; lead wireframing for core app user flows (Home → Camera Viewfinder → Result Modal with waste bin colors → Profile/Streak → Rules). If time permits, set up Node.js LTS and Expo Go, running a minimal sandbox camera preview screen on a physical phone.
-  * **Resources:**
-    * [Figma for Beginners (Official Playlist)](https://www.youtube.com/playlist?list=PLXDU_eVOJTx7QHLShNqIXL1Cgbxj7HlN4)
-    * [Mobile App Wireframing Guide](https://www.figma.com/resource-library/mobile-wireframes/)
-    * [React Native Basics Tutorial](https://reactnative.dev/docs/tutorial)
-    * [expo-camera SDK Documentation](https://docs.expo.dev/versions/latest/sdk/camera/)
+  * **Resources:** See Shared Subteam Resources above.
 * **Carlos**
   * **Objective:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; collaborate on wireframe screen structure and technical feasibility review. Initialize the mobile workspace (`sortify-app`) with base dependencies. If time permits, test `expo-camera` capture screen on a physical device using Expo Go to verify hardware permissions.
-  * **Resources:**
-    * [Figma Component & Layout Best Practices](https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma)
-    * [Expo Get Started Guide](https://docs.expo.dev/get-started/create-a-project/)
-    * [Expo Go Workflow & Testing](https://docs.expo.dev/get-started/expo-go/)
-    * [expo-camera Code Example](https://docs.expo.dev/versions/latest/sdk/camera/#usage)
+  * **Resources:** See Shared Subteam Resources above.
 
 ---
 
@@ -88,18 +88,26 @@ async def upload_image(file: UploadFile = File(...)):
     return {"status": "received", "filename": file.filename}
 ```
 
+**Shared Subteam Resources:**
+* [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
+* [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
+* [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
+* [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
+* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
+* [Firebase Console Overview](https://console.firebase.google.com/)
+
 * **Janice**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
-  * **Resources:** [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/), [FastAPI File Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
+  * **Resources:** See Shared Subteam Resources above.
 * **David**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
-  * **Resources:** [FastAPI Request Files & Forms](https://fastapi.tiangolo.com/tutorial/request-forms-and-files/), [Uvicorn Deployment Docs](https://www.uvicorn.org/)
+  * **Resources:** See Shared Subteam Resources above.
 * **Krish**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
-  * **Resources:** [Firebase Console Overview](https://console.firebase.google.com/), [Thunder Client VS Code Extension](https://www.thunderclient.com/)
+  * **Resources:** See Shared Subteam Resources above.
 * **Edward**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
-  * **Resources:** [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html), [Ruff Linter Quickstart](https://docs.astral.sh/ruff/)
+  * **Resources:** See Shared Subteam Resources above.
 
 ---
 
@@ -113,18 +121,26 @@ model = torchvision.models.resnet18(pretrained=True)
 model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 ```
 
+**Shared Subteam Resources:**
+* [PyTorch Deep Learning 60-Minute Blitz](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html)
+* [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html)
+* [torchvision.models Official Documentation](https://pytorch.org/vision/stable/models.html)
+* [PyTorch Training a Classifier (CIFAR-10 Example)](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html)
+* [PyTorch Real-Time Inference Guidelines](https://pytorch.org/tutorials/intermediate/realtime_rpi.html)
+* [JupyterLab Documentation](https://jupyterlab.readthedocs.io/en/stable/)
+
 * **Holly**
   * **Objective:** PyTorch environment setup & complete Transfer Learning exercise.
-  * **Resources:** [PyTorch Transfer Learning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html), [torchvision.models Docs](https://pytorch.org/vision/stable/models.html)
+  * **Resources:** See Shared Subteam Resources above.
 * **Kathleen**
   * **Objective:** PyTorch environment setup & complete Transfer Learning exercise.
-  * **Resources:** [PyTorch Deep Learning 60-Min Blitz](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html), [Kaggle Waste Classification Datasets](https://www.kaggle.com/datasets)
+  * **Resources:** See Shared Subteam Resources above.
 * **Max**
   * **Objective:** PyTorch environment setup & complete Transfer Learning exercise.
-  * **Resources:** [PyTorch Training a Classifier](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html), [PyTorch Tensors Tutorial](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html)
+  * **Resources:** See Shared Subteam Resources above.
 * **Doil**
   * **Objective:** PyTorch environment setup & complete Transfer Learning exercise.
-  * **Resources:** [PyTorch Inference Guidelines](https://pytorch.org/tutorials/intermediate/realtime_rpi.html), [JupyterLab Documentation](https://jupyterlab.readthedocs.io/en/stable/)
+  * **Resources:** See Shared Subteam Resources above.
 
 ---
 
