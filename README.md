@@ -42,8 +42,8 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 3. ALWAYS verify latest main  ──▶  git pull origin main
 4. Commit your changes       ──▶  git commit -m "feat(camera): add viewfinder"
 5. Push to GitHub            ──▶  git push -u origin feat/frontend/alex/camera-ui
-6. Open a Pull Request       ──▶  Assign Caden as reviewer
-7. Trigger AI Code Review    ──▶  Post PR comment: @coderabbitai review
+6. Open PR & Assign Caden    ──▶  On GitHub: open PR and set Caden as reviewer
+7. Trigger AI Code Review    ──▶  On GitHub: post comment "@coderabbitai review"
 ```
 
 ---
@@ -79,12 +79,15 @@ Every branch must include your **type of work**, **sub-team**, **your name**, an
 ### 3. Pull Request (PR) Rules
 
 1. **Keep PRs small:** Target under 300 lines of code. Small PRs get reviewed and merged quickly.
-2. **Assign Reviewer:** Set **Caden** (`@BoppingNoodles`) as reviewer on the PR.
-3. **Trigger AI Review (CodeRabbit):** On open-source repos with under 10 stars, CodeRabbit does not run automatically. In the PR comments section, post this exact standalone comment:
-   ```text
-   @coderabbitai review
-   ```
-   *(CodeRabbit will review the code and post supportive feedback focused on bugs, logic, and security).*
+2. **Assign Reviewer:** On your PR page (right sidebar), click **Reviewers** and select **Caden** (`@BoppingNoodles`).
+3. **Trigger CodeRabbit AI Review:**
+   * CodeRabbit is our AI review bot that scans your PR for bugs, logic flaws, and security issues to give you instant feedback.
+   * **How to run it:** Once your PR is open, scroll down to the comment box at the bottom of the PR conversation page on GitHub, type:
+     ```text
+     @coderabbitai review
+     ```
+     and click the green **Comment** button.
+   * CodeRabbit will analyze your diff and reply in the conversation with mentor-style feedback in 1–2 minutes.
 4. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
 
 ---
