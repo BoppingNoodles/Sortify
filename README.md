@@ -42,7 +42,7 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 3. ALWAYS verify latest main  ──▶  git pull origin main
 4. Commit your changes       ──▶  git commit -m "feat(camera): add viewfinder"
 5. Push to GitHub            ──▶  git push -u origin feat/frontend/alex/camera-ui
-6. Open a Pull Request       ──▶  Request 1 sub-team review before merging
+6. Open a Pull Request       ──▶  Comment @coderabbitai review & assign Caden
 ```
 
 ---
@@ -78,8 +78,13 @@ Every branch must include your **type of work**, **sub-team**, **your name**, an
 ### 3. Pull Request (PR) Rules
 
 1. **Keep PRs small:** Target under 300 lines of code. Small PRs get reviewed and merged quickly.
-2. **Approval:** Assign Caden as reviewer
-3. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
+2. **AI Code Review (CodeRabbit):** On open-source repos with under 10 stars, CodeRabbit does not trigger automatically. Comment on your PR to run the review:
+   ```text
+   @coderabbitai review
+   ```
+   *(CodeRabbit provides supportive mentor feedback focused on bugs, logic, and security).*
+3. **Approval:** Assign Caden as reviewer.
+4. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
 
 ---
 
