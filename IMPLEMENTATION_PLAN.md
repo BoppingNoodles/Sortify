@@ -155,7 +155,7 @@ Week  12      🎤 FINAL PRESENTATION
   └── README.md
   ```
 - [ ] Set up branch protection on `main` (require PR reviews)
-- [ ] Agree on a branching strategy (recommended: `main` → `dev` → feature branches like `feat/camera-capture`)
+- [ ] Agree on a branching strategy (recommended: `main` → feature branches like `feat/<subteam>/<your-name>/<feature-name>`)
 - [ ] Create Slack channels: `#sortify-general`, `#sortify-frontend`, `#sortify-backend`, `#sortify-ml`
 - [ ] Schedule recurring weekly all-hands + sub-team work sessions
 

@@ -38,10 +38,10 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 
 ```
 1. Switch to main & update   ──▶  git checkout main && git pull origin main
-2. Create your feature branch ──▶  git checkout -b feat/frontend/camera-ui
+2. Create your feature branch ──▶  git checkout -b feat/frontend/alex/camera-ui
 3. ALWAYS verify latest main  ──▶  git pull origin main
 4. Commit your changes       ──▶  git commit -m "feat(camera): add viewfinder"
-5. Push to GitHub            ──▶  git push -u origin feat/frontend/camera-ui
+5. Push to GitHub            ──▶  git push -u origin feat/frontend/alex/camera-ui
 6. Open a Pull Request       ──▶  Request 1 sub-team review before merging
 ```
 
@@ -51,8 +51,8 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 > ### Mandatory Rule: Sync Immediately After Branching
 > Right after you create or switch to a new branch, **always pull the latest changes from `main`** to make sure you are building on top of the freshest code:
 > ```bash
-> # 1. Create and switch to your new branch
-> git checkout -b feat/<subteam>/<feature-name>
+> # 1. Create and switch to your new branch (sub-team, your name, and feature)
+> git checkout -b feat/<subteam>/<your-name>/<feature-name>
 > 
 > # 2. CRITICAL STEP: Pull the latest changes from origin main
 > git pull origin main
@@ -63,15 +63,17 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 
 ### 2. Branch Naming Conventions
 
-Always prefix your branch by **sub-team** and **type of work**:
+Every branch must include your **type of work**, **sub-team**, **your name**, and a **short feature description**:
 
-* `feat/frontend/<feature-name>` (e.g., `feat/frontend/result-card`)
-* `feat/backend/<endpoint-name>` (e.g., `feat/backend/stats-endpoint`)
-* `feat/ml/<model-experiment>` (e.g., `feat/ml/mobilenet-transfer-learning`)
-* `fix/<subteam>/<bug-name>` (e.g., `fix/backend/cors-headers`)
-* `docs/<topic>` (e.g., `docs/api-contracts`)
+`Format:` `<type>/<subteam>/<your-name>/<feature-name>`
 
-*(Avoid vague branch names like `caden-test`, `updates`, or `temp`.)*
+* **Frontend:** `feat/frontend/<your-name>/<feature-name>` (e.g., `feat/frontend/alex/camera-ui`)
+* **Backend:** `feat/backend/<your-name>/<endpoint-name>` (e.g., `feat/backend/sam/classify-endpoint`)
+* **AI/ML:** `feat/ml/<your-name>/<model-experiment>` (e.g., `feat/ml/jordan/mobilenet-training`)
+* **Bug fixes:** `fix/<subteam>/<your-name>/<bug-name>` (e.g., `fix/backend/sam/cors-headers`)
+* **Documentation:** `docs/<your-name>/<topic>` (e.g., `docs/caden/api-contracts`)
+
+*(Avoid generic branch names like `test`, `updates`, `temp`, or names without your identity.)*
 
 ### 3. Pull Request (PR) Rules
 
