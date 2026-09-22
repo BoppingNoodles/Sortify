@@ -19,5 +19,4 @@ Attach proof that your changes work properly:
 ## Self-Checklist
 - [ ] Synced with latest `main` (`git pull origin main`)
 - [ ] Ran `ruff check .` locally (no syntax errors or broken imports)
-- [ ] Commented `@coderabbitai review` on the PR to trigger AI review
 - [ ] Assigned Caden as reviewer
