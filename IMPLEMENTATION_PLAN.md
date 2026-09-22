@@ -121,7 +121,7 @@ async def upload_image(file: UploadFile = File(...)):
 ```python
 # Illustrative snippet: transfer learning head replacement
 model = torchvision.models.resnet18(pretrained=True)
-model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
+model.fc = torch.nn.Linear(model.fc.in_features, 5)  # 5 categories
 ```
 
 **Shared Subteam Resources:**
