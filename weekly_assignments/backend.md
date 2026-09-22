@@ -1,6 +1,6 @@
 # Sortify — Backend Subteam Weekly Work Plan (Weeks 1–12)
 
-> **Companion Documents:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) | [TEAM_WEEKLY_ASSIGNMENTS.md](../TEAM_WEEKLY_ASSIGNMENTS.md)  
+> **Companion Documents:** [IMPLEMENTATION_PLAN.md](../docs/IMPLEMENTATION_PLAN.md) | [TEAM_WEEKLY_ASSIGNMENTS.md](TEAM_WEEKLY_ASSIGNMENTS.md)  
 > **Repository:** `Sortify`  
 > **Branching Convention:** `<type>/backend/<your-name>/<feature-name>` (e.g., `feat/backend/janice/api-schemas`, `feat/backend/carlos/model-service`)  
 > **Key Milestones:** **Week 6** (Mid-Semester Presentation / Recorded Video Demo) & **Week 12** (Final Presentation / Portfolio Release)  

@@ -1,6 +1,6 @@
 # Sortify — Weekly Team Member Work Plan (Weeks 1–12)
 
-> **Companion Documents:** [IMPLEMENTATION_PLAN.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/IMPLEMENTATION_PLAN.md) | **Subteam Plans:** [Frontend](weekly_assignments/frontend.md) · [Backend](weekly_assignments/backend.md) · [AI / ML](weekly_assignments/ml-ai.md)  
+> **Companion Documents:** [IMPLEMENTATION_PLAN.md](../docs/IMPLEMENTATION_PLAN.md) | **Subteam Plans:** [Frontend](frontend.md) · [Backend](backend.md) · [AI / ML](ml-ai.md)  
 > **Repository:** `Sortify`  
 > **Branching Convention:** `<type>/<subteam>/<your-name>/<feature-name>` (e.g., `feat/frontend/caden/camera-ui`, `feat/backend/carlos/model-service`, `feat/ml/aarav/resnet-training`)  
 > **Key Milestones:** **Week 6** (Mid-Semester Presentation / Recorded Video Demo) & **Week 12** (Final Presentation / Portfolio Release)  

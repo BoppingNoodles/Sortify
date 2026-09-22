@@ -146,7 +146,7 @@ Now that all system programs, runtimes, and the repository are set up on your ma
 
 
 
-**You're all set!** Check out [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for week-by-week goals and team workflows.
+**You're all set!** Check out [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for week-by-week goals and team workflows.
 
 ---
 **Note:** Reach out to Caden if you're interested in using Agentic AI tools if you're not already familiar with them

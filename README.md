@@ -13,8 +13,8 @@ sortify/
 ├── mobile/            # React Native + Expo mobile application
 ├── backend/           # FastAPI backend server & Firestore integration
 ├── ml/                # PyTorch model training, notebooks, & datasets
-├── docs/              # Architecture diagrams, API specs, and meeting notes
-├── IMPLEMENTATION_PLAN.md
+├── docs/              # Architecture diagrams, API specs, and IMPLEMENTATION_PLAN.md
+├── weekly_assignments/# Weekly work plans and starter code by subteam
 └── README.md
 ```
 
@@ -221,4 +221,4 @@ ruff format .
 * **Weeks 11–12:** Stretch goals & final deployment
 * **Week 12:** **Final Presentation**
 
-For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/IMPLEMENTATION_PLAN.md).
+For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) and [Weekly Assignments](weekly_assignments/TEAM_WEEKLY_ASSIGNMENTS.md).
