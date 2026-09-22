@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 from torchvision import models
 
+
 def setup_transfer_learning_model(num_classes: int = 6):
     # TODO: Load pre-trained ResNet-18 model weights
     weights = models.ResNet18_Weights.DEFAULT
@@ -36,11 +37,14 @@ def setup_transfer_learning_model(num_classes: int = 6):
     model.fc = nn.Linear(num_features, num_classes)
     return model
 
+
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"PyTorch Version: {torch.__version__} | Active Device: {device}")
     model = setup_transfer_learning_model()
-    print(f"Classification head initialized with {model.fc.out_features} output classes.")
+    print(
+        f"Classification head initialized with {model.fc.out_features} output classes."
+    )
 ```
 
 ---
@@ -56,13 +60,16 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
+
 def get_sandbox_transforms():
     # TODO: Standard ImageNet transforms (Resize to 224x224 and normalize)
-    return transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    return transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 ```
 
 ---
@@ -77,6 +84,7 @@ def get_sandbox_transforms():
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 
 def run_single_train_step(model, inputs, labels):
     criterion = nn.CrossEntropyLoss()
@@ -101,6 +109,7 @@ def run_single_train_step(model, inputs, labels):
 ```python
 # ml/sandbox/eval_metric_sandbox.py
 import torch
+
 
 def compute_batch_accuracy(outputs: torch.Tensor, labels: torch.Tensor) -> float:
     # TODO: Obtain predicted class indices from argmax
@@ -131,6 +140,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 TRASHNET_URL = "https://huggingface.co/datasets/garythung/trashnet/resolve/main/dataset-resized.zip"
 
+
 def download_and_extract_trashnet():
     zip_path = DATA_DIR / "trashnet.zip"
     if not zip_path.exists():
@@ -153,18 +163,20 @@ import shutil
 import random
 from pathlib import Path
 
+
 def create_dataset_splits(
-    source_dir: Path, 
-    dest_dir: Path, 
-    train_ratio=0.70, 
-    val_ratio=0.15, 
+    source_dir: Path,
+    dest_dir: Path,
+    train_ratio=0.70,
+    val_ratio=0.15,
     test_ratio=0.15,
-    seed=42
+    seed=42,
 ):
     random.seed(seed)
     # TODO: Stratify split by class folder (cardboard, glass, metal, paper, plastic, trash)
     for class_folder in source_dir.iterdir():
-        if not class_folder.is_dir(): continue
+        if not class_folder.is_dir():
+            continue
         images = list(class_folder.glob("*.jpg"))
         random.shuffle(images)
         # TODO: Copy partitioned images into dest_dir/train, val, and test subdirectories
@@ -181,25 +193,31 @@ def create_dataset_splits(
 # ml/scripts/transforms.py
 from torchvision import transforms
 
+
 def get_train_transforms():
     # TODO: Data augmentations (RandomResizedCrop, RandomHorizontalFlip, ColorJitter)
-    return transforms.Compose([
-        transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    return transforms.Compose(
+        [
+            transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
+
 
 def get_eval_transforms():
     # Deterministic preprocessing for validation and test splits
-    return transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    return transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
 ```
 
 ---
@@ -215,12 +233,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from collections import Counter
 
+
 def plot_class_distribution(dataset_path: Path):
     classes = [p.name for p in dataset_path.iterdir() if p.is_dir()]
     counts = {cls: len(list((dataset_path / cls).glob("*.jpg"))) for cls in classes}
-    
+
     plt.figure(figsize=(8, 4))
-    plt.bar(counts.keys(), counts.values(), color='#16A34A')
+    plt.bar(counts.keys(), counts.values(), color="#16A34A")
     plt.title("Class Sample Distribution")
     plt.xlabel("Category")
     plt.ylabel("Number of Images")
@@ -245,6 +264,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from pathlib import Path
+
 
 def train_epoch(model, dataloader, criterion, optimizer, device):
     model.train()
@@ -279,14 +299,21 @@ from torch.utils.data import DataLoader
 from ml.scripts.transforms import get_train_transforms, get_eval_transforms
 from pathlib import Path
 
+
 def get_dataloaders(data_dir: Path, batch_size=32, num_workers=2):
     train_set = ImageFolder(root=data_dir / "train", transform=get_train_transforms())
     val_set = ImageFolder(root=data_dir / "val", transform=get_eval_transforms())
     test_set = ImageFolder(root=data_dir / "test", transform=get_eval_transforms())
 
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    train_loader = DataLoader(
+        train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers
+    )
+    val_loader = DataLoader(
+        val_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
+    test_loader = DataLoader(
+        test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
 
     return train_loader, val_loader, test_loader, train_set.classes
 ```
@@ -317,6 +344,7 @@ import torch
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 
 def evaluate_model_performance(model, test_loader, classes, device):
     model.eval()
@@ -349,16 +377,19 @@ def evaluate_model_performance(model, test_loader, classes, device):
 import torch
 import torch.optim as optim
 
+
 def setup_fine_tuning(model, base_lr=1e-4, fc_lr=1e-3):
     # Unfreeze Layer 4 of ResNet-18
     for param in model.layer4.parameters():
         param.requires_grad = True
 
     # Differential learning rates
-    optimizer = optim.Adam([
-        {'params': model.layer4.parameters(), 'lr': base_lr},
-        {'params': model.fc.parameters(), 'lr': fc_lr}
-    ])
+    optimizer = optim.Adam(
+        [
+            {"params": model.layer4.parameters(), "lr": base_lr},
+            {"params": model.fc.parameters(), "lr": fc_lr},
+        ]
+    )
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=15)
     return optimizer, scheduler
 ```
@@ -376,7 +407,10 @@ import torch
 import json
 from pathlib import Path
 
-def package_checkpoint(model, classes, output_dir: Path, filename="resnet18_sortify.pth"):
+
+def package_checkpoint(
+    model, classes, output_dir: Path, filename="resnet18_sortify.pth"
+):
     output_dir.mkdir(parents=True, exist_ok=True)
     # Save classes.json
     with open(output_dir / "classes.json", "w") as f:
@@ -398,6 +432,7 @@ def package_checkpoint(model, classes, output_dir: Path, filename="resnet18_sort
 # ml/scripts/train_mobilenet.py
 from torchvision import models
 import torch.nn as nn
+
 
 def get_mobilenet_v2(num_classes=6):
     model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
@@ -512,6 +547,7 @@ def get_mobilenet_v2(num_classes=6):
 import torch
 import torch.nn as nn
 
+
 def apply_dynamic_quantization(model):
     # Quantize linear layers to INT8
     quantized_model = torch.quantization.quantize_dynamic(
@@ -556,6 +592,7 @@ def apply_dynamic_quantization(model):
 # ml/scripts/tta_inference.py
 import torch
 
+
 def predict_with_tta(model, image_tensor):
     # Predict original, horizontal flip, and slight rotation; average softmax outputs
     pass
@@ -584,12 +621,16 @@ def predict_with_tta(model, image_tensor):
 # ml/scripts/export_onnx.py
 import torch
 
+
 def export_to_onnx(model, output_path="ml/models/sortify.onnx"):
     dummy_input = torch.randn(1, 3, 224, 224)
     torch.onnx.export(
-        model, dummy_input, output_path,
-        input_names=["input"], output_names=["output"],
-        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+        model,
+        dummy_input,
+        output_path,
+        input_names=["input"],
+        output_names=["output"],
+        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
 ```
 
