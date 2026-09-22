@@ -1,7 +1,7 @@
 # Sortify — 12-Week Implementation Plan
 
 > **Team:** 10 UC Berkeley Undergrads  
-> **Sub-teams:** Frontend (2: Mong, Carlos), Backend (4: Janice, David, Krish, Edward), AI/ML (4: Holly, Kathleen, Max, Doil)  
+> **Sub-teams:** Frontend (2: Mong, Caden), Backend (5: Janice, Carlos, David, Krish, Edward), AI/ML (4: Aarav, Kathleen, Max, Doil)  
 > **Key Dates:** Mid-semester presentation & video demo → **Week 6** | Final presentation & portfolio release → **Week 12**  
 > **Scope:** MVP-first — robust core classification, location rules, and gamification before stretch goals  
 > **Companion Document:** [TEAM_WEEKLY_ASSIGNMENTS.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/TEAM_WEEKLY_ASSIGNMENTS.md)
@@ -54,7 +54,7 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 
 ---
 
-### 📱 Frontend Subteam (Mong, Carlos)
+### 📱 Frontend Subteam (Mong, Caden)
 
 **Shared Focus:**
 1. **Primary Deliverable:** Figma Wireframing & App User Flow. Set up Figma Education account (`@berkeley.edu`) and collaborate to design comprehensive wireframes and user journeys for the mobile app (Home, Camera Viewfinder, Result Card modal with bin colors, Profile & Daily Streak tracker, Location Rules).
@@ -71,13 +71,13 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 * **Mong**
   * **Objective:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; lead wireframing for core app user flows (Home → Camera Viewfinder → Result Modal with waste bin colors → Profile/Streak → Rules). If time permits, set up Node.js LTS and Expo Go, running a minimal sandbox camera preview screen on a physical phone.
   * **Resources:** See Shared Subteam Resources above.
-* **Carlos**
+* **Caden**
   * **Objective:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits). Sign up for Figma Education; collaborate on wireframe screen structure and technical feasibility review. Initialize the mobile workspace (`sortify-app`) with base dependencies. If time permits, test `expo-camera` capture screen on a physical device using Expo Go to verify hardware permissions.
   * **Resources:** See Shared Subteam Resources above.
 
 ---
 
-### ⚙️ Backend Subteam (Janice, David, Krish, Edward)
+### ⚙️ Backend Subteam (Janice, Carlos, David, Krish, Edward)
 
 **Shared Task:** Install Python 3.10+, FastAPI, Uvicorn, and Thunder Client. Set up a Firebase project container. Build a standalone FastAPI server implementing `GET /health` and `POST /upload-image` (file upload handler saving locally), verified with Thunder Client.
 
@@ -99,6 +99,9 @@ async def upload_image(file: UploadFile = File(...)):
 * **Janice**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
   * **Resources:** See Shared Subteam Resources above.
+* **Carlos**
+  * **Objective:** Dev environment setup, FastAPI multipart file streaming sandbox, and local temporary file storage verification.
+  * **Resources:** See Shared Subteam Resources above.
 * **David**
   * **Objective:** Dev environment setup, Firebase console onboarding, and complete FastAPI sandbox exercise (`GET /health` & `POST /upload-image`).
   * **Resources:** See Shared Subteam Resources above.
@@ -111,7 +114,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 ---
 
-### 🤖 AI / ML Subteam (Holly, Kathleen, Max, Doil)
+### 🤖 AI / ML Subteam (Aarav, Kathleen, Max, Doil)
 
 **Shared Task:** Install Python 3.10+, PyTorch, torchvision, and JupyterLab. Work through the PyTorch transfer learning tutorial: load pretrained ResNet-18, replace the final classification layer with 5 output classes, train on 50 sample images for 2–3 epochs, and verify single-image inference.
 
@@ -129,7 +132,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 * [PyTorch Real-Time Inference Guidelines](https://pytorch.org/tutorials/intermediate/realtime_rpi.html)
 * [JupyterLab Documentation](https://jupyterlab.readthedocs.io/en/stable/)
 
-* **Holly**
+* **Aarav**
   * **Objective:** PyTorch environment setup & complete Transfer Learning exercise.
   * **Resources:** See Shared Subteam Resources above.
 * **Kathleen**
@@ -165,7 +168,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [Figma Auto Layout Guide](https://help.figma.com/hc/en-us/articles/360040451373-Explore-auto-layout-properties)
     * [Material Design 3 Color System](https://m3.material.io/styles/color/overview)
-* **Carlos — React Navigation Stack & Mobile Structure**
+* **Caden — React Navigation Stack & Mobile Structure**
   * **Medium-High Level Task:** Configure `@react-navigation/native` and bottom tab navigation. Scaffold screen files (`HomeScreen`, `ScanScreen`, `ResultScreen`, `HistoryScreen`, `ProfileScreen`) and directory structure (`src/components`, `src/screens`, `src/services`).
   * **Resources:**
     * [React Navigation Bottom Tabs Navigator](https://reactnavigation.org/docs/bottom-tab-navigator/)
@@ -175,12 +178,17 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### ⚙️ Backend Subteam
 
-* **Janice — API Contract Specification & Pydantic Schemas**
+* **Janice — API Contract Specification & Starter Schemas**
   * **Medium-High Level Task:** Author formal API specification for core endpoints (`/api/classify`, `/api/rules/{location}`, `/api/history`, `/api/stats`). Scaffold starter Pydantic models in `backend/app/models/schemas.py` (`ClassifyResponse`, `RuleResponse`, `ScanRecord`).
   * **Resources:**
     * [FastAPI Response Model Docs](https://fastapi.tiangolo.com/tutorial/response-model/)
     * [Pydantic v2 Core Concepts](https://docs.pydantic.dev/latest/concepts/models/)
-* **David — System Architecture & Backend Config**
+* **Carlos — Backend Environment Configuration & Settings Management**
+  * **Medium-High Level Task:** Implement `backend/app/config.py` using `pydantic-settings` to parse environment variables (`ENV`, `PORT`, `CORS_ORIGINS`, `FIREBASE_CREDENTIALS_PATH`, `MODEL_PATH`) and create `.env.example`.
+  * **Resources:**
+    * [Pydantic Settings Management](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+    * [FastAPI CORS Middleware](https://fastapi.tiangolo.com/tutorial/cors/)
+* **David — System Architecture Diagram & Pipeline Specifications**
   * **Medium-High Level Task:** Diagram system architecture (Mobile → FastAPI → PyTorch / Rules → Firestore). Implement `backend/app/config.py` using `pydantic-settings` to parse environment variables with `.env.example`.
   * **Resources:**
     * [Pydantic Settings Management](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
@@ -200,7 +208,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Dataset Assembly & Class Remapping**
+* **Aarav — Dataset Assembly & Class Remapping**
   * **Medium-High Level Task:** Download open-source waste datasets into `data/raw/`. Write a mapping script remapping raw dataset labels to the 5 target categories: **paper, plastic, glass, compost, landfill**.
   * **Resources:**
     * [TrashNet Dataset on GitHub](https://github.com/garythung/trashnet)
@@ -243,7 +251,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native Flexbox Layout](https://reactnative.dev/docs/flexbox)
     * [React Native StyleSheet API](https://reactnative.dev/docs/stylesheet)
-* **Carlos — Camera Screen & API Service Layer**
+* **Caden — Camera Screen & API Service Layer**
   * **Medium-High Level Task:** Build `src/screens/ScanScreen.js` using `expo-camera` (viewfinder, shutter button, photo preview overlay with Retake/Confirm). Create `src/services/api.js` with `fetch` multipart wrapper using local network IP.
   * **Resources:**
     * [React Native Network Requests (`fetch`)](https://reactnative.dev/docs/network)
@@ -278,7 +286,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Structured Training Pipeline Script**
+* **Aarav — Structured Training Pipeline Script**
   * **Medium-High Level Task:** Write `ml/scripts/train.py` supporting command-line arguments (epochs, batch size, learning rate), data loader loading, training loop execution, and checkpoint saving.
   * **Resources:**
     * [Python `argparse` Tutorial](https://docs.python.org/3/howto/argparse.html)
@@ -321,7 +329,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native Images Guide](https://reactnative.dev/docs/image)
     * [Expo Vector Icons Directory](https://icons.expo.fyi/)
-* **Carlos — End-to-End Camera API Integration**
+* **Caden — End-to-End Camera API Integration**
   * **Medium-High Level Task:** Connect `ScanScreen` photo confirmation to `classifyImage()` in `services/api.js`. Add loading spinners, error alerts, and navigate to `ResultScreen` with real prediction data.
   * **Resources:**
     * [React Native ActivityIndicator](https://reactnative.dev/docs/activityindicator)
@@ -331,8 +339,13 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### ⚙️ Backend Subteam
 
-* **Janice — PyTorch Model Inference Singleton Service**
-  * **Medium-High Level Task:** Implement `backend/app/services/classifier.py` loading model weights at server startup, preprocessing image tensors (resize 224×224, normalize), and running inference on CPU.
+* **Janice — Response Formatting & Disposal Tips Integration**
+  * **Medium-High Level Task:** Connect the disposal tips helper into the classification response pipeline and format `ClassifyResponse` JSON models cleanly.
+  * **Resources:**
+    * [FastAPI Response Model Docs](https://fastapi.tiangolo.com/tutorial/response-model/)
+    * [Python Dictionaries & Default Fallbacks](https://docs.python.org/3/tutorial/datastructures.html#dictionaries)
+* **Carlos — PyTorch Model Inference Singleton Service**
+  * **Medium-High Level Task:** Implement `backend/app/services/inference.py` (`ModelService` singleton class): load model weights at server startup, preprocess image tensors (resize 224×224, normalize), run `torch.no_grad()` inference on CPU, and profile latency.
   * **Resources:**
     * [PyTorch Loading Models for Inference](https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-model-for-inference)
     * [FastAPI Lifespan Events](https://fastapi.tiangolo.com/advanced/events/)
@@ -356,7 +369,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Model Fine-Tuning & Layer Unfreezing**
+* **Aarav — Model Fine-Tuning & Layer Unfreezing**
   * **Medium-High Level Task:** Unfreeze deeper layers of ResNet-18, experiment with differential learning rates, and fine-tune for improved accuracy (> 75% target).
   * **Resources:**
     * [PyTorch Fine-Tuning Tutorial](https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html#convnet-as-fixed-feature-extractor)
@@ -399,21 +412,26 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native Modal Component](https://reactnative.dev/docs/modal)
     * [React Native Picker Community Library](https://github.com/react-native-picker/picker)
-* **Carlos — `expo-location` GPS Integration**
-  * **Medium-High Level Task:** Install `expo-location`, implement auto-city detection via reverse geocoding, pass location to `/api/classify`, and verify on both iOS and Android.
+* **Caden — Location Rules Integration & App Hardening**
+  * **Medium-High Level Task:** Integrate city selection state into the mobile app, pass selected city parameter to `/api/classify` and `/api/rules/{city}`, and verify responsive layout on physical iOS and Android devices.
   * **Resources:**
-    * [expo-location SDK Docs](https://docs.expo.dev/versions/latest/sdk/location/)
-    * [expo-location Geocoding Methods](https://docs.expo.dev/versions/latest/sdk/location/#locationreversegeocodeasyncpoint)
+    * [React Native State Management](https://react.dev/learn/managing-state)
+    * [Expo Testing Guidelines](https://docs.expo.dev/develop/development-builds/introduction/)
 
 ---
 
 ### ⚙️ Backend Subteam
 
-* **Janice — Location Rules Engine Service**
-  * **Medium-High Level Task:** Build `backend/app/services/rules_engine.py` loading municipal rules JSON (Berkeley, San Francisco, Default) and matching categories to municipal bin colors and notes.
+* **Janice — Municipal Rules Engine Service & Dataset**
+  * **Medium-High Level Task:** Build `backend/app/services/rules_engine.py` loading municipal rules JSON (`berkeley_rules.json`, `sf_rules.json`) and matching categories to municipal bin colors and local sorting notes.
   * **Resources:**
     * [City of Berkeley Recycling Rules](https://berkeleyca.gov/city-services/trash-recycling)
     * [SF Environment Recycling & Composting](https://sfenvironment.org/zero-waste)
+* **Carlos — Classification Pipeline Hardening & Error Resilience**
+  * **Medium-High Level Task:** Harden the inference pipeline against corrupted images, non-square dimensions, and slow request timeouts. Add comprehensive error recovery returning clean HTTP 422 responses.
+  * **Resources:**
+    * [FastAPI Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/)
+    * [Python Exception Handling Best Practices](https://docs.python.org/3/tutorial/errors.html)
 * **David — Rules Endpoint & Classify Integration**
   * **Medium-High Level Task:** Expose `GET /api/rules/{location}` and modify `POST /api/classify` to accept an optional `location` query parameter to inject municipal guidance.
   * **Resources:**
@@ -434,7 +452,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Hyperparameter Optimization & Model Checkpoint Freeze**
+* **Aarav — Hyperparameter Optimization & Model Checkpoint Freeze**
   * **Medium-High Level Task:** Finalize learning rate scheduling and data augmentation parameters, select the best model checkpoint on validation accuracy, and lock weights for the mid-sem demo.
   * **Resources:**
     * [PyTorch Cosine Annealing LR Scheduler](https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html)
@@ -476,28 +494,31 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 ### Member Assignments & Resource Guides
 
 * **Mong (Frontend) — UI Responsiveness Audit & Demo Flow Styling**
-  * **Task:** Audit layout on small and large phone screens, polish button feedback and theme contrast, and prepare the UI flow walkthrough for Carlos's demo recording.
+  * **Task:** Audit layout on small and large phone screens, polish button feedback and theme contrast, and prepare the UI flow walkthrough for Caden's demo recording.
   * **Resources:** [Mobile Responsive Design Checklist](https://web.dev/responsive-web-design-basics/), [Color Contrast Accessibility Tools](https://webaim.org/resources/contrastchecker/)
-* **Carlos (Frontend) — App Demo Video Production**
+* **Caden (Frontend) — App Demo Video Production**
   * **Task:** Record a high-resolution screen capture of the Sortify app on a physical phone: scanning real items with the camera, displaying real-time classification results, and navigating tabs. Embed video in the slide deck.
   * **Resources:** [iOS Screen Recording Guide](https://support.apple.com/en-us/HT207935), [Android Screen Recording Guide](https://support.google.com/android/answer/9075928)
-* **Janice (Backend) — API Resilience & Error Handling Audit**
+* **Janice (Backend) — API Documentation & Schema Review**
+  * **Task:** Review and audit API schemas, document route parameters and response models for `/health`, `/api/classify`, and `/api/rules`, ensuring all endpoints have accurate docstrings for presentation materials.
+  * **Resources:** [FastAPI OpenAPI Documentation](https://fastapi.tiangolo.com/tutorial/metadata-and-docs-urls/)
+* **Carlos (Backend) — Demo Environment Networking & Server Telemetry**
+  * **Task:** Configure local Wi-Fi IP routing / hotspot for mobile phone connection during demo rehearsals, monitor server logs, and profile request telemetry.
+  * **Resources:** [Local Wi-Fi Network Debugging](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Tools_and_setup/set_up_a_local_testing_server)
+* **David (Backend) — API Resilience & Error Handling Audit**
   * **Task:** Verify that all endpoints (`/health`, `/api/classify`, `/api/rules`) handle malformed inputs and slow network connections gracefully with correct HTTP status codes during recording.
   * **Resources:** [HTTP Status Code Definitions (MDN)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status), [FastAPI Error Handling](https://fastapi.tiangolo.com/tutorial/handling-errors/)
-* **David (Backend) — Demo Environment Setup & Server Monitoring**
-  * **Task:** Configure local Wi-Fi IP routing / hotspot for Carlos's phone to connect during demo recording, and monitor server logs and request telemetry.
-  * **Resources:** [Local Wi-Fi Network Debugging](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Tools_and_setup/set_up_a_local_testing_server)
 * **Krish (Backend) — Firestore Data Integrity & Security Verification**
   * **Task:** Audit Firestore read/write operations during classification, verify that user and scan documents are created cleanly without orphan records, and check security rules.
   * **Resources:** [Firestore Security Rules Basics](https://firebase.google.com/docs/firestore/security/get-started), [Firestore Indexes Guide](https://firebase.google.com/docs/firestore/query-data/indexing)
 * **Edward (Backend) — Team Retrospective Lead**
   * **Task:** Lead the 30-minute team retrospective meeting, document team feedback, bottlenecks, and action items for Phase 2 in `docs/retrospective-midsem.md`.
   * **Resources:** [Agile Retrospective Format (Start-Stop-Continue)](https://www.atlassian.com/team-playbook/plays/retrospective)
-* **Holly (AI/ML) — Mid-Sem Model Benchmark & Metrics Summary**
+* **Aarav (AI/ML) — Mid-Sem Model Benchmark & Metrics Summary**
   * **Task:** Calculate final training and validation accuracy metrics, loss curves, and parameter statistics across the baseline models, documenting findings in `ml/models/MIDSEM_METRICS.md`.
   * **Resources:** [Model Evaluation Best Practices](https://scikit-learn.org/stable/modules/model_evaluation.html)
 * **Kathleen (AI/ML) — Physical Demo Items Benchmark**
-  * **Task:** Benchmark 8–10 real items against the model, identify the top 3–4 items with highest confidence for Carlos's demo recording, and document classification results in a test log.
+  * **Task:** Benchmark 8–10 real items against the model, identify the top 3–4 items with highest confidence for Caden's demo recording, and document classification results in a test log.
   * **Resources:** [Designing Robust Test Sets](https://developers.google.com/machine-learning/testing-debugging/metrics/data-leakage)
 * **Max (AI/ML) — Error Analysis & Failure Modes Catalog**
   * **Task:** Analyze misclassified validation items, identify specific failure patterns (e.g. shiny plastic vs glass, logos/text confusion), and catalog them in `ml/docs/FAILURE_MODES.md`.
@@ -528,7 +549,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native TextInput](https://reactnative.dev/docs/textinput)
     * [React Native KeyboardAvoidingView](https://reactnative.dev/docs/keyboardavoidingview)
-* **Carlos — AuthContext & Protected Navigation**
+* **Caden — AuthContext & Protected Navigation**
   * **Medium-High Level Task:** Build `AuthContext.js` managing user session, integrate `@react-native-async-storage/async-storage`, and configure conditional navigation (Auth Stack vs Main Tabs).
   * **Resources:**
     * [React Context API Documentation](https://react.dev/reference/react/createContext)
@@ -538,11 +559,16 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### ⚙️ Backend Subteam
 
-* **Janice — Firebase Auth Token Verification Middleware**
-  * **Medium-High Level Task:** Implement `backend/app/middleware/auth.py` validating Firebase Bearer ID tokens (`auth.verify_id_token`) and extracting `uid` for route security.
+* **Janice — Protected User Profile Route (`GET /api/users/me`)**
+  * **Medium-High Level Task:** Implement `GET /api/users/me` endpoint extracting user UID from the validated Firebase token and returning user profile details.
   * **Resources:**
-    * [Firebase Admin Verify ID Tokens](https://firebase.google.com/docs/auth/admin/verify-id-tokens#python)
     * [FastAPI Security & Dependencies](https://fastapi.tiangolo.com/tutorial/security/)
+    * [FastAPI Path Operations](https://fastapi.tiangolo.com/tutorial/path-params/)
+* **Carlos — History Data Service & Streak Calculation**
+  * **Medium-High Level Task:** Implement `backend/app/services/history_service.py` to save scan records and calculate consecutive daily active sorting streaks based on timestamps.
+  * **Resources:**
+    * [Python `datetime` & `zoneinfo`](https://docs.python.org/3/library/zoneinfo.html)
+    * [Streak Counter Logic Algorithm Guide](https://stackoverflow.com/questions/35503099/calculate-daily-streak-from-timestamps)
 * **David — Validated Scan Logging Endpoint (`POST /api/history`)**
   * **Medium-High Level Task:** Build endpoint saving scan record (`item`, `bin`, `confidence`, `timestamp`) into `users/{uid}/scans/` in Firestore, with input validation and returning the created scan ID.
   * **Resources:**
@@ -563,7 +589,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Model Dynamic Quantization**
+* **Aarav — Model Dynamic Quantization**
   * **Medium-High Level Task:** Implement dynamic quantization on the PyTorch model (`torch.quantization.quantize_dynamic`) to reduce CPU latency on backend server (< 2s target).
   * **Resources:**
     * [PyTorch Dynamic Quantization Tutorial](https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html)
@@ -606,7 +632,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [react-native-chart-kit Documentation](https://github.com/indiespirit/react-native-chart-kit)
     * [Gamification UX Patterns in Mobile Apps](https://uxdesign.cc/gamification-in-mobile-apps-patterns-and-best-practices-a87f87233633)
-* **Carlos — History Screen with FlatList & Auto-Logging**
+* **Caden — History Screen with FlatList & Auto-Logging**
   * **Medium-High Level Task:** Implement `src/screens/HistoryScreen.js` using `<FlatList>` for past scans; automatically trigger scan logging upon successful classification with toast feedback.
   * **Resources:**
     * [React Native FlatList Optimization](https://reactnative.dev/docs/flatlist)
@@ -621,6 +647,11 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [Firestore Pagination Queries](https://firebase.google.com/docs/firestore/query-data/query-cursors)
     * [FastAPI Query Parameters with Default Limits](https://fastapi.tiangolo.com/tutorial/query-params-str-validations/)
+* **Carlos — Query Optimization & History Indexing**
+  * **Medium-High Level Task:** Optimize Firestore query ordering and compound indexes for user scan history; benchmark query performance under concurrent requests.
+  * **Resources:**
+    * [Firestore Indexes Guide](https://firebase.google.com/docs/firestore/query-data/indexing)
+    * [Query Performance Optimization](https://cloud.google.com/firestore/docs/best-practices)
 * **David — Stats Aggregation Endpoint (`GET /api/stats`)**
   * **Medium-High Level Task:** Build endpoint aggregating user stats: total scans, points formula, and dictionary breakdown of counts per bin category.
   * **Resources:**
@@ -641,7 +672,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Test-Time Augmentation (TTA) Experiments**
+* **Aarav — Test-Time Augmentation (TTA) Experiments**
   * **Medium-High Level Task:** Implement test-time augmentation (horizontal flip and multiple crops) during inference to evaluate whether accuracy improves on tricky items.
   * **Resources:**
     * [Test-Time Augmentation Concept in PyTorch](https://github.com/qubvel/ttach)
@@ -684,7 +715,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native Accessibility Guide](https://reactnative.dev/docs/accessibility)
     * [Skeleton Loading UX Patterns](https://uxdesign.cc/what-you-should-know-about-skeleton-screens-a820c45a571a)
-* **Carlos — Cross-Device Testing & Memory Cleanup**
+* **Caden — Cross-Device Testing & Memory Cleanup**
   * **Medium-High Level Task:** Test all flows on both iOS and Android physical devices; ensure `expo-camera` unloads cleanly when navigating away to prevent memory leaks.
   * **Resources:**
     * [React Native Performance Monitor](https://reactnative.dev/docs/performance)
@@ -694,8 +725,13 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### ⚙️ Backend Subteam
 
-* **Janice — Full-Flow Integration Test Suite**
-  * **Medium-High Level Task:** Write automated integration test suite executing full sequence: user signup → token verify → classify image → history log → stats verification.
+* **Janice — API Unit Tests with pytest**
+  * **Medium-High Level Task:** Write automated unit tests for FastAPI endpoints (`/health`, `/api/rules/{city}`) and response schema validation using `pytest` and `TestClient`.
+  * **Resources:**
+    * [Testing FastAPI with TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
+    * [pytest Documentation](https://docs.pytest.org/en/latest/)
+* **Carlos — Full-Flow Integration Test Suite**
+  * **Medium-High Level Task:** Write automated integration test suite executing full sequence: user signup → token verify → classify image (with mock ML inference) → history log → stats verification.
   * **Resources:**
     * [Testing FastAPI with TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
     * [pytest Fixtures for Database Teardown](https://docs.pytest.org/en/latest/explanation/fixtures.html)
@@ -719,7 +755,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Adversarial Input Stress Testing**
+* **Aarav — Adversarial Input Stress Testing**
   * **Medium-High Level Task:** Test model behavior against blurred images, multiple waste items in one frame, extreme lighting, and non-trash items (e.g., selfies).
   * **Resources:**
     * [Adversarial Robustness in Computer Vision](https://distill.pub/2017/feature-visualization/)
@@ -762,7 +798,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [React Native `useColorScheme`](https://reactnative.dev/docs/usecolorscheme)
     * [react-native-onboarding-swiper](https://github.com/jfilter/react-native-onboarding-swiper)
-* **Carlos — Haptic Feedback, Safe Areas & Icon Audit**
+* **Caden — Haptic Feedback, Safe Areas & Icon Audit**
   * **Medium-High Level Task:** Integrate `expo-haptics` on shutter trigger, ensure seamless safe-area padding across various device screens, and unify `@expo/vector-icons`.
   * **Resources:**
     * [expo-haptics Documentation](https://docs.expo.dev/versions/latest/sdk/haptics/)
@@ -772,8 +808,13 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### ⚙️ Backend Subteam
 
-* **Janice — Dockerization & Docker Compose Setup**
-  * **Medium-High Level Task:** Create multi-stage `backend/Dockerfile` and `docker-compose.yml`, validating that FastAPI and PyTorch dependencies build and boot cleanly.
+* **Janice — Error Handling Middleware & Logging**
+  * **Medium-High Level Task:** Implement standardized exception handlers and request logging in `backend/app/main.py` returning clean JSON responses for client errors.
+  * **Resources:**
+    * [FastAPI Global Exception Handlers](https://fastapi.tiangolo.com/tutorial/handling-errors/#custom-exception-handlers)
+    * [Python Logging HOWTO](https://docs.python.org/3/howto/logging.html)
+* **Carlos — Dockerization & Docker Compose Setup**
+  * **Medium-High Level Task:** Create multi-stage `backend/Dockerfile` and `docker-compose.yml`, caching PyTorch CPU wheel dependencies and validating clean container startup.
   * **Resources:**
     * [Docker for Python Developers Guide](https://docs.docker.com/language/python/)
     * [Docker Compose Getting Started](https://docs.docker.com/compose/gettingstarted/)
@@ -797,7 +838,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Dockerized Model Inference Verification**
+* **Aarav — Dockerized Model Inference Verification**
   * **Medium-High Level Task:** Validate that the PyTorch model loads and executes predictions reliably inside the Docker container within CPU memory limits.
   * **Resources:**
     * [Deploying PyTorch in Docker Containers](https://pytorch.org/tutorials/intermediate/flask_rest_api_tutorial.html)
@@ -840,17 +881,22 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
   * **Resources:**
     * [Expo Splash Screen & Icon Configuration](https://docs.expo.dev/develop/user-interface/splash-screen/)
     * [App Store Mockup Design Templates (Figma)](https://www.figma.com/community/search?resource_type=mixed&sort_by=relevancy&query=app+store+mockup)
-* **Carlos — EAS Standalone Build & Multi-Object UI Prototype**
-  * **Medium-High Level Task:** Set up Expo Application Services (`eas build --platform android --profile preview`) to generate installable APK; build prototype UI for multi-object bounding boxes in branch `feat/frontend/carlos/multi-object-ui`.
+* **Caden — EAS Standalone Build & Preview APK**
+  * **Medium-High Level Task:** Configure Expo Application Services (`eas build --platform android --profile preview`) to generate an installable standalone Android APK for physical device validation.
   * **Resources:**
     * [EAS Build Android Preview Guide](https://docs.expo.dev/build/setup/)
-    * [React Native SVG Bounding Boxes Overlay](https://github.com/software-mansion/react-native-svg)
+    * [Expo Application Services Overview](https://docs.expo.dev/eas/)
 
 ---
 
 ### ⚙️ Backend Subteam
 
-* **Janice — Production Cloud Deployment**
+* **Janice — OpenAPI Swagger Polish & Setup Guide**
+  * **Medium-High Level Task:** Finalize interactive Swagger docs with example schemas, and write clear local setup and execution instructions in `backend/README.md`.
+  * **Resources:**
+    * [Swagger UI Documentation](https://swagger.io/tools/swagger-ui/)
+    * [Writing Great Documentation](https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/)
+* **Carlos — Production Cloud Deployment**
   * **Medium-High Level Task:** Deploy Docker container to cloud hosting (Railway, Render, or GCP Cloud Run), configure production environment secrets, and verify public HTTPS endpoint.
   * **Resources:**
     * [Deploying FastAPI to Render](https://render.com/docs/deploy-fastapi)
@@ -875,8 +921,8 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 
 ### 🤖 AI / ML Subteam
 
-* **Holly — Multi-Object Detection Prototype with YOLOv8**
-  * **Medium-High Level Task:** In branch `feat/ml/holly/yolov8-multiobject`, test YOLOv8 model for detecting multiple waste items within a single frame.
+* **Aarav — Multi-Object Detection Prototype with YOLOv8**
+  * **Medium-High Level Task:** In branch `feat/ml/aarav/yolov8-multiobject`, test YOLOv8 model for detecting multiple waste items within a single frame.
   * **Resources:**
     * [Ultralytics YOLOv8 Quickstart Docs](https://docs.ultralytics.com/quickstart/)
     * [YOLOv8 Python Inference API](https://docs.ultralytics.com/modes/predict/)
@@ -919,10 +965,13 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 * **Mong (Frontend) — Mobile UI Final Polish & Architecture Documentation**
   * **Task:** Audit visual consistency across all screens, verify color contrast and dark mode styling, and write `mobile/README.md` documenting component architecture and design tokens.
   * **Resources:** [Writing a Great Mobile App README](https://github.com/matiassingers/awesome-readme), [UI/UX Quality Checklist](https://uxplanet.org/ui-ux-design-checklist-for-mobile-apps-980b6299b9cf)
-* **Carlos (Frontend) — Final Comprehensive Demo Video**
+* **Caden (Frontend) — Final Comprehensive Demo Video**
   * **Task:** Record a complete end-to-end app video demonstration (auth signup/login, scanning items with live classification, location-specific tips, daily streak increment, history list, stats dashboard). Embed in the presentation deck and present the mobile walkthrough.
   * **Resources:** [Mobile Screen Recording & Voiceover Guide](https://support.apple.com/en-us/HT207935)
-* **Janice (Backend) — Cloud Production Deployment Health Audit**
+* **Janice (Backend) — Final API Documentation & Postman Export**
+  * **Task:** Finalize API documentation, export full Postman/Thunder Client testing collection with saved examples, and compile backend release notes in `backend/README.md`.
+  * **Resources:** [API Documentation Best Practices](https://swagger.io/resources/articles/best-practices-in-api-documentation/)
+* **Carlos (Backend) — Cloud Production Deployment Health Audit**
   * **Task:** Verify live cloud container deployment (Render/Railway/GCP), test uptime of `/api/health`, and ensure production environment variables and SSL certificates are active.
   * **Resources:** [Cloud Service Uptime Monitoring](https://uptimerobot.com/), [FastAPI Health Check Endpoint](https://fastapi.tiangolo.com/)
 * **David (Backend) — Backend Latency & Performance Profiling Report**
@@ -934,7 +983,7 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5) # 5 categories
 * **Edward (Backend) — Rules Engine Audit & API Setup Verification**
   * **Task:** Verify all 5 municipal city rules return accurate payloads, test edge case inputs, and author the API usage examples section in `backend/README.md`.
   * **Resources:** [API Documentation Best Practices](https://swagger.io/resources/articles/best-practices-in-api-documentation/)
-* **Holly (AI/ML) — Model Optimization & Quantization Analysis**
+* **Aarav (AI/ML) — Model Optimization & Quantization Analysis**
   * **Task:** Benchmark the quantized PyTorch model vs unquantized weights on CPU inference speed and file size, documenting findings in `ml/docs/OPTIMIZATION.md`.
   * **Resources:** [PyTorch Quantization Performance Summary](https://pytorch.org/blog/introduction-to-quantization-on-pytorch/)
 * **Kathleen (AI/ML) — Campus Real-World Testing Final Report**

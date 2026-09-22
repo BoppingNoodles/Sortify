@@ -2,7 +2,7 @@
 
 > **Companion Document to:** [IMPLEMENTATION_PLAN.md](file:///c:/Users/caden/Documents/Open%20Project/Sortify/Sortify/IMPLEMENTATION_PLAN.md)  
 > **Repository:** `Sortify`  
-> **Branching Convention:** `<type>/<subteam>/<your-name>/<feature-name>` (e.g., `feat/frontend/carlos/camera-ui`, `feat/backend/janice/classify-router`, `feat/ml/holly/resnet-training`)  
+> **Branching Convention:** `<type>/<subteam>/<your-name>/<feature-name>` (e.g., `feat/frontend/caden/camera-ui`, `feat/backend/carlos/model-service`, `feat/ml/aarav/resnet-training`)  
 > **Key Milestones:** **Week 6** (Mid-Semester Presentation / Recorded Video Demo) & **Week 12** (Final Presentation / Portfolio Release)  
 
 ---
@@ -12,12 +12,13 @@
 | Subteam | Member | Primary Focus Area |
 |---|---|---|
 | **Frontend** | **Mong** | UI/UX Design (Figma), Design Systems, Core Screens (Home, Result, Profile, Stats, Onboarding) |
-| **Frontend** | **Carlos** | Native Hardware Integration (`expo-camera`, `expo-location`), State Management, Video Demo Production |
-| **Backend** | **Janice** | API Architecture, Router Scaffolding, Model Integration Service, Docker & Cloud Deployment |
+| **Frontend** | **Caden** | Mobile Hardware Integration (`expo-camera`), Navigation Stack, State Management, Video Demo Production |
+| **Backend** | **Janice** | API Schemas, Modular Routers, Rules Endpoints, Endpoint Unit Testing & API Documentation |
+| **Backend** | **Carlos** | In-Memory Model Inference Service, Request Streaming Validation, Dockerization & Cloud Deployment |
 | **Backend** | **David** | Classification Pipeline, Inference Logic, Stats Aggregation & Performance Profiling |
 | **Backend** | **Krish** | Firebase Admin SDK, Cloud Firestore Schema, Auth Middleware, Rate Limiting & Analytics |
 | **Backend** | **Edward** | Location Rules Engine, Data Validation, Automated Pytest Suite, OpenAPI & Documentation |
-| **AI / ML** | **Holly** | Model Architecture (ResNet-18), Transfer Learning Pipeline, Fine-Tuning & Quantization |
+| **AI / ML** | **Aarav** | Model Architecture (ResNet-18), Transfer Learning Pipeline, Fine-Tuning & Quantization |
 | **AI / ML** | **Kathleen** | Dataset Acquisition, Curation, Data Splitting, Model Logging & Campus Testing Benchmarks |
 | **AI / ML** | **Max** | Image Preprocessing, Baseline Training, ONNX Export, Comparative Model Evaluation |
 | **AI / ML** | **Doil** | Exploratory Data Analysis (EDA), Confusion Matrices, Model Cards, Retraining Docs & Wrap-Up |
@@ -77,10 +78,10 @@
        - **Result Card Modal:** Detected item name, category badge with waste bin colors (Blue: Plastic, Green: Compost, Brown: Paper, Teal: Glass, Gray: Landfill), confidence bar, and disposal instructions.
        - **Profile / Streak:** User stats, current streak flame, and total items sorted.
     4. *Extension (if time permits):* Install Node.js LTS, VS Code, and the Expo Go app on your physical phone; test running a basic React Native template.
-  * **Verification:** Share the Figma board link with Carlos and the PMs; walk through the user flow in the weekly subteam sync.
+  * **Verification:** Share the Figma board link with Caden and the PMs; walk through the user flow in the weekly subteam sync.
   * **Deliverable & Branch:** Figma wireframe board link + `feat/frontend/mong/week1-setup` (if code sandbox completed).
 
-* **Carlos**
+* **Caden**
   * **Task:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits).
   * **Goal & Context:** Ensure the Figma designs translate cleanly into React Native components and initialize the mobile workspace.
   * **Action Steps:**
@@ -94,7 +95,7 @@
        - Render the captured photo in an `<Image>` component with "Retake" and "Use Photo" buttons.
     5. Test with Expo Go on your physical iOS or Android device.
   * **Verification:** Verify physical camera opens, shutter snaps an image, and the preview renders on your phone. Take a screenshot or screen recording for the PR.
-  * **Deliverable & Branch:** Figma wireframe feedback + `feat/frontend/carlos/week1-camera-exercise`.
+  * **Deliverable & Branch:** Figma wireframe feedback + `feat/frontend/caden/week1-camera-exercise`.
 
 ---
 
@@ -125,6 +126,17 @@
     5. Save the uploaded file to a temporary local directory (`temp_uploads/`) and return filename and size in JSON response.
   * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Thunder Client in VS Code. Attach screenshot of HTTP 200 responses to your PR.
   * **Deliverable & Branch:** `feat/backend/janice/week1-fastapi-exercise`.
+
+* **Carlos**
+  * **Task:** Dev environment setup, FastAPI multipart file streaming sandbox & local temporary file storage verification.
+  * **Goal & Context:** Master asynchronous file upload handling and request validation in FastAPI.
+  * **Action Steps:**
+    1. Set up local Python 3.10+ virtual environment and install dependencies (`fastapi`, `uvicorn`, `python-multipart`, `aiofiles`).
+    2. Access the shared Firebase console project and review database rules and project settings.
+    3. Implement `main.py` with `GET /health` and `POST /upload-image`.
+    4. Implement asynchronous file writing using `async with aiofiles.open(...)` or standard file streaming to prevent blocking the event loop.
+  * **Verification:** Run `uvicorn main:app --reload` and send test requests via Thunder Client; verify HTTP 200 responses and local file writes.
+  * **Deliverable & Branch:** `feat/backend/carlos/week1-fastapi-exercise`.
 
 * **David**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
@@ -178,7 +190,7 @@
 * [PyTorch Real-Time Inference Guidelines](https://pytorch.org/tutorials/intermediate/realtime_rpi.html)
 * [JupyterLab Documentation](https://jupyterlab.readthedocs.io/en/stable/)
 
-* **Holly**
+* **Aarav**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
   * **Goal & Context:** Establish local GPU/MPS/CPU training capability and understand fine-tuning head replacement.
   * **Action Steps:**
@@ -190,7 +202,7 @@
     6. Train on a tiny toy folder of 50 sample images using CrossEntropyLoss and Adam optimizer for 2 epochs.
     7. Run single-image inference and print predicted class and softmax probability.
   * **Verification:** Run notebook end-to-end without errors; attach terminal/notebook screenshot showing decreasing loss and single-image prediction in PR.
-  * **Deliverable & Branch:** `feat/ml/holly/week1-transfer-learning-exercise`.
+  * **Deliverable & Branch:** `feat/ml/aarav/week1-transfer-learning-exercise`.
 
 * **Kathleen**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
@@ -250,7 +262,7 @@
   * **Verification:** Share Figma Prototype link in `#team-frontend` Slack channel; test interactive click-through prototype.
   * **Deliverable & Branch:** Figma Design Tokens & Component Library.
 
-* **Carlos**
+* **Caden**
   * **Task:** Configure mobile navigation stack and directory structure.
   * **Goal & Context:** Establish the production React Native project architecture and seamless bottom tab navigation.
   * **Action Steps:**
@@ -273,7 +285,7 @@
        ```
     3. Implement bottom tab navigator with icons (`Home`, `Scan`, `History`, `Profile`) and configure native stack navigator for modal transitions (e.g. `Scan` → `Result`).
   * **Verification:** Launch app in Expo Go on iOS/Android; tap between all 4 tabs and confirm smooth transition with active tab indicators.
-  * **Deliverable & Branch:** `feat/frontend/carlos/navigation-scaffolding`.
+  * **Deliverable & Branch:** `feat/frontend/caden/navigation-scaffolding`.
 
 ### ⚙️ Backend Subteam
 * **Janice**
@@ -289,16 +301,24 @@
   * **Verification:** Write a small Python script instantiating valid and invalid Pydantic models to verify validation triggers on bad data.
   * **Deliverable & Branch:** `feat/backend/janice/api-contracts-and-schemas`.
 
-* **David**
-  * **Task:** Create architecture diagrams & backend config module.
-  * **Goal & Context:** Document the entire system data flow and provide centralized, typed environment configuration.
+* **Carlos**
+  * **Task:** Backend environment configuration module & settings management.
+  * **Goal & Context:** Provide centralized, typed environment configuration parsing with `.env` support.
   * **Action Steps:**
-    1. Diagram system architecture using Mermaid in `docs/architecture.md`: Mobile Client → FastAPI Gateway → PyTorch Model / Rules Engine → Cloud Firestore.
-    2. Implement `backend/app/config.py` using `pydantic-settings`:
-       - Define `Settings` class with `ENV`, `PORT`, `CORS_ORIGINS`, `FIREBASE_CREDENTIALS_PATH`, and `MODEL_PATH`.
+    1. Implement `backend/app/config.py` using `pydantic-settings`.
+    2. Define `Settings` class with `ENV`, `PORT`, `CORS_ORIGINS`, `FIREBASE_CREDENTIALS_PATH`, and `MODEL_PATH`.
     3. Create `.env.example` documenting all required environment variables with default values for local development.
   * **Verification:** Run a test script importing `config.settings` and verify environment variables parse correctly from `.env`.
-  * **Deliverable & Branch:** `feat/backend/david/architecture-and-config`.
+  * **Deliverable & Branch:** `feat/backend/carlos/backend-config-setup`.
+
+* **David**
+  * **Task:** Create architecture diagrams & pipeline latency specifications.
+  * **Goal & Context:** Document the entire system data flow and define latency targets.
+  * **Action Steps:**
+    1. Diagram system architecture using Mermaid in `docs/architecture.md`: Mobile Client → FastAPI Gateway → PyTorch Model / Rules Engine → Cloud Firestore.
+    2. Document end-to-end latency targets across mobile capture, network transfer, model inference, and database write.
+  * **Verification:** Review diagram and specifications with backend subteam.
+  * **Deliverable & Branch:** `feat/backend/david/architecture-and-specs`.
 
 * **Krish**
   * **Task:** Design Firestore schema & database initialization test script.
@@ -324,7 +344,7 @@
   * **Deliverable & Branch:** `feat/backend/edward/firebase-admin-setup`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
   * **Action Steps:**
@@ -333,7 +353,7 @@
     3. Inspect corrupted images and remove 0-byte or unreadable files.
     4. Save organized dataset into `data/interim/`.
   * **Verification:** Run script and verify directory contains 5 clean class folders with balanced sample distribution.
-  * **Deliverable & Branch:** `feat/ml/holly/dataset-aggregation`.
+  * **Deliverable & Branch:** `feat/ml/aarav/dataset-aggregation`.
 
 * **Kathleen**
   * **Task:** Build train / validation / test partitioning script.
@@ -393,7 +413,7 @@
   * **Verification:** Test component with 5 different mock categories; confirm correct colors, typography, and layout.
   * **Deliverable & Branch:** `feat/frontend/mong/results-screen-ui`.
 
-* **Carlos**
+* **Caden**
   * **Task:** Build full Camera capture screen & API client service.
   * **Goal & Context:** Provide responsive camera viewfinder with photo preview and scaffold the HTTP network layer.
   * **Action Steps:**
@@ -406,7 +426,7 @@
        - Implement `classifyImage(imageUri)` function creating `FormData` with image blob and executing `POST /api/classify`.
        - Add request timeout (10s) and friendly error handling for network disconnects.
   * **Verification:** Test photo capture on physical phone; verify image URI is captured and passed to preview overlay.
-  * **Deliverable & Branch:** `feat/frontend/carlos/camera-and-api-service`.
+  * **Deliverable & Branch:** `feat/frontend/caden/camera-and-api-service`.
 
 ### ⚙️ Backend Subteam
 * **Janice**
@@ -428,6 +448,17 @@
     4. Implement `GET /health` endpoint verifying server status.
   * **Verification:** Launch server with `uvicorn app.main:app --reload`; visit `http://localhost:8000/docs` and confirm all router sections appear in Swagger UI.
   * **Deliverable & Branch:** `feat/backend/janice/router-scaffolding`.
+
+* **Carlos**
+  * **Task:** Implement multipart upload validation & request streaming middleware.
+  * **Goal & Context:** Protect backend endpoints from invalid formats, oversized streams, and corrupted payloads.
+  * **Action Steps:**
+    1. Implement upload validation in `backend/app/routers/classify.py`.
+    2. Validate image MIME types (`image/jpeg`, `image/png`, `image/webp`).
+    3. Inspect file magic bytes using Pillow or header checks.
+    4. Enforce 10MB payload size limit, returning HTTP 413 for oversized payloads.
+  * **Verification:** Send test requests with `.txt`, `.pdf`, and large image files via Thunder Client; verify proper 400 and 413 responses.
+  * **Deliverable & Branch:** `feat/backend/carlos/upload-validation`.
 
 * **David**
   * **Task:** Implement mock classification endpoint with validation.
@@ -469,7 +500,7 @@
   * **Deliverable & Branch:** `docs/backend/edward/api-testing-guide`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
   * **Action Steps:**
@@ -479,7 +510,7 @@
     4. Implement epoch loop calculating training loss and validation accuracy after every epoch.
     5. Save checkpoint `.pth` whenever validation accuracy achieves a new best score.
   * **Verification:** Run `python ml/scripts/train.py --epochs 2 --batch_size 16` on sample dataset; verify loss decreases and checkpoint file is saved.
-  * **Deliverable & Branch:** `feat/ml/holly/training-pipeline`.
+  * **Deliverable & Branch:** `feat/ml/aarav/training-pipeline`.
 
 * **Kathleen**
   * **Task:** Configure PyTorch DataLoaders with data augmentations.
@@ -543,7 +574,7 @@
   * **Verification:** Test screen rendering on physical phone via Expo Go; verify all touch targets navigate to appropriate screens.
   * **Deliverable & Branch:** `feat/frontend/mong/home-screen-ui`.
 
-* **Carlos**
+* **Caden**
   * **Task:** Integrate live mobile camera scanning with backend API.
   * **Goal & Context:** Achieve the complete camera-to-cloud classification flow on physical devices.
   * **Action Steps:**
@@ -555,10 +586,20 @@
        - On error: Display clean alert modal ("Could not reach Sortify server. Check your connection or try again.") with a "Retry" button.
     3. Test latency and optimize image compression (`quality: 0.7` in Expo Camera) to reduce upload payload to < 500KB.
   * **Verification:** Snap photo of real campus trash on physical phone; verify phone sends request, spinner displays, and result screen opens with live prediction.
-  * **Deliverable & Branch:** `feat/frontend/carlos/camera-api-integration`.
+  * **Deliverable & Branch:** `feat/frontend/caden/camera-api-integration`.
 
 ### ⚙️ Backend Subteam
 * **Janice**
+  * **Task:** Build response formatting & disposal guidance integration.
+  * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
+  * **Action Steps:**
+    1. Connect `tips_service.py` guidance helper into classification responses.
+    2. Construct `ClassifyResponse` objects with category badges and bin colors.
+    3. Add descriptive error models for unclassified items.
+  * **Verification:** Verify endpoint returns structured JSON conforming to `ClassifyResponse` schema.
+  * **Deliverable & Branch:** `feat/backend/janice/tips-response-formatting`.
+
+* **Carlos**
   * **Task:** Build PyTorch model inference service layer.
   * **Goal & Context:** Load PyTorch model into server memory once at startup and execute fast, thread-safe inference.
   * **Action Steps:**
@@ -574,7 +615,7 @@
          - Return top predicted class, confidence float, and top-3 alternatives.
     3. Include latency timer logging inference duration in milliseconds.
   * **Verification:** Write unit test passing sample image bytes to `ModelService.predict()` and verifying dictionary output format.
-  * **Deliverable & Branch:** `feat/backend/janice/model-inference-service`.
+  * **Deliverable & Branch:** `feat/backend/carlos/model-inference-service`.
 
 * **David**
   * **Task:** Connect live model inference to `POST /api/classify`.
@@ -619,7 +660,7 @@
   * **Deliverable & Branch:** `feat/backend/edward/request-validation`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
   * **Action Steps:**
@@ -629,7 +670,7 @@
     4. Implement early stopping with patience of 3 epochs based on validation loss.
     5. Save best checkpoint to `ml/models/resnet18_finetuned.pth`.
   * **Verification:** Confirm validation accuracy improves over baseline model by at least 5% (targeting ≥ 82%).
-  * **Deliverable & Branch:** `feat/ml/holly/model-finetuning`.
+  * **Deliverable & Branch:** `feat/ml/aarav/model-finetuning`.
 
 * **Kathleen**
   * **Task:** Build model export and packaging script.
@@ -687,19 +728,16 @@
   * **Verification:** Test selecting different cities in the UI; verify selected city updates across screens.
   * **Deliverable & Branch:** `feat/frontend/mong/location-selector-ui`.
 
-* **Carlos**
-  * **Task:** GPS location auto-detection integration.
-  * **Goal & Context:** Automatically detect user's current city via mobile GPS and supply it to classification requests.
+* **Caden**
+  * **Task:** Location rules integration & app hardening.
+  * **Goal & Context:** Integrate municipal location selection with camera scans and harden app flow.
   * **Action Steps:**
-    1. Install and configure `expo-location`: `npx expo install expo-location`.
-    2. Implement `getCurrentCity()` in `src/services/location.js`:
-       - Request foreground location permissions (`Location.requestForegroundPermissionsAsync()`).
-       - Fetch current coordinates (`Location.getCurrentPositionAsync()`).
-       - Reverse geocode coordinates (`Location.reverseGeocodeAsync()`) to extract `city` or `subregion`.
-    3. Fallback gracefully to "berkeley" if permissions are denied or GPS is unavailable.
-    4. Pass `location` query parameter in `classifyImage(uri, location)` to backend API.
-  * **Verification:** Test on physical phone; verify app requests location permissions and detects city name in console logs.
-  * **Deliverable & Branch:** `feat/frontend/carlos/gps-location-integration`.
+    1. Connect `LocationSelector` modal to app state, allowing user to select or switch current municipality (Berkeley, San Francisco, Oakland).
+    2. Pass selected location parameter in `POST /api/classify`.
+    3. Handle network disconnects and slow inference responses with clean retry buttons.
+    4. Verify end-to-end scan flow across different screen sizes and orientations.
+  * **Verification:** Test on physical phone; verify selected city updates classification result tips accurately.
+  * **Deliverable & Branch:** `feat/frontend/caden/location-rules-integration`.
 
 ### ⚙️ Backend Subteam
 * **Janice**
@@ -713,6 +751,16 @@
     3. Case-insensitive matching and fallback to default rules for unrecognized cities.
   * **Verification:** Write unit test testing rule lookups for "berkeley", "san francisco", and an unknown city; verify correct JSON rules return.
   * **Deliverable & Branch:** `feat/backend/janice/location-rules-engine`.
+
+* **Carlos**
+  * **Task:** Classification pipeline hardening & error resilience.
+  * **Goal & Context:** Ensure inference pipeline handles real-world anomalies without crashing.
+  * **Action Steps:**
+    1. Add timeout protection and exception catching in `POST /api/classify`.
+    2. Handle non-standard image aspect ratios and corrupted streams gracefully.
+    3. Benchmark inference latency across 20 test images on CPU.
+  * **Verification:** Run batch of corrupted and unusual images through classify endpoint; confirm zero uncaught server crashes.
+  * **Deliverable & Branch:** `feat/backend/carlos/classify-pipeline-hardening`.
 
 * **David**
   * **Task:** Expose Rules API endpoint & integrate into `/api/classify`.
@@ -754,7 +802,7 @@
   * **Deliverable & Branch:** `feat/backend/edward/automated-pytest-suite`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
   * **Action Steps:**
@@ -764,7 +812,7 @@
     4. Copy weights to `backend/app/models/sortify_mvp_v1.pth` for backend integration.
     5. Create checksum (MD5 or SHA-256) to ensure weight integrity.
   * **Verification:** Verify backend boots cleanly using the frozen `sortify_mvp_v1.pth` weights.
-  * **Deliverable & Branch:** `feat/ml/holly/checkpoint-freeze`.
+  * **Deliverable & Branch:** `feat/ml/aarav/checkpoint-freeze`.
 
 * **Kathleen**
   * **Task:** Campus test dataset collection & real-world photo evaluation.
@@ -785,7 +833,7 @@
     1. Analyze Kathleen's campus test results; identify specific visual factors causing confidence drops (shadows, background clutter, item crumpling).
     2. Curate a list of 5 "golden demo items" (e.g. clean Starbucks cold cup, compostable napkin, aluminum soda can) that consistently yield > 90% confidence.
     3. Document recommended physical scanning guidelines (e.g. hold camera 8–12 inches away, plain background) in `docs/ml/demo_scanning_guide.md`.
-  * **Verification:** Test golden demo items with Carlos and Mong on physical phones to confirm rock-solid live recognition.
+  * **Verification:** Test golden demo items with Caden and Mong on physical phones to confirm rock-solid live recognition.
   * **Deliverable & Branch:** `docs/ml/max/demo-items-guide`.
 
 * **Doil**
@@ -827,11 +875,11 @@
     1. Audit app layout across multiple screen sizes (iPhone SE, iPhone 14/15, Android pixel devices).
     2. Fix any layout overflows, clipped text, or awkward padding.
     3. Polish button tap feedback (`activeOpacity: 0.7`) and card shadow elevations.
-    4. Walk through the exact UI sequence with Carlos prior to final video recording.
+    4. Walk through the exact UI sequence with Caden prior to final video recording.
   * **Verification:** Review screen recording preview; verify zero visual glitches or layout jumps.
   * **Deliverable & Branch:** `feat/frontend/mong/ui-audit-polish`.
 
-* **Carlos (Frontend)**
+* **Caden (Frontend)
   * **Task:** App Demo Video Production & Mobile Walkthrough.
   * **Goal & Context:** Produce a smooth, high-resolution video recording of the working app to embed in the presentation deck.
   * **Action Steps:**
@@ -846,19 +894,29 @@
   * **Verification:** Play back embedded video in presentation mode; verify audio/video sync and crisp resolution.
   * **Deliverable & Branch:** Final Recorded Demo Video (`.mp4`) & slide embedding.
 
-* **Janice (Backend)**
-  * **Task:** API Resilience & Error Handling Audit.
-  * **Goal & Context:** Ensure the backend handles spotty connections and demo traffic gracefully without crashing.
+* **Janice (Backend)
+  * **Task:** API Documentation & Schema Review.
+  * **Goal & Context:** Audit API schemas and ensure route parameters and responses are clearly documented for presentation materials.
   * **Action Steps:**
-    1. Stress-test endpoints with rapid consecutive requests to verify server thread pool handles concurrent traffic.
-    2. Verify error responses return well-formatted JSON payloads rather than unhandled 500 HTML tracebacks.
-    3. Document backend API health status in `docs/backend-health-midsem.md`.
-  * **Verification:** Run 20 rapid curl requests; confirm 100% success rate and zero unhandled exceptions in server logs.
-  * **Deliverable & Branch:** `docs/backend/janice/api-resilience-audit`.
+    1. Document route parameters and schemas for `/health`, `/api/classify`, and `/api/rules`.
+    2. Verify docstrings and OpenAPI descriptions match implemented schemas.
+    3. Export sample JSON responses for presentation slides.
+  * **Verification:** Review Swagger UI documentation at `http://localhost:8000/docs` and confirm clean schema rendering.
+  * **Deliverable & Branch:** `docs/backend/janice/api-schema-review`.
+
+* **Carlos (Backend)
+  * **Task:** Demo Environment Networking & Server Telemetry.
+  * **Goal & Context:** Ensure stable local networking between mobile phone and FastAPI server during recording sessions.
+  * **Action Steps:**
+    1. Configure dedicated local Wi-Fi hotspot and static local IP routing for mobile phone connection during demo rehearsals.
+    2. Monitor server logs in real-time and profile request telemetry.
+    3. Validate that requests execute with sub-second response times on local network.
+  * **Verification:** Run 5 test classifications over Wi-Fi and verify clean server log output without disconnects.
+  * **Deliverable & Branch:** `feat/backend/carlos/demo-telemetry`.
 
 * **David (Backend)**
   * **Task:** Demo Environment Setup & Server Monitoring.
-  * **Goal & Context:** Provide stable networking between Carlos's mobile phone and the FastAPI backend server during recording and rehearsals.
+  * **Goal & Context:** Provide stable networking between Caden's mobile phone and the FastAPI backend server during recording and rehearsals.
   * **Action Steps:**
     1. Configure dedicated local Wi-Fi hotspot and static local IP routing for the backend server.
     2. Test latency and response times from mobile device across local network.
@@ -887,7 +945,7 @@
   * **Verification:** Commit retrospective summary to repository; review action items in the next all-hands standup.
   * **Deliverable & Branch:** `docs/retrospective-midsem.md`.
 
-* **Holly (AI/ML)**
+* **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
   * **Goal & Context:** Document formal machine learning model performance for technical review.
   * **Action Steps:**
@@ -906,7 +964,7 @@
        - Item 1: Clean plastic water bottle (`plastic`)
        - Item 2: Starbucks paper coffee cup (`paper/compost`)
        - Item 3: Aluminum soda can (`metal/recycling`)
-    3. Hand off physical items and test notes to Carlos for the recording session.
+    3. Hand off physical items and test notes to Caden for the recording session.
   * **Verification:** Confirm all 3 items classify correctly on 5 consecutive trial scans.
   * **Deliverable & Branch:** `docs/ml/kathleen/demo-items-benchmark.md`.
 
@@ -950,7 +1008,7 @@
   * **Verification:** Test form inputs on physical phone; verify keyboard dismissing and input validation banners.
   * **Deliverable & Branch:** `feat/frontend/mong/auth-screens-ui`.
 
-* **Carlos**
+* **Caden
   * **Task:** Integrate Firebase Auth client SDK & React AuthContext.
   * **Goal & Context:** Manage global login state, secure token storage, and authenticated API requests.
   * **Action Steps:**
@@ -959,22 +1017,30 @@
     3. Persist JWT ID tokens securely using `expo-secure-store`.
     4. Update `src/services/api.js` to automatically attach `Authorization: Bearer <token>` header to all outgoing requests when logged in.
   * **Verification:** Register a test user; verify session persists across app restarts and token is saved in SecureStore.
-  * **Deliverable & Branch:** `feat/frontend/carlos/auth-context-integration`.
+  * **Deliverable & Branch:** `feat/frontend/caden/auth-context-integration`.
 
 ### ⚙️ Backend Subteam
-* **Janice**
-  * **Task:** Implement Firebase Auth JWT verification middleware.
-  * **Goal & Context:** Secure API routes by validating Firebase Bearer tokens and injecting user identity.
+* **Janice
+  * **Task:** Implement protected user profile route (`GET /api/users/me`).
+  * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
   * **Action Steps:**
-    1. Create `backend/app/middleware/auth.py`.
-    2. Implement `get_current_user` FastAPI dependency:
-       - Extract `Authorization: Bearer <token>` header.
-       - Verify token signature and expiration with Firebase Admin SDK: `auth.verify_id_token(token)`.
-       - Extract `uid`, `email`, and custom claims.
-       - Raise HTTP 401 Unauthorized for missing, invalid, or expired tokens.
-    3. Allow optional authentication for guest endpoints.
-  * **Verification:** Send curl requests with valid, expired, and missing tokens; confirm correct 200 vs 401 status codes.
-  * **Deliverable & Branch:** `feat/backend/janice/jwt-auth-middleware`.
+    1. Implement `GET /api/users/me` endpoint in `backend/app/routers/auth.py`.
+    2. Use auth dependency to extract user `uid`.
+    3. Fetch and return user profile details (`email`, `display_name`, `created_at`).
+    4. Handle user not found with clean HTTP 404 response.
+  * **Verification:** Query endpoint with valid bearer token; confirm accurate user profile JSON returned.
+  * **Deliverable & Branch:** `feat/backend/janice/user-profile-endpoint`.
+
+* **Carlos
+  * **Task:** Implement history data service & streak calculation logic.
+  * **Goal & Context:** Encapsulate scan record writes and calculate daily active sorting streaks.
+  * **Action Steps:**
+    1. Create `backend/app/services/history_service.py`.
+    2. Implement `save_scan_record(user_id: str, scan_data: dict) -> str` writing to Firestore.
+    3. Write algorithmic helper evaluating consecutive daily activity from scan timestamps.
+    4. Handle timezone offsets and same-day multiple scans cleanly.
+  * **Verification:** Unit test streak calculation helper with sample timestamp lists across multiple days.
+  * **Deliverable & Branch:** `feat/backend/carlos/history-and-streaks-service`.
 
 * **David**
   * **Task:** Implement authenticated scan history logging (`POST /api/history`).
@@ -1011,7 +1077,7 @@
   * **Deliverable & Branch:** `feat/backend/edward/auth-security-tests`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
   * **Action Steps:**
@@ -1021,7 +1087,7 @@
     4. Benchmark inference speed on 50 sample images; measure speedup percentage.
     5. Evaluate accuracy delta to ensure accuracy loss is < 1%.
   * **Verification:** Save quantized model to `ml/models/sortify_quantized.pth` and log benchmark metrics in PR.
-  * **Deliverable & Branch:** `feat/ml/holly/model-quantization`.
+  * **Deliverable & Branch:** `feat/ml/aarav/model-quantization`.
 
 * **Kathleen**
   * **Task:** Targeted dataset expansion for weak classes.
@@ -1077,7 +1143,7 @@
   * **Verification:** Test chart rendering with varying sample data; verify chart fits seamlessly on both small and large phone screens.
   * **Deliverable & Branch:** `feat/frontend/mong/stats-screen-ui`.
 
-* **Carlos**
+* **Caden
   * **Task:** Implement History Screen with FlatList & auto-logging.
   * **Goal & Context:** Provide responsive, paginated browsing of past scans with thumbnail previews.
   * **Action Steps:**
@@ -1087,10 +1153,10 @@
        - Empty state component ("No scans yet! Snap a photo of waste to start your streak.").
     2. In `ScanScreen.js`: automatically trigger `POST /api/history` upon successful classification and show a quick toast message ("Scan saved! +10 points 🎉").
   * **Verification:** Scan 3 items in the app; switch to History tab and confirm all 3 appear instantly in the list.
-  * **Deliverable & Branch:** `feat/frontend/carlos/history-screen-flatlist`.
+  * **Deliverable & Branch:** `feat/frontend/caden/history-screen-flatlist`.
 
 ### ⚙️ Backend Subteam
-* **Janice**
+* **Janice
   * **Task:** Implement paginated scan history endpoint (`GET /api/history`).
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
   * **Action Steps:**
@@ -1100,6 +1166,16 @@
     4. Return list of `ScanRecord` models along with `next_cursor` for infinite scroll support.
   * **Verification:** Query endpoint with `limit=2` and verify only 2 items return with a valid next cursor.
   * **Deliverable & Branch:** `feat/backend/janice/paginated-history-endpoint`.
+
+* **Carlos
+  * **Task:** Optimize history queries & pagination indexing.
+  * **Goal & Context:** Optimize Firestore query ordering and compound indexes for scan history.
+  * **Action Steps:**
+    1. Define compound Firestore indexes for `user_id` ASC + `timestamp` DESC.
+    2. Benchmark query response latency under concurrent request loads.
+    3. Add query stress tests ensuring database reads remain sub-100ms.
+  * **Verification:** Confirm Firestore console indexes show status enabled and query execution time is logged.
+  * **Deliverable & Branch:** `feat/backend/carlos/history-pagination-indexing`.
 
 * **David**
   * **Task:** Implement user stats aggregation endpoint (`GET /api/stats`).
@@ -1144,7 +1220,7 @@
   * **Deliverable & Branch:** `feat/backend/edward/expand-municipal-rules`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
   * **Action Steps:**
@@ -1157,7 +1233,7 @@
     3. Benchmark accuracy and latency: compare single forward pass vs TTA forward pass.
     4. Document findings in `docs/ml/tta_experiments.md`.
   * **Verification:** Measure accuracy improvement vs inference latency increase; determine if TTA is viable for production.
-  * **Deliverable & Branch:** `docs/ml/holly/tta-experiments`.
+  * **Deliverable & Branch:** `docs/ml/aarav/tta-experiments`.
 
 * **Kathleen**
   * **Task:** Model version logging & loading helper script.
@@ -1211,7 +1287,7 @@
   * **Verification:** Test app with iOS VoiceOver or Android TalkBack enabled; verify all buttons are clearly announced.
   * **Deliverable & Branch:** `feat/frontend/mong/accessibility-and-skeletons`.
 
-* **Carlos**
+* **Caden
   * **Task:** Cross-device testing & memory leak cleanup.
   * **Goal & Context:** Ensure stable app performance on low-end and high-end devices without crashing or memory leaks.
   * **Action Steps:**
@@ -1219,10 +1295,20 @@
     2. Implement automatic retry logic in `services/api.js` for failed network requests with exponential backoff.
     3. Test full user journey on both physical iOS (iPhone) and physical Android devices.
   * **Verification:** Monitor memory footprint using React Native performance monitor; confirm memory returns to baseline after camera unmounts.
-  * **Deliverable & Branch:** `feat/frontend/carlos/performance-and-cleanup`.
+  * **Deliverable & Branch:** `feat/frontend/caden/performance-and-cleanup`.
 
 ### ⚙️ Backend Subteam
-* **Janice**
+* **Janice
+  * **Task:** API endpoint unit tests with pytest.
+  * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
+  * **Action Steps:**
+    1. Create `backend/tests/test_routes.py`.
+    2. Write unit tests for `/health`, `/api/rules/{location}`, and Pydantic schema validation.
+    3. Test invalid query parameters and verify appropriate error response payloads.
+  * **Verification:** Run `pytest backend/tests/test_routes.py` and confirm all tests pass cleanly.
+  * **Deliverable & Branch:** `feat/backend/janice/api-unit-tests`.
+
+* **Carlos
   * **Task:** Full-flow end-to-end integration test suite.
   * **Goal & Context:** Automatically verify the complete sequence from user registration through image classification and history retrieval.
   * **Action Steps:**
@@ -1232,8 +1318,8 @@
        - Scenario 2: User registers → verifies token → uploads image for classification → logs result to `POST /api/history` → verifies scan appears in `GET /api/history`.
        - Scenario 3: Verify stats counter increments after scan is logged.
     3. Use test fixtures to clean up test records from Firestore after test run.
-  * **Verification:** Run `pytest tests/test_integration.py`; confirm all integration tests pass with zero errors.
-  * **Deliverable & Branch:** `feat/backend/janice/integration-tests`.
+  * **Verification:** Run `pytest backend/tests/test_integration.py`; confirm all integration tests pass with zero errors.
+  * **Deliverable & Branch:** `feat/backend/carlos/integration-tests`.
 
 * **David**
   * **Task:** Latency benchmarking & performance profiling middleware.
@@ -1274,7 +1360,7 @@
   * **Deliverable & Branch:** `docs/backend/edward/edge-cases-and-docs`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
   * **Action Steps:**
@@ -1285,7 +1371,7 @@
     2. Run inference across the adversarial set; record predicted classes and confidence scores.
     3. Document failure patterns in `docs/ml/adversarial_stress_test.md`.
   * **Verification:** Commit stress-test findings and identify threshold recommendations to reject out-of-distribution photos.
-  * **Deliverable & Branch:** `docs/ml/holly/adversarial-stress-test`.
+  * **Deliverable & Branch:** `docs/ml/aarav/adversarial-stress-test`.
 
 * **Kathleen**
   * **Task:** Empirical confidence threshold calibration.
@@ -1347,7 +1433,7 @@
   * **Verification:** Test first-time app launch on physical phone; verify onboarding displays once, dismisses smoothly, and dark mode toggles seamlessly with system settings.
   * **Deliverable & Branch:** `feat/frontend/mong/onboarding-and-dark-mode`.
 
-* **Carlos**
+* **Caden
   * **Task:** Integrate haptic feedback, safe areas & icon audit.
   * **Goal & Context:** Add tactile responsiveness to mobile interactions and fix notch/home-bar padding.
   * **Action Steps:**
@@ -1358,10 +1444,20 @@
     3. Audit safe-area padding using `react-native-safe-area-context` across iPhone Dynamic Island, Android notch, and bottom gesture bar.
     4. Unify icon set using `@expo/vector-icons` (`Ionicons` / `Feather`).
   * **Verification:** Test on physical phone; verify pleasant physical vibration on shutter press and zero layout overlap with device notch.
-  * **Deliverable & Branch:** `feat/frontend/carlos/haptics-and-polish`.
+  * **Deliverable & Branch:** `feat/frontend/caden/haptics-and-polish`.
 
 ### ⚙️ Backend Subteam
-* **Janice**
+* **Janice
+  * **Task:** Error handling middleware, custom exception handlers & standardized error responses.
+  * **Goal & Context:** Ensure consistent error responses across all endpoints.
+  * **Action Steps:**
+    1. Implement standardized exception handlers in `backend/app/main.py`.
+    2. Format all errors as `{ "error": true, "code": str, "message": str }`.
+    3. Add request logging middleware capturing status codes and response times.
+  * **Verification:** Test sending malformed payloads; confirm consistent error responses returned.
+  * **Deliverable & Branch:** `feat/backend/janice/error-handling-logging`.
+
+* **Carlos
   * **Task:** Dockerize backend with multi-stage Dockerfile & Compose.
   * **Goal & Context:** Package backend into reproducible containers for zero-config deployment.
   * **Action Steps:**
@@ -1374,7 +1470,7 @@
     2. Create `docker-compose.yml` to spin up backend with proper environment variables and volume mounts.
     3. Validate container size (< 1GB) and build duration.
   * **Verification:** Run `docker-compose up --build` on local machine; verify server starts and `http://localhost:8000/health` returns 200 OK.
-  * **Deliverable & Branch:** `feat/backend/janice/dockerization`.
+  * **Deliverable & Branch:** `feat/backend/carlos/dockerization`.
 
 * **David**
   * **Task:** Implement comprehensive Diagnostics endpoint (`GET /api/health`).
@@ -1422,16 +1518,16 @@
   * **Deliverable & Branch:** `docs/backend/edward/openapi-polish`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Verify Dockerized model inference performance.
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
   * **Action Steps:**
-    1. Pull Janice's Docker container build locally.
+    1. Pull Carlos's Docker container build locally.
     2. Run container with strict CPU and RAM resource limits (`--memory=1g --cpus=2`).
     3. Execute 50 sequential and concurrent classification requests against the container.
     4. Measure inference latency and ensure container memory does not continuously climb.
   * **Verification:** Confirm container executes requests under 100ms on CPU without crashing or triggering OOM killer.
-  * **Deliverable & Branch:** `docs/ml/holly/docker-inference-validation`.
+  * **Deliverable & Branch:** `docs/ml/aarav/docker-inference-validation`.
 
 * **Kathleen**
   * **Task:** Build interactive model demo Jupyter notebook.
@@ -1487,20 +1583,29 @@
   * **Verification:** Export visual assets at 2x resolution and upload to `docs/portfolio_assets/`.
   * **Deliverable & Branch:** `docs/portfolio_assets/` in repository.
 
-* **Carlos**
-  * **Task:** Generate standalone APK via EAS Build & prototype multi-object UI.
-  * **Goal & Context:** Produce an installable Android `.apk` file and prototype multi-object bounding box overlays.
+* **Caden
+  * **Task:** Generate standalone APK via EAS Build & preview distribution.
+  * **Goal & Context:** Produce an installable Android `.apk` file for physical device validation.
   * **Action Steps:**
     1. Configure Expo Application Services (`eas.json`):
        - Set up build profile for Android preview APK: `eas build --platform android --profile preview`.
     2. Generate installable `.apk` file and test installation on a physical Android phone.
-    3. In isolated branch `feat/frontend/carlos/multi-object-ui`:
-       - Build prototype overlay rendering SVG bounding boxes with label tags over the camera preview for multiple waste items.
-  * **Verification:** Verify standalone `.apk` installs and opens on an Android device without requiring Expo Go.
-  * **Deliverable & Branch:** Standalone APK build link + `feat/frontend/carlos/multi-object-ui`.
+    3. Distribute APK link to team members for physical testing.
+  * **Verification:** Download generated APK on an Android device; install and confirm full functionality outside of Expo Go.
+  * **Deliverable & Branch:** Standalone APK build link + `feat/frontend/caden/eas-standalone-build`.
 
 ### ⚙️ Backend Subteam
-* **Janice**
+* **Janice
+  * **Task:** OpenAPI Swagger documentation polish & backend setup guide.
+  * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
+  * **Action Steps:**
+    1. Finalize interactive Swagger docs with example schemas and descriptions for all endpoints.
+    2. Author setup and execution guide in `backend/README.md`.
+    3. Document curl testing commands for local development.
+  * **Verification:** Visit `/docs` on local server; confirm clean descriptions and example payloads render.
+  * **Deliverable & Branch:** `docs/backend/janice/api-documentation-polish`.
+
+* **Carlos
   * **Task:** Production Cloud Deployment to Render / Cloud Run.
   * **Goal & Context:** Host the Sortify backend on a publicly accessible, secure HTTPS server.
   * **Action Steps:**
@@ -1509,7 +1614,7 @@
     3. Set production environment secrets (Firebase credentials, model path, allowed CORS origins).
     4. Verify public HTTPS endpoint: `https://sortify-api.onrender.com/health`.
   * **Verification:** Send curl request from phone to the public HTTPS URL; confirm HTTP 200 response.
-  * **Deliverable & Branch:** `feat/backend/janice/cloud-deployment`.
+  * **Deliverable & Branch:** `feat/backend/carlos/cloud-deployment`.
 
 * **David**
   * **Task:** Prototype multi-object classification endpoint.
@@ -1518,7 +1623,7 @@
     1. In branch `feat/backend/david/classify-multi`:
        - Create `POST /api/classify-multi`.
        - Define response schema returning `detected_items: list[DetectedItem]` where each item includes: `item_name`, `category`, `confidence`, and bounding box coordinates `[x_min, y_min, x_max, y_max]`.
-    2. Return structured mock multi-item data to unblock Carlos's UI prototype.
+    2. Return structured mock multi-item data to test object detection response schemas.
   * **Verification:** Test endpoint via Thunder Client; verify multi-item array payload validates against Pydantic schema.
   * **Deliverable & Branch:** `feat/backend/david/classify-multi`.
 
@@ -1550,17 +1655,17 @@
   * **Deliverable & Branch:** `feat/backend/edward/contamination-heuristics`.
 
 ### 🤖 AI / ML Subteam
-* **Holly**
+* **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
   * **Action Steps:**
-    1. In branch `feat/ml/holly/yolov8-multiobject`:
+    1. In branch `feat/ml/aarav/yolov8-multiobject`:
        - Install Ultralytics: `pip install ultralytics`.
        - Load pretrained YOLOv8n model and test inference on multi-item waste images.
        - Extract bounding boxes, class labels, and confidence scores.
     2. Document feasibility, frame rate, and export formats in `docs/ml/yolov8_feasibility.md`.
   * **Verification:** Run script on sample multi-item photo; verify detected bounding boxes draw cleanly over items.
-  * **Deliverable & Branch:** `feat/ml/holly/yolov8-multiobject`.
+  * **Deliverable & Branch:** `feat/ml/aarav/yolov8-multiobject`.
 
 * **Kathleen**
   * **Task:** Contamination classification heuristic prototype.
@@ -1623,7 +1728,7 @@
   * **Verification:** Run linter across mobile codebase; ensure zero lint errors or warnings.
   * **Deliverable & Branch:** `mobile/README.md`.
 
-* **Carlos (Frontend)**
+* **Caden (Frontend)
   * **Task:** Final Comprehensive Demo Video & Mobile Presentation.
   * **Goal & Context:** Produce the definitive, high-impact video demonstration of the Sortify app to showcase in the final presentation.
   * **Action Steps:**
@@ -1638,16 +1743,26 @@
   * **Verification:** Play back video in the presentation venue; confirm crystal-clear playback and crisp audio.
   * **Deliverable & Branch:** Final Demo Video (`.mp4`) & mobile presentation walkthrough.
 
-* **Janice (Backend)**
+* **Janice (Backend)
+  * **Task:** Final API Documentation Audit & Postman Export.
+  * **Goal & Context:** Finalize API documentation and test collections for the portfolio release.
+  * **Action Steps:**
+    1. Finalize API documentation and export Postman / Thunder Client collections with saved request examples.
+    2. Compile backend release notes and API usage guide in `backend/README.md`.
+    3. Verify all endpoints have accurate docstrings and schemas.
+  * **Verification:** Review backend documentation and test collection import cleanly into a fresh workspace.
+  * **Deliverable & Branch:** `docs/backend/janice/final-api-docs`.
+
+* **Carlos (Backend)
   * **Task:** Production Cloud Deployment Health Audit & Monitoring.
   * **Goal & Context:** Ensure the deployed cloud backend is operating with high availability and SSL encryption.
   * **Action Steps:**
     1. Verify live cloud container deployment on Render / Cloud Run.
     2. Run uptime checks against `GET /api/health`; configure free uptime monitoring alert (e.g. UptimeRobot).
     3. Verify environment variables, CORS policies, and SSL HTTPS certificates are fully active.
-    4. Document deployment URL and architecture in `backend/DEPLOYMENT.md`.
-  * **Verification:** Execute curl requests from multiple external networks to verify public availability.
-  * **Deliverable & Branch:** `backend/DEPLOYMENT.md`.
+    4. Document public API base URL, health endpoints, and response schemas in `backend/DEPLOYMENT.md`.
+  * **Verification:** Confirm UptimeRobot reports 100% availability over 48 hours.
+  * **Deliverable & Branch:** `docs/backend/DEPLOYMENT.md`.
 
 * **David (Backend)**
   * **Task:** Backend Latency & Performance Profiling Report.
@@ -1680,7 +1795,7 @@
   * **Verification:** Verify all 5 cities return verified municipal guidelines and interactive Swagger docs are complete.
   * **Deliverable & Branch:** `docs/backend/edward/rules-audit`.
 
-* **Holly (AI/ML)**
+* **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.
   * **Goal & Context:** Document machine learning optimization techniques applied throughout the semester.
   * **Action Steps:**
@@ -1730,12 +1845,13 @@
 | Member | Subteam | Weeks 1–3 (Onboarding & Foundation) | Weeks 4–6 (Core MVP Build & Demo Video) | Weeks 7–9 (Auth, Gamification & Hardening) | Weeks 10–12 (Polish, Deploy & Final Demo) |
 |---|---|---|---|---|---|
 | **Mong** | Frontend | W1 Figma wireframes (React sandbox if time), design tokens, Result screen UI | Home screen, location selector UI, UI responsiveness audit | Auth screens UI, Stats dashboard, accessibility & skeleton UI | Onboarding swiper, app branding assets, mobile UI documentation |
-| **Carlos** | Frontend | W1 Figma wireframes (Expo sandbox if time), navigation tabs, `services/api.js` | Live API scan integration, GPS location integration, recorded demo video | AuthContext & token storage, History screen FlatList, device lifecycle testing | Haptics & notch polish, EAS build & multi-object UI, recorded final demo video |
-| **Janice** | Backend | W1 FastAPI exercise, API contract & schemas, router scaffolding | Model singleton inference service, location rules engine, API resilience audit | Firebase Auth middleware, `GET /api/history` with pagination, integration test suite | Docker containerization, production cloud deployment, production health audit |
+| **Caden** | Frontend | W1 Figma wireframes (Expo sandbox if time), navigation tabs, `services/api.js` | Live API scan integration, location rules client integration, recorded demo video | AuthContext & token storage, History screen FlatList, device lifecycle testing | Haptics & notch polish, EAS build & preview APK, recorded final demo video |
+| **Janice** | Backend | W1 FastAPI exercise, API contract & schemas, router scaffolding | Response formatting & disposal tips, location rules engine, API schema review | Protected user profile route, `GET /api/history` pagination, API unit tests | Error handling middleware, OpenAPI Swagger polish & setup guide, final API docs |
+| **Carlos** | Backend | W1 FastAPI upload exercise, backend config module, multipart upload validation | Model singleton inference service, classify pipeline hardening, demo telemetry | History & streak service, history indexing optimization, full integration test suite | Docker containerization, production cloud deployment, production health audit |
 | **David** | Backend | W1 FastAPI exercise, architecture diagrams & config, mock classify endpoint | Live `/api/classify` model integration, rules endpoint, demo environment setup | `POST /api/history` validated logging, `GET /api/stats` aggregation, latency profiling | Health check diagnostics, multi-object API prototype, latency profiling report |
 | **Krish** | Backend | W1 FastAPI exercise, Firestore schema & test script, Firestore CRUD | Tips engine with sub-tips, request logging middleware, Firestore data audit | User profile sync & `GET /api/user/profile`, daily streak calculator, rate limiting | Global exception handling, admin analytics endpoint, repo cleanup & backend docs |
 | **Edward** | Backend | W1 FastAPI exercise, Firebase Admin SDK setup & test, Thunder Client guide | Request validation, automated Pytest suite, retro & feedback compilation | Auth security test suite, expand rules to 5 cities with 404 validation, edge case tests | OpenAPI Swagger polish with examples, contamination warning logic, rules engine verification |
-| **Holly** | AI / ML | W1 Transfer learning exercise, dataset aggregation, training pipeline script | Model fine-tuning, final MVP checkpoint selection, mid-sem metrics summary | Dynamic quantization, TTA experimentation, adversarial robustness testing | Docker inference validation, YOLOv8 multi-object prototype, quantization benchmark report |
+| **Aarav** | AI / ML | W1 Transfer learning exercise, dataset aggregation, training pipeline script | Model fine-tuning, final MVP checkpoint selection, mid-sem metrics summary | Dynamic quantization, TTA experimentation, adversarial robustness testing | Docker inference validation, YOLOv8 multi-object prototype, quantization benchmark report |
 | **Kathleen** | AI / ML | W1 Transfer learning exercise, train/val/test split script, dataloaders & augmentations | Model export packaging with classes.json, campus photo benchmark, demo item testing | Targeted dataset expansion, model log & loader helper, empirical threshold testing | Interactive demo notebook, contamination heuristics, campus benchmark report |
 | **Max** | AI / ML | W1 Transfer learning exercise, preprocessing pipeline, baseline ResNet-18 training | MobileNetV2 benchmark, domain gap analysis, failure modes catalog | Retraining expanded data, ONNX export pipeline, model comparison evaluation | Mobile inference research, final metrics comparative charts, model evolution summary |
 | **Doil** | AI / ML | W1 Transfer learning exercise, EDA notebook, confusion matrix eval script | Error analysis report, metrics visualizer script, rehearsal timing | Model evaluation report, ONNX to TFLite prototype, final Model Card | Retraining guide verification, future work roadmap, contributions doc & wrap-up |
