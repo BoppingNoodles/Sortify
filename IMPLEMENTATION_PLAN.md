@@ -368,7 +368,7 @@ Week  12      🎤 FINAL PRESENTATION
           "item": "plastic bottle",
           "bin": "plastic",
           "confidence": 0.92,
-          "tip": "Empty and rinse before recycling"
+          "tip": "Empty and rinse before recycling",
       }
   ```
 - [ ] **Set up CORS middleware** so the React Native app can call the backend locally (allow all origins in dev)
@@ -474,21 +474,23 @@ Week  12      🎤 FINAL PRESENTATION
   import torch
   from torchvision import transforms, models
   from PIL import Image
-  
+
+
   class WasteClassifier:
       def __init__(self, model_path: str):
           self.model = models.resnet18(pretrained=False)
           self.model.fc = torch.nn.Linear(512, 5)  # 5 classes
-          self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
+          self.model.load_state_dict(torch.load(model_path, map_location="cpu"))
           self.model.eval()
-          self.transform = transforms.Compose([
-              transforms.Resize((224, 224)),
-              transforms.ToTensor(),
-              transforms.Normalize([0.485, 0.456, 0.406],
-                                   [0.229, 0.224, 0.225])
-          ])
-          self.classes = ['compost', 'glass', 'landfill', 'paper', 'plastic']
-  
+          self.transform = transforms.Compose(
+              [
+                  transforms.Resize((224, 224)),
+                  transforms.ToTensor(),
+                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+              ]
+          )
+          self.classes = ["compost", "glass", "landfill", "paper", "plastic"]
+
       def predict(self, image: Image.Image):
           tensor = self.transform(image).unsqueeze(0)
           with torch.no_grad():
@@ -729,7 +731,8 @@ Week  12      🎤 FINAL PRESENTATION
     ```python
     # middleware/auth.py
     from firebase_admin import auth
-    
+
+
     async def verify_token(request: Request):
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         try:
@@ -747,12 +750,14 @@ Week  12      🎤 FINAL PRESENTATION
   @router.post("/api/history")
   async def log_scan(scan: ScanCreate, uid: str = Depends(verify_token)):
       doc_ref = db.collection("users").document(uid).collection("scans").document()
-      doc_ref.set({
-          "item": scan.item,
-          "bin": scan.bin,
-          "confidence": scan.confidence,
-          "timestamp": firestore.SERVER_TIMESTAMP,
-      })
+      doc_ref.set(
+          {
+              "item": scan.item,
+              "bin": scan.bin,
+              "confidence": scan.confidence,
+              "timestamp": firestore.SERVER_TIMESTAMP,
+          }
+      )
       return {"success": True, "scanId": doc_ref.id}
   ```
 
