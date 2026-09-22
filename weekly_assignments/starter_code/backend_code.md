@@ -22,10 +22,12 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Sortify Backend Sandbox")
 
+
 @app.get("/")
 def read_root():
     # TODO: Return greeting payload with service status
     return {"message": "Sortify Backend API Sandbox", "status": "online"}
+
 
 @app.get("/health")
 def health_check():
@@ -50,11 +52,14 @@ app = FastAPI()
 TEMP_DIR = Path("temp_uploads")
 TEMP_DIR.mkdir(exist_ok=True)
 
+
 @app.post("/sandbox/upload")
 async def upload_image_sandbox(file: UploadFile = File(...)):
     # TODO: Validate content-type starts with 'image/'
     if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Invalid file type. Image required.")
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Image required."
+        )
 
     destination = TEMP_DIR / file.filename
     # TODO: Stream chunks safely to avoid consuming excessive RAM
@@ -94,12 +99,14 @@ httpx>=0.27.0
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+
 def init_firebase_sandbox():
     # TODO: Load serviceAccountKey.json if present
     # cred = credentials.Certificate("serviceAccountKey.json")
     # firebase_admin.initialize_app(cred)
     # db = firestore.client()
     print("Firebase test scaffold initialized.")
+
 
 if __name__ == "__main__":
     init_firebase_sandbox()
@@ -142,14 +149,17 @@ if __name__ == "__main__":
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+
 class ClassificationAlternative(BaseModel):
     category: str
     confidence: float
+
 
 class DisposalTip(BaseModel):
     action: str
     bin_type: str
     notes: Optional[str] = None
+
 
 class ClassifyResponse(BaseModel):
     item_name: str
@@ -173,6 +183,7 @@ class ClassifyResponse(BaseModel):
 from pydantic_settings import BaseSettings
 from typing import List
 
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Sortify Backend"
     API_V1_STR: str = "/api"
@@ -184,6 +195,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
 
 settings = Settings()
 ```
@@ -228,6 +240,7 @@ settings = Settings()
 #       - confidence: float
 #       - timestamp: timestamp
 
+
 def verify_collections(db):
     # TODO: Verify read/write permissions to test collection
     pass
@@ -246,6 +259,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 from pathlib import Path
 from backend.app.core.config import settings
+
 
 def get_firestore_client():
     if not firebase_admin._apps:
@@ -292,6 +306,7 @@ app.include_router(classify.router, prefix="/api", tags=["Classification"])
 app.include_router(rules.router, prefix="/api", tags=["Rules"])
 app.include_router(history.router, prefix="/api", tags=["History"])
 
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -312,15 +327,21 @@ from backend.app.core.config import settings
 MAX_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
+
 async def validate_image_upload(file: UploadFile) -> bytes:
     # 1. Validate content type header
     if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=415, detail="Unsupported media type. JPEG or PNG required.")
+        raise HTTPException(
+            status_code=415, detail="Unsupported media type. JPEG or PNG required."
+        )
 
     # 2. Read bytes and enforce size limit
     contents = await file.read()
     if len(contents) > MAX_BYTES:
-        raise HTTPException(status_code=413, detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.")
+        raise HTTPException(
+            status_code=413,
+            detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
+        )
 
     return contents
 ```
@@ -339,10 +360,11 @@ from backend.app.schemas.classify import ClassifyResponse, DisposalTip
 
 router = APIRouter()
 
+
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
     file: UploadFile = File(...),
-    location: str = Query("berkeley", description="Municipality name")
+    location: str = Query("berkeley", description="Municipality name"),
 ):
     # TODO: In Week 4, replace mock response with real PyTorch model inference
     return ClassifyResponse(
@@ -353,9 +375,9 @@ async def classify_item(
         disposal_tips=DisposalTip(
             action="Compost",
             bin_type="green",
-            notes="Accepted in Berkeley organics cart."
+            notes="Accepted in Berkeley organics cart.",
         ),
-        location=location
+        location=location,
     )
 ```
 
@@ -371,13 +393,16 @@ async def classify_item(
 from backend.app.core.firebase import get_firestore_client
 from google.cloud.firestore import SERVER_TIMESTAMP
 
+
 class FirestoreService:
     def __init__(self):
         self.db = get_firestore_client()
 
     def record_scan(self, user_id: str, scan_data: dict) -> str:
         # TODO: Save under users/{user_id}/scans collection with SERVER_TIMESTAMP
-        doc_ref = self.db.collection("users").document(user_id).collection("scans").document()
+        doc_ref = (
+            self.db.collection("users").document(user_id).collection("scans").document()
+        )
         scan_data["timestamp"] = SERVER_TIMESTAMP
         doc_ref.set(scan_data)
         return doc_ref.id
@@ -396,6 +421,7 @@ from fastapi.testclient import TestClient
 from backend.app.main import app
 
 client = TestClient(app)
+
 
 def test_health_check_returns_200():
     response = client.get("/health")
@@ -416,19 +442,21 @@ def test_health_check_returns_200():
 
 ```python
 # backend/app/services/guidance_service.py
-def build_disposal_guidance(category: str, confidence: float, location: str = "berkeley") -> dict:
+def build_disposal_guidance(
+    category: str, confidence: float, location: str = "berkeley"
+) -> dict:
     # TODO: Return actionable disposal advice based on confidence threshold and location
     if confidence < 0.50:
         return {
             "bin": "Landfill (Uncertain)",
             "tip": "Confidence is low. When in doubt, check local guidelines to avoid contamination.",
-            "is_uncertain": True
+            "is_uncertain": True,
         }
     # Category mapping logic
     return {
         "bin": f"{category.capitalize()} Bin",
         "tip": "Ensure item is clean and dry before disposal.",
-        "is_uncertain": False
+        "is_uncertain": False,
     }
 ```
 
@@ -448,6 +476,7 @@ import io
 import json
 from pathlib import Path
 
+
 class ModelService:
     _instance = None
 
@@ -463,11 +492,15 @@ class ModelService:
         self.classes = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
         # self.model = torch.load(...)
         # self.model.eval()
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
 
     def predict(self, image_bytes: bytes) -> dict:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -478,6 +511,7 @@ class ModelService:
             pass
         # TODO: Return top class and confidence score
         return {"category": "plastic", "confidence": 0.94}
+
 
 model_service = ModelService()
 ```
@@ -495,20 +529,23 @@ from fastapi import APIRouter, UploadFile, File, Query, Depends
 from backend.app.services.model_service import model_service
 from backend.app.utils.upload_validator import validate_image_upload
 
+
 @router.post("/classify")
-async def classify_live_item(file: UploadFile = File(...), location: str = Query("berkeley")):
+async def classify_live_item(
+    file: UploadFile = File(...), location: str = Query("berkeley")
+):
     # 1. Validate payload
     image_bytes = await validate_image_upload(file)
-    
+
     # 2. Run inference
     prediction = model_service.predict(image_bytes)
-    
+
     # 3. Format response
     return {
         "item_name": prediction["category"].title(),
         "category": prediction["category"],
         "confidence": prediction["confidence"],
-        "location": location
+        "location": location,
     }
 ```
 
@@ -546,11 +583,11 @@ import io
 
 client = TestClient(app)
 
+
 def test_classify_rejects_non_image_file():
     txt_file = io.BytesIO(b"Not an image")
     response = client.post(
-        "/api/classify",
-        files={"file": ("test.txt", txt_file, "text/plain")}
+        "/api/classify", files={"file": ("test.txt", txt_file, "text/plain")}
     )
     assert response.status_code in [400, 415]
 ```
@@ -571,6 +608,7 @@ def test_classify_rejects_non_image_file():
 import json
 from pathlib import Path
 
+
 class RulesEngine:
     def __init__(self, data_path: str = "backend/app/data/rules.json"):
         with open(data_path, "r") as f:
@@ -579,10 +617,13 @@ class RulesEngine:
     def get_rule(self, category: str, location: str) -> dict:
         loc = location.lower()
         loc_rules = self.rules.get(loc, self.rules.get("default", {}))
-        return loc_rules.get(category.lower(), {
-            "bin": "landfill",
-            "guideline": "Check local municipal website for special disposal."
-        })
+        return loc_rules.get(
+            category.lower(),
+            {
+                "bin": "landfill",
+                "guideline": "Check local municipal website for special disposal.",
+            },
+        )
 ```
 
 ---
@@ -599,7 +640,9 @@ try:
     prediction = model_service.predict(image_bytes)
 except Exception as e:
     # Log internal error and return clear HTTP 500 error
-    raise HTTPException(status_code=500, detail="Inference engine temporarily unavailable.")
+    raise HTTPException(
+        status_code=500, detail="Inference engine temporarily unavailable."
+    )
 ```
 
 ---
@@ -614,6 +657,7 @@ except Exception as e:
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
+
 
 @router.get("/rules/{location}")
 def get_location_rules(location: str):
@@ -636,12 +680,15 @@ import logging
 
 logger = logging.getLogger("sortify.api")
 
+
 class TelemetryMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         start_time = time.time()
         response = await call_next(request)
         duration = time.time() - start_time
-        logger.info(f"{request.method} {request.url.path} completed in {duration:.3f}s (Status: {response.status_code})")
+        logger.info(
+            f"{request.method} {request.url.path} completed in {duration:.3f}s (Status: {response.status_code})"
+        )
         return response
 ```
 
@@ -658,6 +705,7 @@ from fastapi.testclient import TestClient
 from backend.app.main import app
 
 client = TestClient(app)
+
 
 def test_get_berkeley_rules():
     res = client.get("/api/rules/berkeley")
@@ -697,12 +745,14 @@ def test_get_berkeley_rules():
 import psutil
 import time
 
+
 def monitor():
     print("Sortify Server Telemetry Active...")
     while True:
         cpu = psutil.cpu_percent(interval=1)
         ram = psutil.virtual_memory().percent
         print(f"Server Health -> CPU: {cpu}% | RAM: {ram}%", end="\r")
+
 
 if __name__ == "__main__":
     monitor()
@@ -733,10 +783,12 @@ if __name__ == "__main__":
 # backend/scripts/audit_firestore.py
 from backend.app.core.firebase import get_firestore_client
 
+
 def audit():
     db = get_firestore_client()
     users = list(db.collection("users").stream())
     print(f"Verified {len(users)} registered users in Firestore.")
+
 
 if __name__ == "__main__":
     audit()
@@ -774,12 +826,13 @@ from backend.app.middleware.auth import get_current_user
 
 router = APIRouter()
 
+
 @router.get("/users/me")
 def read_current_user(current_user: dict = Depends(get_current_user)):
     return {
         "uid": current_user["uid"],
         "email": current_user.get("email"),
-        "display_name": current_user.get("name")
+        "display_name": current_user.get("name"),
     }
 ```
 
@@ -795,10 +848,11 @@ def read_current_user(current_user: dict = Depends(get_current_user)):
 from datetime import datetime, timedelta
 from typing import List
 
+
 def calculate_streak(scan_timestamps: List[datetime]) -> int:
     if not scan_timestamps:
         return 0
-    
+
     sorted_dates = sorted(set(ts.date() for ts in scan_timestamps), reverse=True)
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
@@ -833,6 +887,7 @@ from backend.app.services.firestore_service import FirestoreService
 router = APIRouter()
 firestore_service = FirestoreService()
 
+
 @router.post("/history", status_code=status.HTTP_201_CREATED)
 def save_scan_history(payload: dict, user: dict = Depends(get_current_user)):
     scan_id = firestore_service.record_scan(user["uid"], payload)
@@ -850,6 +905,7 @@ def save_scan_history(payload: dict, user: dict = Depends(get_current_user)):
 # backend/app/services/user_service.py
 from backend.app.core.firebase import get_firestore_client
 
+
 def get_or_create_profile(uid: str, email: str) -> dict:
     db = get_firestore_client()
     user_ref = db.collection("users").document(uid)
@@ -859,7 +915,7 @@ def get_or_create_profile(uid: str, email: str) -> dict:
             "email": email,
             "points": 0,
             "current_streak": 0,
-            "created_at": firestore.SERVER_TIMESTAMP
+            "created_at": firestore.SERVER_TIMESTAMP,
         }
         user_ref.set(initial_data)
         return initial_data
@@ -879,6 +935,7 @@ from fastapi.testclient import TestClient
 from backend.app.main import app
 
 client = TestClient(app)
+
 
 def test_protected_route_rejects_missing_token():
     res = client.get("/api/users/me")
@@ -901,11 +958,12 @@ def test_protected_route_rejects_missing_token():
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
+
 @router.get("/history")
 def get_user_history(
     limit: int = Query(10, le=50),
     cursor: Optional[str] = None,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(get_current_user),
 ):
     # TODO: Query Firestore subcollection with order_by and start_after cursor
     return {"items": [], "next_cursor": None}
@@ -921,6 +979,7 @@ def get_user_history(
 ```python
 # backend/tests/benchmark_history.py
 import time
+
 
 def benchmark_firestore_query():
     start = time.time()
@@ -942,6 +1001,7 @@ from fastapi import APIRouter, Depends
 
 router = APIRouter()
 
+
 @router.get("/stats")
 def get_user_stats(user: dict = Depends(get_current_user)):
     # TODO: Aggregate total scans and category distribution
@@ -949,12 +1009,7 @@ def get_user_stats(user: dict = Depends(get_current_user)):
         "streak_days": 4,
         "eco_points": 140,
         "items_sorted": 28,
-        "category_counts": {
-            "plastic": 12,
-            "compost": 10,
-            "paper": 4,
-            "glass": 2
-        }
+        "category_counts": {"plastic": 12, "compost": 10, "paper": 4, "glass": 2},
     }
 ```
 
@@ -1121,6 +1176,7 @@ CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 # backend/app/core/exceptions.py
 class ModelInferenceError(Exception):
     pass
+
 
 class LocationNotFoundError(Exception):
     pass
