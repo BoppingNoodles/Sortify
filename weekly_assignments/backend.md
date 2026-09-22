@@ -915,12 +915,9 @@
 
 ## 🛠️ Best Practices & Coordination Rules
 
-1. **Daily & Weekly Syncs:**
-   * Weekly All-Hands Standup: 30 minutes (align cross-subteam blockers).
-   * Subteam Work Sessions: 1–2 hours weekly (pair programming & code review).
-2. **Branch Hygiene:**
+1. **Branch Hygiene:**
    * Always branch off fresh `main`: `git checkout main && git pull origin main && git checkout -b feat/<subteam>/<your-name>/<feature-name>`.
    * PRs must be focused and under 300 lines of code wherever possible.
    * Assign team leads and peer subteam members for reviews.
-3. **No Direct Commits to Main:**
+2. **No Direct Commits to Main:**
    * All changes must pass Ruff linting / formatting and automated CI checks before merging.
