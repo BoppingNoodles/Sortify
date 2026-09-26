@@ -25,7 +25,8 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
         if not class_folder.is_dir():
             die(f"class folder not found: {class_folder}")
         images = sorted(
-            f for f in class_folder.iterdir()
+            f
+            for f in class_folder.iterdir()
             if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
         )
         if not images:
@@ -35,10 +36,16 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
 
 
 def compute_split_counts(total: int, tie_break_priority: list[str]) -> dict[str, int]:
-    ideal = {"train": total * TRAIN_RATIO, "val": total * VAL_RATIO, "test": total * TEST_RATIO}
+    ideal = {
+        "train": total * TRAIN_RATIO,
+        "val": total * VAL_RATIO,
+        "test": total * TEST_RATIO,
+    }
     counts = {split: int(ideal[split]) for split in SPLITS}
     remainder = total - sum(counts.values())
-    by_fraction = sorted(tie_break_priority, key=lambda s: ideal[s] - counts[s], reverse=True)
+    by_fraction = sorted(
+        tie_break_priority, key=lambda s: ideal[s] - counts[s], reverse=True
+    )
     for split in by_fraction[:remainder]:
         counts[split] += 1
     return counts
@@ -56,13 +63,13 @@ def create_dataset_splits(source_dir: Path, dest_dir: Path) -> None:
         total = len(images)
         # Rotate which split gets the leftover file(s) so rounding doesn't
         # always favor the same split across every class.
-        priority = SPLITS[idx % len(SPLITS):] + SPLITS[: idx % len(SPLITS)]
+        priority = SPLITS[idx % len(SPLITS) :] + SPLITS[: idx % len(SPLITS)]
         counts = compute_split_counts(total, priority)
 
         partitions = {
             "train": images[: counts["train"]],
-            "val": images[counts["train"]: counts["train"] + counts["val"]],
-            "test": images[counts["train"] + counts["val"]:],
+            "val": images[counts["train"] : counts["train"] + counts["val"]],
+            "test": images[counts["train"] + counts["val"] :],
         }
 
         for split, files in partitions.items():
@@ -87,14 +94,21 @@ def print_split_summary(dest_dir: Path) -> None:
             print(f"{class_name:<10}  (no files found)")
             continue
 
-        print(f"{class_name:<10}" + "".join(f"{c:>6} ({c / class_total:6.1%})" for c in counts))
+        print(
+            f"{class_name:<10}"
+            + "".join(f"{c:>6} ({c / class_total:6.1%})" for c in counts)
+        )
         for split, c in zip(SPLITS, counts):
             actual_ratio = c / class_total
             if abs(actual_ratio - target[split]) > RATIO_TOLERANCE:
-                ratio_warnings.append(f"  {class_name}/{split}: {actual_ratio:.1%} vs target {target[split]:.0%}")
+                ratio_warnings.append(
+                    f"  {class_name}/{split}: {actual_ratio:.1%} vs target {target[split]:.0%}"
+                )
 
     if ratio_warnings:
-        print(f"\nWarning: some splits deviate from target by more than {RATIO_TOLERANCE:.0%}:")
+        print(
+            f"\nWarning: some splits deviate from target by more than {RATIO_TOLERANCE:.0%}:"
+        )
         print("\n".join(ratio_warnings))
 
 
@@ -102,7 +116,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Split a dataset into stratified train/val/test sets (70/15/15, seed=42)."
     )
-    parser.add_argument("--input_dir", type=Path, required=True, help="Folder with one sub-folder per class.")
+    parser.add_argument(
+        "--input_dir",
+        type=Path,
+        required=True,
+        help="Folder with one sub-folder per class.",
+    )
     parser.add_argument(
         "--output_dir",
         type=Path,
