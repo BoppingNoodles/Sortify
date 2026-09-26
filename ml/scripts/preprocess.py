@@ -3,12 +3,14 @@ Week 2 — turn messy photos into the exact pictures ResNet expects.
 
 ResNet-18 was trained on square, 3-color (RGB), 224×224 images. Real datasets
 are not like that: some files are broken, some are grayscale (1 channel), some
-have transparency (4 channels), and sizes vary. This script:
+have transparency (4 channels), phone cameras store rotation in EXIF, and
+sizes vary. This script:
 
     1. Rejects files Pillow cannot fully decode (Image.verify + reload).
-    2. Converts every survivor to RGB (3 channels).
-    3. Resizes it to exactly 224×224 with bilinear interpolation.
-    4. Writes a JPEG copy. Originals are left untouched.
+    2. Applies the EXIF orientation tag so phone photos are upright.
+    3. Composites transparent pixels onto white, then converts to RGB.
+    4. Resizes it to exactly 224×224 with bilinear interpolation.
+    5. Writes a JPEG copy. Originals are left untouched.
 
 Normalization (ImageNet mean/std) is NOT baked into the saved files. That step
 happens later, in memory, when the training loop turns pixels into tensors.
@@ -28,7 +30,7 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms.functional import resize as tv_resize
 
@@ -55,10 +57,29 @@ def image_is_intact(path: Path) -> bool:
     return True
 
 
+def _to_rgb(image: Image.Image) -> Image.Image:
+    """Orient from EXIF, then composite transparency onto white.
+
+    ``convert("RGB")`` turns transparent pixels black. Phone photos also
+    store rotation in an EXIF tag that Pillow does not apply on open.
+    """
+    oriented = ImageOps.exif_transpose(image)
+    if oriented.mode in ("RGBA", "LA") or (
+        oriented.mode == "P" and "transparency" in oriented.info
+    ):
+        background = Image.new("RGB", oriented.size, (255, 255, 255))
+        alpha = oriented.convert("RGBA").split()[-1]
+        background.paste(oriented, mask=alpha)
+        return background
+    return oriented.convert("RGB")
+
+
 def preprocess_image(source: Path, destination: Path) -> None:
     """Convert one intact image to a 224×224 RGB JPEG."""
     with Image.open(source) as image:
-        rgb = image.convert("RGB")
+        rgb = _to_rgb(image)
+        # Week 2 stretches to a square. Week 3 should letterbox or
+        # Resize(256) + CenterCrop(224) so rectangular items keep their shape.
         resized = tv_resize(
             rgb,
             list(TARGET_SIZE),
@@ -91,7 +112,7 @@ def preprocess_directory(input_dir: Path, output_dir: Path) -> tuple[int, int]:
         written += 1
         logger.info("Wrote %s", destination)
 
-    logger.warning("Done. Wrote %s images, skipped %s.", written, skipped)
+    logger.info("Done. Wrote %s images, skipped %s.", written, skipped)
     return written, skipped
 
 
