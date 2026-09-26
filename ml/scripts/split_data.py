@@ -1,4 +1,3 @@
-
 import argparse
 import hashlib
 import random
@@ -6,18 +5,18 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
- 
+
 CLASSES = ["paper", "plastic", "glass", "compost", "landfill"]
 SPLITS = ["train", "val", "test"]
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 RATIO_TOLERANCE = 0.02
 RATIO_SUM_TOLERANCE = 1e-6
- 
- 
+
+
 def die(message: str) -> None:
     sys.exit(f"Error: {message}")
- 
- 
+
+
 def validate_ratios(train_ratio: float, val_ratio: float, test_ratio: float) -> None:
     for name, r in (
         ("train_ratio", train_ratio),
@@ -29,8 +28,8 @@ def validate_ratios(train_ratio: float, val_ratio: float, test_ratio: float) -> 
     total = train_ratio + val_ratio + test_ratio
     if abs(total - 1.0) > RATIO_SUM_TOLERANCE:
         die(f"train_ratio + val_ratio + test_ratio must equal 1.0, got {total}.")
- 
- 
+
+
 def validate_dirs(source_dir: Path, dest_dir: Path) -> None:
     if not source_dir.exists():
         die(f"input_dir does not exist: {source_dir}")
@@ -38,35 +37,35 @@ def validate_dirs(source_dir: Path, dest_dir: Path) -> None:
         die(f"input_dir is not a directory: {source_dir}")
     if dest_dir.exists() and not dest_dir.is_dir():
         die(f"output_dir exists and is not a directory: {dest_dir}")
- 
+
     source_resolved = source_dir.resolve()
     dest_resolved = dest_dir.resolve()
     if dest_resolved == source_resolved or source_resolved in dest_resolved.parents:
         die("output_dir must not be the same as, or nested inside, input_dir.")
     if dest_resolved in source_resolved.parents:
         die("output_dir must not be an ancestor of input_dir.")
- 
+
     if dest_dir.exists() and any((dest_dir / split).exists() for split in SPLITS):
         die(
             f"train/val/test folders already exist in {dest_dir}. "
             "Delete them or choose a new --output_dir."
         )
- 
- 
+
+
 def file_hash(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
- 
- 
+
+
 def check_for_duplicate_content(class_images: dict[str, list[Path]]) -> None:
     hash_to_locations: dict[str, list[tuple[str, Path]]] = {}
     for class_name, images in class_images.items():
         for f in images:
             hash_to_locations.setdefault(file_hash(f), []).append((class_name, f))
- 
+
     within_class_dupes = []
     for locations in hash_to_locations.values():
         if len(locations) < 2:
@@ -74,11 +73,9 @@ def check_for_duplicate_content(class_images: dict[str, list[Path]]) -> None:
         classes_involved = {c for c, _ in locations}
         if len(classes_involved) > 1:
             listing = ", ".join(f"{c}/{f.name}" for c, f in locations)
-            die(
-                f"identical image content found under different classes: {listing}"
-            )
+            die(f"identical image content found under different classes: {listing}")
         within_class_dupes.append(locations)
- 
+
     if within_class_dupes:
         print(
             f"Warning: found {len(within_class_dupes)} set(s) of duplicate images within the same class. "
@@ -87,8 +84,8 @@ def check_for_duplicate_content(class_images: dict[str, list[Path]]) -> None:
             class_name = locations[0][0]
             names = ", ".join(f.name for _, f in locations)
             print(f"  {class_name}: {names}")
- 
- 
+
+
 def compute_split_counts(
     total: int,
     train_ratio: float,
@@ -109,14 +106,14 @@ def compute_split_counts(
     for split in by_fraction[:remainder]:
         counts[split] += 1
     return counts
- 
- 
+
+
 def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
     subfolders_by_lower: dict[str, list[Path]] = {}
     for p in source_dir.iterdir():
         if p.is_dir():
             subfolders_by_lower.setdefault(p.name.lower(), []).append(p)
- 
+
     recognized_lower = {c.lower() for c in CLASSES}
     unexpected = [
         p.name
@@ -128,7 +125,7 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
         print(
             f"Note: ignoring unrecognized folder(s) in {source_dir}: {sorted(unexpected)}"
         )
- 
+
     class_images: dict[str, list[Path]] = {}
     for class_name in CLASSES:
         matches = subfolders_by_lower.get(class_name.lower(), [])
@@ -141,8 +138,10 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
             )
         class_folder = matches[0]
         if class_folder.name != class_name:
-            print(f"Note: using folder '{class_folder.name}' for class '{class_name}' (case differs).")
- 
+            print(
+                f"Note: using folder '{class_folder.name}' for class '{class_name}' (case differs)."
+            )
+
         entries = list(class_folder.iterdir())
         subdirs = [e for e in entries if e.is_dir()]
         if subdirs:
@@ -150,7 +149,7 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
                 f"Note: {class_folder} contains {len(subdirs)} subdirector"
                 f"{'y' if len(subdirs) == 1 else 'ies'} — nested files are ignored "
             )
- 
+
         all_files = [f for f in entries if f.is_file() and not f.name.startswith(".")]
         images = sorted(f for f in all_files if f.suffix.lower() in IMAGE_EXTENSIONS)
         skipped = len(all_files) - len(images)
@@ -165,14 +164,14 @@ def collect_class_images(source_dir: Path) -> dict[str, list[Path]]:
                     f"'{seen_lower[key].name}' and '{f.name}' differ only by case."
                 )
             seen_lower[key] = f
- 
+
         if not images:
             die(f"no images found in {class_folder}")
         class_images[class_name] = images
- 
+
     return class_images
- 
- 
+
+
 def create_dataset_splits(
     source_dir: Path,
     dest_dir: Path,
@@ -187,30 +186,32 @@ def create_dataset_splits(
     staging_dir = None
     try:
         class_images = collect_class_images(source_dir)
- 
+
         if not skip_duplicate_check:
             check_for_duplicate_content(class_images)
- 
+
         dest_dir.parent.mkdir(parents=True, exist_ok=True)
         staging_dir = Path(
             tempfile.mkdtemp(prefix=f".{dest_dir.name}_staging_", dir=dest_dir.parent)
         )
- 
+
         rng = random.Random(seed)
         zero_count_warnings = []
- 
+
         for idx, (class_name, images) in enumerate(class_images.items()):
             rng.shuffle(images)
             total = len(images)
             priority = SPLITS[idx % len(SPLITS) :] + SPLITS[: idx % len(SPLITS)]
-            counts = compute_split_counts(total, train_ratio, val_ratio, test_ratio, priority)
- 
+            counts = compute_split_counts(
+                total, train_ratio, val_ratio, test_ratio, priority
+            )
+
             partitions = {
                 "train": images[: counts["train"]],
                 "val": images[counts["train"] : counts["train"] + counts["val"]],
                 "test": images[counts["train"] + counts["val"] :],
             }
- 
+
             for split, files in partitions.items():
                 if not files:
                     zero_count_warnings.append(f"{class_name}/{split}")
@@ -218,21 +219,21 @@ def create_dataset_splits(
                 target_dir.mkdir(parents=True, exist_ok=True)
                 for file in files:
                     shutil.copy2(file, target_dir / file.name)
- 
+
         if zero_count_warnings:
             print(
                 f"Warning: these splits ended up with 0 images: {zero_count_warnings}"
             )
- 
+
         if dest_dir.exists() and any((dest_dir / split).exists() for split in SPLITS):
             die(f"train/val/test folders already exist in {dest_dir}.")
- 
+
         dest_dir.mkdir(parents=True, exist_ok=True)
         for split in SPLITS:
             staged_split = staging_dir / split
             if staged_split.exists():
                 shutil.move(str(staged_split), str(dest_dir / split))
- 
+
     except (OSError, shutil.Error) as e:
         die(
             f"failed while preparing/writing dataset ({e}). "
@@ -241,8 +242,8 @@ def create_dataset_splits(
     finally:
         if staging_dir is not None:
             shutil.rmtree(staging_dir, ignore_errors=True)
- 
- 
+
+
 def print_split_summary(
     dest_dir: Path,
     train_ratio: float = 0.70,
@@ -251,7 +252,7 @@ def print_split_summary(
 ) -> None:
     target = dict(zip(SPLITS, (train_ratio, val_ratio, test_ratio)))
     print(f"{'class':<10}" + "".join(f"{split:>15}" for split in SPLITS))
- 
+
     totals = [0] * len(SPLITS)
     ratio_warnings = []
     for class_name in CLASSES:
@@ -267,7 +268,7 @@ def print_split_summary(
         if class_total == 0:
             print(f"{class_name:<10}  (no files found)")
             continue
- 
+
         print(
             f"{class_name:<10}"
             + "".join(f"{c:>6} ({c / class_total:6.1%})" for c in counts)
@@ -279,20 +280,20 @@ def print_split_summary(
                     f"  {class_name}/{split}: {actual_ratio:.1%} vs target {target[split]:.0%}"
                 )
         totals = [t + c for t, c in zip(totals, counts)]
- 
+
     grand_total = sum(totals)
     if grand_total:
         print(
             f"{'ALL':<10}" + "".join(f"{c:>6} ({c / grand_total:6.1%})" for c in totals)
         )
- 
+
     if ratio_warnings:
         print(
             f"\nWarning: some splits deviate from target by more than {RATIO_TOLERANCE:.0%}:"
         )
         print("\n".join(ratio_warnings))
- 
- 
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Split a dataset into stratified train/val/test sets (70/15/15)."
@@ -324,7 +325,7 @@ def main():
         help="Skip hashing images to detect duplicate/conflicting content ",
     )
     args = parser.parse_args()
- 
+
     create_dataset_splits(
         args.input_dir,
         args.output_dir,
@@ -337,7 +338,7 @@ def main():
     print_split_summary(
         args.output_dir, args.train_ratio, args.val_ratio, args.test_ratio
     )
- 
- 
+
+
 if __name__ == "__main__":
     main()
