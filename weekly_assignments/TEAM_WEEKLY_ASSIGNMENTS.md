@@ -147,6 +147,11 @@
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Add basic validation to `POST /upload-image`: check that `file.content_type` starts with `image/` before saving, returning HTTP 400 for non-image uploads.
   * **Verification:** Test `POST /upload-image` in Thunder Client with both a valid image and a `.txt` file to confirm 200 and 400 status codes.
+    1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, and python-multipart.
+    2. Access the shared Firebase console project and review database rules and project settings.
+    3. Implement `main.py` with `GET /health` and `POST /upload-image`.
+    4. Add basic validation to `POST /upload-image`: check that `file.content_type` starts with `image/` before saving, returning HTTP 400 for non-image uploads.
+  * **Verification:** Test `POST /upload-image` in Swagger UI (`http://localhost:8000/docs`) with both a valid image and a `.txt` file to confirm 200 and 400 status codes.
   * **Deliverable & Branch:** `feat/backend/david/week1-fastapi-exercise`.
 
 * **Krish**
@@ -158,6 +163,7 @@
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Implement asynchronous file writing using `async with aiofiles.open(...)` or standard file streaming to prevent blocking the event loop.
   * **Verification:** Send multiple concurrent image upload requests via Thunder Client and verify successful responses without server crashes.
+  * **Verification:** Send multiple concurrent image upload requests via Swagger UI (`http://localhost:8000/docs`) and verify successful responses without server crashes.
   * **Deliverable & Branch:** `feat/backend/krish/week1-fastapi-exercise`.
 
 * **Edward**
@@ -169,6 +175,11 @@
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Run `ruff check .` and `ruff format .` to ensure zero linting errors or formatting warnings.
   * **Verification:** Verify Thunder Client requests return HTTP 200 with JSON payloads and ensure `ruff check .` reports all checks passed.
+    1. Set up local Python environment and configure VS Code with Ruff extension.
+    2. Join the Firebase project console; check API keys and service account settings.
+    3. Implement `main.py` with `GET /health` and `POST /upload-image`.
+    4. Run `ruff check .` and `ruff format .` to ensure zero linting errors or formatting warnings.
+  * **Verification:** Verify Swagger UI (`http://localhost:8000/docs`) requests return HTTP 200 with JSON payloads and ensure `ruff check .` reports all checks passed.
   * **Deliverable & Branch:** `feat/backend/edward/week1-fastapi-exercise`.
 
 ---
@@ -458,6 +469,7 @@
     3. Inspect file magic bytes using Pillow or header checks.
     4. Enforce 10MB payload size limit, returning HTTP 413 for oversized payloads.
   * **Verification:** Send test requests with `.txt`, `.pdf`, and large image files via Thunder Client; verify proper 400 and 413 responses.
+  * **Verification:** Send test requests with `.txt`, `.pdf`, and large image files via Swagger UI (`/docs`); verify proper 400 and 413 responses.
   * **Deliverable & Branch:** `feat/backend/carlos/upload-validation`.
 
 * **David**
@@ -470,6 +482,7 @@
     4. Support optional query parameter `?simulate_category=plastic` to allow manual testing of specific waste bins.
     5. Return full `ClassifyResponse` JSON payload with realistic mock confidence (0.85–0.96), disposal tip, and color badge.
   * **Verification:** Test endpoint via Thunder Client with sample images; verify response schema matches `ClassifyResponse` model.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`) with sample images; verify response schema matches `ClassifyResponse` model.
   * **Deliverable & Branch:** `feat/backend/david/mock-classify-endpoint`.
 
 * **Krish**
@@ -490,6 +503,12 @@
   * **Action Steps:**
     1. Create a Thunder Client / Postman collection in `backend/tests/Sortify_API_Collection.json`.
     2. Include saved requests for:
+  * **Task:** Author API testing guide & FastAPI Swagger UI / ReDoc documentation suite.
+  * **Goal & Context:** Equip the entire team with clear interactive documentation and request examples to test endpoints effortlessly.
+  * **Action Steps:**
+    1. Configure interactive OpenAPI documentation tags, descriptions, and request/response examples for Swagger UI (`/docs`) and ReDoc (`/redoc`).
+    2. Export the verified OpenAPI 3.0 schema to `backend/tests/Sortify_OpenAPI_Schema.json`.
+    3. Verify interactive execution and schema validation for:
        - `GET /health`
        - `POST /api/classify` (with sample image attachment)
        - `GET /api/rules/berkeley`
@@ -497,6 +516,8 @@
     3. Add test scripts in the collection verifying HTTP 200 status and presence of required response fields.
     4. Author `docs/api-testing-guide.md` with step-by-step setup instructions for both VS Code Thunder Client and terminal `curl`.
   * **Verification:** Import collection into a clean Thunder Client profile and run all requests successfully against local backend.
+    4. Author `docs/api-testing-guide.md` with step-by-step testing instructions for both browser Swagger UI (`http://localhost:8000/docs`) and terminal `curl`.
+  * **Verification:** Open `http://localhost:8000/docs` in a clean browser session and execute all requests successfully against local backend.
   * **Deliverable & Branch:** `docs/backend/edward/api-testing-guide`.
 
 ### 🤖 AI / ML Subteam
@@ -629,6 +650,7 @@
        - Construct and return `ClassifyResponse` Pydantic model.
     2. Add error handling for corrupted image streams, returning HTTP 422 with descriptive error message.
   * **Verification:** Send real JPEG trash images via Thunder Client and verify model returns accurate predictions and confidence scores.
+  * **Verification:** Send real JPEG trash images via Swagger UI (`/docs`) and verify model returns accurate predictions and confidence scores.
   * **Deliverable & Branch:** `feat/backend/david/live-classify-integration`.
 
 * **Krish**
@@ -771,6 +793,7 @@
     3. Modify `POST /api/classify` to accept optional `location: str = Query("berkeley")`.
     4. Call `rules_engine.apply_location_rules()` and embed municipal guidance inside `ClassifyResponse`.
   * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Thunder Client; verify municipal notes match.
+  * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Swagger UI (`/docs`); verify municipal notes match.
   * **Deliverable & Branch:** `feat/backend/david/rules-endpoint-integration`.
 
 * **Krish**
@@ -1052,6 +1075,7 @@
     4. Write scan document to Firestore under `users/{uid}/scans` subcollection with server timestamp.
     5. Return HTTP 201 with saved `scan_id`.
   * **Verification:** Send authenticated request via Thunder Client; confirm scan document is created in Firestore under correct `uid`.
+  * **Verification:** Send authenticated request via Swagger UI (`/docs`) using the Authorize modal; confirm scan document is created in Firestore under correct `uid`.
   * **Deliverable & Branch:** `feat/backend/david/post-history-endpoint`.
 
 * **Krish**
@@ -1062,6 +1086,7 @@
     2. Check if user document exists in Firestore upon first login; initialize profile with `created_at`, `points: 0`, `current_streak: 0`.
     3. Allow updating `display_name` and favorite campus location.
   * **Verification:** Test profile creation and retrieval for a newly registered user via Thunder Client.
+  * **Verification:** Test profile creation and retrieval for a newly registered user via Swagger UI (`/docs`).
   * **Deliverable & Branch:** `feat/backend/krish/user-profile-sync`.
 
 * **Edward**
@@ -1188,6 +1213,7 @@
        - Category breakdown dictionary: `{"compost": 12, "plastic": 8, "paper": 5, "glass": 2, "landfill": 1}`.
     3. Return structured `UserStatsResponse` Pydantic model.
   * **Verification:** Test endpoint via Thunder Client; verify category counts accurately reflect total scans.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`); verify category counts accurately reflect total scans.
   * **Deliverable & Branch:** `feat/backend/david/stats-aggregation-endpoint`.
 
 * **Krish**
@@ -1217,6 +1243,7 @@
     2. Update `backend/app/data/rules.json` with verified guidelines and official portal URLs.
     3. Update `GET /api/rules/{location}` so unknown cities return a helpful 404 listing supported cities.
   * **Verification:** Query all 5 cities via Thunder Client; verify accurate municipal rules and URLs return.
+  * **Verification:** Query all 5 cities via Swagger UI (`/docs`); verify accurate municipal rules and URLs return.
   * **Deliverable & Branch:** `feat/backend/edward/expand-municipal-rules`.
 
 ### 🤖 AI / ML Subteam
@@ -1485,6 +1512,7 @@
        - `firestore_connected`: boolean (verified with ping)
        - `system_memory_usage`: percentage memory used via `psutil`
   * **Verification:** Query endpoint in Thunder Client; confirm all subsystem health indicators report true.
+  * **Verification:** Query endpoint in Swagger UI (`/docs`); confirm all subsystem health indicators report true.
   * **Deliverable & Branch:** `feat/backend/david/health-diagnostics`.
 
 * **Krish**
@@ -1625,6 +1653,7 @@
        - Define response schema returning `detected_items: list[DetectedItem]` where each item includes: `item_name`, `category`, `confidence`, and bounding box coordinates `[x_min, y_min, x_max, y_max]`.
     2. Return structured mock multi-item data to test object detection response schemas.
   * **Verification:** Test endpoint via Thunder Client; verify multi-item array payload validates against Pydantic schema.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`); verify multi-item array payload validates against Pydantic schema.
   * **Deliverable & Branch:** `feat/backend/david/classify-multi`.
 
 * **Krish**
