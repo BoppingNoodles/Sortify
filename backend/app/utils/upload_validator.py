@@ -1,5 +1,6 @@
-from backend.app.core.config import settings
 from fastapi import HTTPException, UploadFile
+
+from backend.app.core.config import settings
 
 MAX_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}

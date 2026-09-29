@@ -11,9 +11,7 @@ TEMP_DIR.mkdir(exist_ok=True)
 
 
 @app.post("/sandbox/upload", status_code=status.HTTP_201_CREATED)
-async def upload_image_sandbox(
-    file: Annotated[UploadFile, File(...)]
-):
+async def upload_image_sandbox(file: Annotated[UploadFile, File(...)]):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

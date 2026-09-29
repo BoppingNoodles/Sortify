@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     Centralized, typed application settings validating environment variables
     using Pydantic-Settings v2. Supports automatic .env parsing.
     """
+
     ENV: str = Field(default="local")
     PORT: int = Field(default=8000)
     CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000"])
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="allow",
-        env_delimiter=","
+        env_delimiter=",",
     )
 
     @field_validator("CORS_ORIGINS", mode="before")
