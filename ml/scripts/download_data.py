@@ -4,9 +4,9 @@ Downloads and extracts the unified 5-class Sortify waste dataset
 (paper, plastic, glass, compost, landfill) from Google Drive or a direct URL.
 
 Usage:
+    python ml/scripts/download_data.py
     python ml/scripts/download_data.py --url <GOOGLE_DRIVE_SHARE_LINK>
     python ml/scripts/download_data.py --file-id <GOOGLE_DRIVE_FILE_ID>
-    python ml/scripts/download_data.py  # uses default configured link
 """
 
 from __future__ import annotations
@@ -15,105 +15,135 @@ import argparse
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 
-# Default Google Drive share link / file ID for the team.
-# Replace with the team's shared Google Drive file link or set SORTIFY_DATASET_GDRIVE_URL.
+# Default Google Drive share link for the unified 5-class Sortify dataset:
 DEFAULT_GDRIVE_URL = os.getenv(
     "SORTIFY_DATASET_GDRIVE_URL",
-    "",  # Will be populated with the user's Google Drive link once provided
+    "https://drive.google.com/file/d/1PhS5g3ZaAT3A_iOBek0l9mZkdWRqmu89/view?usp=sharing",
 )
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 
 def extract_gdrive_file_id(url_or_id: str) -> str:
-    """Extract a Google Drive file ID from a full share URL or return the raw ID."""
+    """Extract a Google Drive file ID from a file or folder share URL."""
     clean_val = url_or_id.strip()
-    # Check for /d/<file_id>/ pattern
+
+    # Check for direct file share /file/d/<file_id>/
+    match = re.search(r"/file/d/([a-zA-Z0-9_-]{25,})", clean_val)
+    if match:
+        return match.group(1)
+
+    # Check for generic /d/<file_id>/ pattern
     match = re.search(r"/d/([a-zA-Z0-9_-]{25,})", clean_val)
     if match:
         return match.group(1)
-    # Check for id=<file_id> pattern
+
+    # Check for query param ?id=<file_id>
     match = re.search(r"[?&]id=([a-zA-Z0-9_-]{25,})", clean_val)
     if match:
         return match.group(1)
-    # Assume it's an ID if it's alphanumeric with standard length
+
+    # If it's a folder URL, query folder page to find the enclosed zip file ID
+    folder_match = re.search(r"/folders/([a-zA-Z0-9_-]{25,})", clean_val)
+    if folder_match:
+        try:
+            req = urllib.request.Request(
+                clean_val,
+                headers={"User-Agent": "Mozilla/5.0 (Sortify Dataset Downloader)"},
+            )
+            html = urllib.request.urlopen(req).read().decode("utf-8", errors="ignore")
+            # Find file IDs in folder HTML
+            file_match = re.search(r'ssk=[\'"][0-9]+:[^:]+:([a-zA-Z0-9_-]{25,})-', html)
+            if file_match:
+                return file_match.group(1)
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
+
+    # If it's already a raw ID
     if re.match(r"^[a-zA-Z0-9_-]{25,}$", clean_val):
         return clean_val
+
     return clean_val
 
 
-def build_gdrive_download_url(file_id: str, confirm_token: str | None = None) -> str:
-    """Construct a direct download URL for a Google Drive file."""
-    base = f"https://drive.google.com/uc?export=download&id={file_id}"
-    if confirm_token:
-        base += f"&confirm={confirm_token}"
-    return base
-
-
 def download_from_google_drive(file_id: str, dest_path: Path) -> Path:
-    """Download a file from Google Drive, handling the virus-scan confirmation token."""
-    download_url = build_gdrive_download_url(file_id)
+    """Download a file from Google Drive, handling confirmation prompts and redirects."""
+    initial_url = f"https://drive.google.com/uc?export=download&id={file_id}"
 
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
     urllib.request.install_opener(opener)
 
     req = urllib.request.Request(
-        download_url,
+        initial_url,
         headers={"User-Agent": "Mozilla/5.0 (Sortify Dataset Downloader)"},
     )
 
-    with opener.open(req) as response:
-        content_type = response.headers.get("Content-Type", "")
-        # Google Drive returns HTML if confirmation prompt is required for large files
-        if "text/html" in content_type:
-            html = response.read().decode("utf-8", errors="ignore")
-            token_match = re.search(r"confirm=([0-9A-Za-z_]+)", html)
-            if not token_match:
-                token_match = re.search(
-                    r'name="confirm"\s+value="([0-9A-Za-z_]+)"', html
+    response = opener.open(req)
+    content_type = response.headers.get("Content-Type", "")
+
+    # When Google Drive shows the "too large to scan for viruses" confirmation form
+    if "text/html" in content_type:
+        html = response.read().decode("utf-8", errors="ignore")
+
+        # Parse form action (typically https://drive.usercontent.google.com/download)
+        action_match = re.search(r'action="([^"]+)"', html)
+        action_url = (
+            action_match.group(1)
+            if action_match
+            else "https://drive.usercontent.google.com/download"
+        )
+
+        # Extract hidden input fields (id, export, confirm, uuid, etc.)
+        inputs = re.findall(r'<input[^>]+name="([^"]+)"[^>]+value="([^"]+)"', html)
+        params = {name: val for name, val in inputs}
+        if "id" not in params:
+            params["id"] = file_id
+        if "confirm" not in params:
+            params["confirm"] = "t"
+        if "export" not in params:
+            params["export"] = "download"
+
+        download_url = action_url + "?" + urllib.parse.urlencode(params)
+        req2 = urllib.request.Request(
+            download_url,
+            headers={"User-Agent": "Mozilla/5.0 (Sortify Dataset Downloader)"},
+        )
+        response = opener.open(req2)
+
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    total_size = response.headers.get("Content-Length")
+    total_bytes = int(total_size) if total_size and total_size.isdigit() else None
+
+    downloaded_bytes = 0
+    print(f"Downloading dataset to: {dest_path}")
+    with open(dest_path, "wb") as f:
+        while True:
+            chunk = response.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            f.write(chunk)
+            downloaded_bytes += len(chunk)
+            if total_bytes:
+                pct = (downloaded_bytes / total_bytes) * 100
+                print(
+                    f"\rProgress: {downloaded_bytes / (1024 * 1024):.1f} MB / "
+                    f"{total_bytes / (1024 * 1024):.1f} MB ({pct:.1f}%)",
+                    end="",
+                    flush=True,
                 )
-            confirm_token = token_match.group(1) if token_match else "t"
-
-            download_url = build_gdrive_download_url(file_id, confirm_token)
-            req = urllib.request.Request(
-                download_url,
-                headers={"User-Agent": "Mozilla/5.0 (Sortify Dataset Downloader)"},
-            )
-            response = opener.open(req)
-
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-        total_size = response.headers.get("Content-Length")
-        total_bytes = int(total_size) if total_size and total_size.isdigit() else None
-
-        downloaded_bytes = 0
-        print(f"Downloading dataset to: {dest_path}")
-        with open(dest_path, "wb") as f:
-            while True:
-                chunk = response.read(CHUNK_SIZE)
-                if not chunk:
-                    break
-                f.write(chunk)
-                downloaded_bytes += len(chunk)
-                if total_bytes:
-                    pct = (downloaded_bytes / total_bytes) * 100
-                    print(
-                        f"\rProgress: {downloaded_bytes / (1024 * 1024):.1f} MB / "
-                        f"{total_bytes / (1024 * 1024):.1f} MB ({pct:.1f}%)",
-                        end="",
-                        flush=True,
-                    )
-                else:
-                    print(
-                        f"\rDownloaded: {downloaded_bytes / (1024 * 1024):.1f} MB",
-                        end="",
-                        flush=True,
-                    )
-        print("\nDownload complete!")
+            else:
+                print(
+                    f"\rDownloaded: {downloaded_bytes / (1024 * 1024):.1f} MB",
+                    end="",
+                    flush=True,
+                )
+    print("\nDownload complete!")
 
     return dest_path
 
@@ -132,7 +162,7 @@ def summarize_extracted_data(extract_dir: Path) -> None:
     print("\nDataset Summary:")
     classes = ["paper", "plastic", "glass", "compost", "landfill"]
     found_any = False
-    for root, dirs, files in os.walk(extract_dir):
+    for root, dirs, _ in os.walk(extract_dir):
         rel = Path(root).relative_to(extract_dir)
         if any(c in dirs for c in classes):
             print(f"Found class folders in: {rel or '.'}")
@@ -207,7 +237,12 @@ def main() -> None:
         if not args.keep_zip and zip_path.exists():
             zip_path.unlink()
             print(f"Cleaned up temporary archive {zip_path.name}.")
-    except (urllib.error.URLError, zipfile.BadZipFile, OSError, ValueError) as e:
+    except (
+        urllib.error.URLError,
+        zipfile.BadZipFile,
+        OSError,
+        ValueError,
+    ) as e:
         print(f"Error downloading or extracting dataset: {e}", file=sys.stderr)
         sys.exit(1)
 
