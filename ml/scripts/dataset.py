@@ -41,14 +41,29 @@ def get_dataloaders(data_dir, batch_size=32, num_workers=2):
     val_set = ImageFolder(root=data_dir / "val", transform=get_eval_transforms())
     test_set = ImageFolder(root=data_dir / "test", transform=get_eval_transforms())
 
+    if not (train_set.classes == val_set.classes == test_set.classes):
+        raise ValueError(
+            "Class folders differ across splits: "
+            f"train={train_set.classes}, val={val_set.classes}, test={test_set.classes}"
+        )
+
     train_loader = DataLoader(
-        train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
     )
     val_loader = DataLoader(
-        val_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        val_set,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
     )
     test_loader = DataLoader(
-        test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        test_set,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
     )
 
     return train_loader, val_loader, test_loader, train_set.classes
@@ -71,9 +86,24 @@ def visualize_batch(data_dir, out):
         ax.axis("off")
 
     plt.tight_layout()
+    out = Path(out)
+    out.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out, dpi=150)
     print(f"Saved preview to {out}")
     plt.show()
+
+
+def print_summary(data_dir):
+    train_loader, val_loader, test_loader, classes = get_dataloaders(
+        data_dir, num_workers=0
+    )
+    print(f"Classes: {classes}")
+    print(
+        f"Images: train={len(train_loader.dataset)}, "
+        f"val={len(val_loader.dataset)}, test={len(test_loader.dataset)}"
+    )
+    images, labels = next(iter(train_loader))
+    print(f"Batch shape: {tuple(images.shape)}, labels shape: {tuple(labels.shape)}")
 
 
 if __name__ == "__main__":
@@ -81,4 +111,6 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=Path, default=Path("data/processed"))
     parser.add_argument("--out", type=Path, default=Path("augmentation_preview.png"))
     args = parser.parse_args()
+
+    print_summary(args.data_dir)
     visualize_batch(args.data_dir, args.out)
