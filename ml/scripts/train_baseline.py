@@ -6,6 +6,8 @@ from 224x224 images written by ml/scripts/preprocess.py:
     <data-dir>/{train,val,test}/{compost,paper,plastic,glass,landfill}/*.jpg
 
 ImageNet normalization is applied here at load time, never baked into files.
+After training, loss and validation-accuracy curves are written to
+docs/ml/baseline_loss_curves.png.
 
 Run from the repo root with the venv activated:
     python ml/scripts/train_baseline.py --data-dir data/processed --epochs 12
@@ -31,6 +33,7 @@ IMAGENET_STD = [0.229, 0.224, 0.225]
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_OUTPUT = REPO_ROOT / "ml" / "models" / "resnet18_baseline.pth"
+DEFAULT_PLOT = REPO_ROOT / "docs" / "ml" / "baseline_loss_curves.png"
 
 
 def get_device() -> torch.device:
@@ -105,6 +108,56 @@ def run_epoch(model, loader, criterion, device, optimizer=None):
     return total_loss / count, correct / count
 
 
+def save_training_curves(
+    history: list[tuple[int, float, float, float]], path: Path
+) -> None:
+    """Write train/val loss and validation accuracy for one training run.
+
+    Each history row is (epoch, train_loss, val_loss, val_accuracy).
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    epochs = [row[0] for row in history]
+    train_loss = [row[1] for row in history]
+    val_loss = [row[2] for row in history]
+    val_acc = [row[3] * 100 for row in history]
+    best_index = max(range(len(history)), key=lambda i: history[i][3])
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    axes[0].plot(epochs, train_loss, marker="o", label="Train loss")
+    axes[0].plot(epochs, val_loss, marker="o", label="Validation loss")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
+    axes[0].set_title("Loss")
+    axes[0].set_xticks(epochs)
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(epochs, val_acc, marker="o", label="Validation accuracy")
+    axes[1].scatter(
+        [epochs[best_index]],
+        [val_acc[best_index]],
+        s=80,
+        zorder=3,
+        label=f"Best ({val_acc[best_index]:.2f}%)",
+    )
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("Accuracy (%)")
+    axes[1].set_title("Validation accuracy")
+    axes[1].set_xticks(epochs)
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    fig.suptitle("ResNet-18 baseline, frozen backbone, 5 bins")
+    fig.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
 def report_test(model, loader, device, num_examples: int = 5) -> float:
     model.eval()
     correct, count, shown = 0, 0, 0
@@ -129,6 +182,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data/processed")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--plot", type=Path, default=DEFAULT_PLOT)
     parser.add_argument("--epochs", type=int, default=12)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -156,10 +210,12 @@ def main() -> None:
     optimizer = optim.Adam(model.fc.parameters(), lr=args.lr)
 
     best_val_acc, best_epoch, best_state = -1.0, 0, None
+    history: list[tuple[int, float, float, float]] = []
     print(f"{'epoch':>5} {'train_loss':>11} {'val_loss':>9} {'val_acc':>8}")
     for epoch in range(1, args.epochs + 1):
         train_loss, _ = run_epoch(model, train_loader, criterion, device, optimizer)
         val_loss, val_acc = run_epoch(model, val_loader, criterion, device)
+        history.append((epoch, train_loss, val_loss, val_acc))
         print(f"{epoch:>5} {train_loss:>11.4f} {val_loss:>9.4f} {val_acc:>8.2%}")
         if val_acc > best_val_acc:
             best_val_acc, best_epoch = val_acc, epoch
@@ -184,6 +240,8 @@ def main() -> None:
         args.output,
     )
     print(f"Saved weights to {args.output}")
+    save_training_curves(history, args.plot)
+    print(f"Saved curves to {args.plot}")
 
 
 if __name__ == "__main__":
