@@ -1,6 +1,11 @@
 import argparse
+import sys
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -8,6 +13,8 @@ from torchvision.datasets import ImageFolder
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
+
+DEFAULT_NUM_WORKERS = 2 if sys.platform != "win32" else 0
 
 
 def get_train_transforms():
@@ -34,8 +41,14 @@ def get_eval_transforms():
     )
 
 
-def get_dataloaders(data_dir, batch_size=32, num_workers=2):
+def get_dataloaders(data_dir, batch_size=32, num_workers=DEFAULT_NUM_WORKERS):
     data_dir = Path(data_dir)
+    train_dir = data_dir / "train"
+    if not train_dir.is_dir():
+        raise FileNotFoundError(
+            f"Directory not found: '{train_dir}'. "
+            "Please run 'python ml/scripts/split_data.py' on the processed dataset first!"
+        )
 
     train_set = ImageFolder(root=data_dir / "train", transform=get_train_transforms())
     val_set = ImageFolder(root=data_dir / "val", transform=get_eval_transforms())
@@ -69,10 +82,17 @@ def get_dataloaders(data_dir, batch_size=32, num_workers=2):
     return train_loader, val_loader, test_loader, train_set.classes
 
 
-def visualize_batch(data_dir, out):
-    import matplotlib.pyplot as plt
+def print_summary(train_loader, val_loader, test_loader, classes):
+    print(f"Classes: {classes}")
+    print(
+        f"Images: train={len(train_loader.dataset)}, "
+        f"val={len(val_loader.dataset)}, test={len(test_loader.dataset)}"
+    )
+    images, labels = next(iter(train_loader))
+    print(f"Batch shape: {tuple(images.shape)}, labels shape: {tuple(labels.shape)}")
 
-    train_loader, _, _, classes = get_dataloaders(data_dir, batch_size=8, num_workers=0)
+
+def visualize_batch(train_loader, classes, out):
     images, labels = next(iter(train_loader))
 
     mean = torch.tensor(IMAGENET_MEAN).view(3, 1, 1)
@@ -89,28 +109,27 @@ def visualize_batch(data_dir, out):
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out, dpi=150)
+    plt.close()
     print(f"Saved preview to {out}")
-    plt.show()
 
 
-def print_summary(data_dir):
-    train_loader, val_loader, test_loader, classes = get_dataloaders(
-        data_dir, num_workers=0
-    )
-    print(f"Classes: {classes}")
-    print(
-        f"Images: train={len(train_loader.dataset)}, "
-        f"val={len(val_loader.dataset)}, test={len(test_loader.dataset)}"
-    )
-    images, labels = next(iter(train_loader))
-    print(f"Batch shape: {tuple(images.shape)}, labels shape: {tuple(labels.shape)}")
-
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preview augmented training images")
-    parser.add_argument("--data_dir", type=Path, default=Path("data/processed"))
-    parser.add_argument("--out", type=Path, default=Path("augmentation_preview.png"))
+    parser.add_argument(
+        "--data-dir", type=Path, default=REPO_ROOT / "data" / "processed"
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=REPO_ROOT / "docs" / "ml" / "augmentation_preview.png",
+    )
     args = parser.parse_args()
 
-    print_summary(args.data_dir)
-    visualize_batch(args.data_dir, args.out)
+    train_loader, val_loader, test_loader, classes = get_dataloaders(
+        args.data_dir, num_workers=0
+    )
+
+    print_summary(train_loader, val_loader, test_loader, classes)
+    visualize_batch(train_loader, classes, args.out)
