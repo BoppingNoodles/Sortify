@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from app.core.config import Settings, settings  # noqa: F401
+from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, value: any) -> list[str]:
+    def assemble_cors_origins(cls, value: Any) -> list[str]:
         """Safely handle plain comma-separated strings or existing lists from env."""
         if isinstance(value, str):
             try:
@@ -28,3 +28,6 @@ class Settings(BaseSettings):
         if isinstance(value, list):
             return [str(item) for item in value]
         return []
+
+
+settings = Settings()

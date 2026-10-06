@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 
 # Automatically find the backend root and append it to Python's search path
-backend_path = Path(__file__).resolve().parent
-sys.path.append(str(backend_path))
+repo_root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(repo_root))
 
 try:
     # UPDATED: Points directly to your new app/core structure
