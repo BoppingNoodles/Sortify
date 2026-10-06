@@ -102,34 +102,17 @@
 ### ⚙️ Backend Subteam (FastAPI, Uvicorn & Firebase)
 
 > **Shared Learning Exercise & Objective:**  
-> Build a standalone FastAPI server with two core verification endpoints and test them using FastAPI's built-in interactive documentation:
+> Build a standalone FastAPI server with two core verification endpoints and test them via Thunder Client:
 > 1. `GET /health` — returns `{"status": "ok"}`
 > 2. `POST /upload-image` — accepts an image file upload via multipart/form-data, saves it locally, and returns `{"status": "received", "filename": "..."}`
-> 3. Verify both endpoints using **Swagger UI** (`http://localhost:8000/docs`) and **ReDoc** (`http://localhost:8000/redoc`), and ensure Firebase console project is created.
->
-> ---
->
-> #### 📖 How to Use FastAPI Built-in Swagger UI & ReDoc
-> FastAPI generates interactive documentation automatically from your route definitions and Pydantic models with zero third-party extensions:
-> * **Interactive Testing with Swagger UI (`http://localhost:8000/docs`):**
->   1. Start your server: `uvicorn main:app --reload` (or `uvicorn backend.main:app --reload`).
->   2. Open `http://localhost:8000/docs` in your browser.
->   3. Click on any route (e.g., `GET /health` or `POST /upload-image`) to expand it.
->   4. Click the **"Try it out"** button in the upper-right corner.
->   5. For file uploads, click **Choose File** to select an image from your disk; for JSON payloads, edit the example values in place.
->   6. Click **"Execute"** to dispatch the real HTTP request.
->   7. Inspect the rendered `curl` command, HTTP status code (200, 400, etc.), response headers, and JSON body.
-> * **Schema Inspection with ReDoc (`http://localhost:8000/redoc`):**
->   * Navigate to `http://localhost:8000/redoc` for a clean, publication-quality reference of all API routes, parameters, and response schemas.
-> * **OpenAPI 3.0 Specification (`http://localhost:8000/openapi.json`):**
->   * Download the raw JSON schema for team sharing or automated tooling.
+> 3. Verify both endpoints using Thunder Client in VS Code and ensure Firebase console project is created.
 
 **Shared Subteam Resources:**
 * [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
 * [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
-* [FastAPI Interactive API Docs (Swagger UI & ReDoc)](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
 * [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
 * [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
+* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
 * [Firebase Console Overview](https://console.firebase.google.com/)
 
 * **Janice**
@@ -141,7 +124,7 @@
     3. Accept invitation to the Firebase project console; verify Firestore Database and Firebase Authentication are enabled.
     4. Create a sandbox `main.py` implementing `GET /health` returning `{"status": "ok"}` and `POST /upload-image` accepting `UploadFile = File(...)`.
     5. Save the uploaded file to a temporary local directory (`temp_uploads/`) and return filename and size in JSON response.
-  * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Swagger UI (`http://localhost:8000/docs`). Attach screenshot of HTTP 200 responses to your PR.
+  * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Thunder Client in VS Code. Attach screenshot of HTTP 200 responses to your PR.
   * **Deliverable & Branch:** `feat/backend/janice/week1-fastapi-exercise`.
 
 * **Carlos**
@@ -159,6 +142,11 @@
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
   * **Goal & Context:** Master asynchronous file upload handling and request validation in FastAPI.
   * **Action Steps:**
+    1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, python-multipart, and Thunder Client.
+    2. Access the shared Firebase console project and review database rules and project settings.
+    3. Implement `main.py` with `GET /health` and `POST /upload-image`.
+    4. Add basic validation to `POST /upload-image`: check that `file.content_type` starts with `image/` before saving, returning HTTP 400 for non-image uploads.
+  * **Verification:** Test `POST /upload-image` in Thunder Client with both a valid image and a `.txt` file to confirm 200 and 400 status codes.
     1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, and python-multipart.
     2. Access the shared Firebase console project and review database rules and project settings.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
@@ -174,6 +162,7 @@
     2. Access the team Firebase console; inspect project credentials and verify Cloud Firestore is set up in test mode.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Implement asynchronous file writing using `async with aiofiles.open(...)` or standard file streaming to prevent blocking the event loop.
+  * **Verification:** Send multiple concurrent image upload requests via Thunder Client and verify successful responses without server crashes.
   * **Verification:** Send multiple concurrent image upload requests via Swagger UI (`http://localhost:8000/docs`) and verify successful responses without server crashes.
   * **Deliverable & Branch:** `feat/backend/krish/week1-fastapi-exercise`.
 
@@ -181,6 +170,11 @@
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
   * **Goal & Context:** Establish local code quality tooling (Ruff) and complete the standardized FastAPI upload endpoint.
   * **Action Steps:**
+    1. Set up local Python environment and configure VS Code with Ruff extension and Thunder Client.
+    2. Join the Firebase project console; check API keys and service account settings.
+    3. Implement `main.py` with `GET /health` and `POST /upload-image`.
+    4. Run `ruff check .` and `ruff format .` to ensure zero linting errors or formatting warnings.
+  * **Verification:** Verify Thunder Client requests return HTTP 200 with JSON payloads and ensure `ruff check .` reports all checks passed.
     1. Set up local Python environment and configure VS Code with Ruff extension.
     2. Join the Firebase project console; check API keys and service account settings.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
@@ -520,6 +514,7 @@
     3. Validate image content type (`image/jpeg`, `image/png`, `image/webp`).
     4. Support optional query parameter `?simulate_category=plastic` to allow manual testing of specific waste bins.
     5. Return full `ClassifyResponse` JSON payload with realistic mock confidence (0.85–0.96), disposal tip, and color badge.
+  * **Verification:** Test endpoint via Thunder Client with sample images; verify response schema matches `ClassifyResponse` model.
   * **Verification:** Test endpoint via Swagger UI (`/docs`) with sample images; verify response schema matches `ClassifyResponse` model.
   * **Deliverable & Branch:** `feat/backend/david/mock-classify-endpoint`.
 
@@ -536,6 +531,11 @@
   * **Deliverable & Branch:** `feat/backend/krish/firestore-service`.
 
 * **Edward**
+  * **Task:** Author API testing guide & Thunder Client collection.
+  * **Goal & Context:** Equip the entire team with automated, pre-configured request collections to test endpoints effortlessly.
+  * **Action Steps:**
+    1. Create a Thunder Client / Postman collection in `backend/tests/Sortify_API_Collection.json`.
+    2. Include saved requests for:
   * **Task:** Author API testing guide & FastAPI Swagger UI / ReDoc documentation suite.
   * **Goal & Context:** Equip the entire team with clear interactive documentation and request examples to test endpoints effortlessly.
   * **Action Steps:**
@@ -546,6 +546,9 @@
        - `POST /api/classify` (with sample image attachment)
        - `GET /api/rules/berkeley`
        - `POST /api/history`
+    3. Add test scripts in the collection verifying HTTP 200 status and presence of required response fields.
+    4. Author `docs/api-testing-guide.md` with step-by-step setup instructions for both VS Code Thunder Client and terminal `curl`.
+  * **Verification:** Import collection into a clean Thunder Client profile and run all requests successfully against local backend.
     4. Author `docs/api-testing-guide.md` with step-by-step testing instructions for both browser Swagger UI (`http://localhost:8000/docs`) and terminal `curl`.
   * **Verification:** Open `http://localhost:8000/docs` in a clean browser session and execute all requests successfully against local backend.
   * **Deliverable & Branch:** `docs/backend/edward/api-testing-guide`.
@@ -700,6 +703,7 @@
        - Map predicted class to waste bin metadata (bin color, category name).
        - Construct and return `ClassifyResponse` Pydantic model.
     2. Add error handling for corrupted image streams, returning HTTP 422 with descriptive error message.
+  * **Verification:** Send real JPEG trash images via Thunder Client and verify model returns accurate predictions and confidence scores.
   * **Verification:** Send real JPEG trash images via Swagger UI (`/docs`) and verify model returns accurate predictions and confidence scores.
   * **Deliverable & Branch:** `feat/backend/david/live-classify-integration`.
 
@@ -860,6 +864,7 @@
     2. Return `RuleResponse` containing supported categories, municipal notes, and official waste authority source URL.
     3. Modify `POST /api/classify` to accept optional `location: str = Query("berkeley")`.
     4. Call `rules_engine.apply_location_rules()` and embed municipal guidance inside `ClassifyResponse`.
+  * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Thunder Client; verify municipal notes match.
   * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Swagger UI (`/docs`); verify municipal notes match.
   * **Deliverable & Branch:** `feat/backend/david/rules-endpoint-integration`.
 
@@ -1175,6 +1180,7 @@
     3. Validate request payload (`item_name`, `category`, `confidence`, `location`).
     4. Write scan document to Firestore under `users/{uid}/scans` subcollection with server timestamp.
     5. Return HTTP 201 with saved `scan_id`.
+  * **Verification:** Send authenticated request via Thunder Client; confirm scan document is created in Firestore under correct `uid`.
   * **Verification:** Send authenticated request via Swagger UI (`/docs`) using the Authorize modal; confirm scan document is created in Firestore under correct `uid`.
   * **Deliverable & Branch:** `feat/backend/david/post-history-endpoint`.
 
@@ -1185,6 +1191,7 @@
     1. Implement `GET /api/user/profile` and `PUT /api/user/profile` in `backend/app/routers/auth.py`.
     2. Check if user document exists in Firestore upon first login; initialize profile with `created_at`, `points: 0`, `current_streak: 0`.
     3. Allow updating `display_name` and favorite campus location.
+  * **Verification:** Test profile creation and retrieval for a newly registered user via Thunder Client.
   * **Verification:** Test profile creation and retrieval for a newly registered user via Swagger UI (`/docs`).
   * **Deliverable & Branch:** `feat/backend/krish/user-profile-sync`.
 
@@ -1328,6 +1335,7 @@
        - Eco-points calculation: `total_scans * 10`.
        - Category breakdown dictionary: `{"compost": 12, "plastic": 8, "paper": 5, "glass": 2, "landfill": 1}`.
     3. Return structured `UserStatsResponse` Pydantic model.
+  * **Verification:** Test endpoint via Thunder Client; verify category counts accurately reflect total scans.
   * **Verification:** Test endpoint via Swagger UI (`/docs`); verify category counts accurately reflect total scans.
   * **Deliverable & Branch:** `feat/backend/david/stats-aggregation-endpoint`.
 
@@ -1357,6 +1365,7 @@
        - **Los Angeles** (LA Sanitation / RecycLA)
     2. Update `backend/app/data/rules.json` with verified guidelines and official portal URLs.
     3. Update `GET /api/rules/{location}` so unknown cities return a helpful 404 listing supported cities.
+  * **Verification:** Query all 5 cities via Thunder Client; verify accurate municipal rules and URLs return.
   * **Verification:** Query all 5 cities via Swagger UI (`/docs`); verify accurate municipal rules and URLs return.
   * **Deliverable & Branch:** `feat/backend/edward/expand-municipal-rules`.
 
@@ -1659,6 +1668,7 @@
        - `model_version`: version string
        - `firestore_connected`: boolean (verified with ping)
        - `system_memory_usage`: percentage memory used via `psutil`
+  * **Verification:** Query endpoint in Thunder Client; confirm all subsystem health indicators report true.
   * **Verification:** Query endpoint in Swagger UI (`/docs`); confirm all subsystem health indicators report true.
   * **Deliverable & Branch:** `feat/backend/david/health-diagnostics`.
 
