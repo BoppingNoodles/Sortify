@@ -79,7 +79,7 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 
 ### ⚙️ Backend Subteam (Janice, Carlos, David, Krish, Edward)
 
-**Shared Task:** Install Python 3.10+, FastAPI, and Uvicorn. Set up a Firebase project container. Build a standalone FastAPI server implementing `GET /health` and `POST /upload-image` (file upload handler saving locally), verified with built-in FastAPI Swagger UI (`http://localhost:8000/docs`) and ReDoc (`http://localhost:8000/redoc`).
+**Shared Task:** Install Python 3.10+, FastAPI, Uvicorn, and Thunder Client. Set up a Firebase project container. Build a standalone FastAPI server implementing `GET /health` and `POST /upload-image` (file upload handler saving locally), verified with Thunder Client.
 
 ```python
 # Illustrative snippet: basic upload endpoint
@@ -91,9 +91,9 @@ async def upload_image(file: UploadFile = File(...)):
 **Shared Subteam Resources:**
 * [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
 * [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
-* [FastAPI Interactive API Docs (Swagger UI & ReDoc)](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
 * [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
 * [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
+* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
 * [Firebase Console Overview](https://console.firebase.google.com/)
 
 * **Janice**
@@ -276,11 +276,11 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5)  # 5 categories
   * **Resources:**
     * [Firestore Add Data with Python](https://firebase.google.com/docs/firestore/manage-data/add-data#python)
     * [Firestore Read Data with Python](https://firebase.google.com/docs/firestore/query-data/get-data#python)
-* **Edward — Swagger UI / ReDoc Documentation Suite & Local IP Testing Guide**
-  * **Medium-High Level Task:** Configure interactive Swagger UI (`/docs`) and ReDoc (`/redoc`) documentation with examples for `/health` and `/api/classify`. Author `docs/TESTING_LOCALLY.md` explaining how teammates find their computer's local Wi-Fi IP and test from physical phones and browser docs.
+* **Edward — Thunder Client Collections & Local IP Testing Guide**
+  * **Medium-High Level Task:** Export a shared Thunder Client collection for `/health` and `/api/classify`. Author `docs/TESTING_LOCALLY.md` explaining how teammates find their computer's local Wi-Fi IP and test from physical phones.
   * **Resources:**
     * [Finding Local IP Address on macOS & Windows](https://www.support.com/how-to/how-to-find-the-ip-address-of-a-computer-10356)
-    * [FastAPI Interactive API Docs](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
+    * [Thunder Client Environment Variables](https://github.com/rangav/thunder-client-support#environments)
 
 ---
 
