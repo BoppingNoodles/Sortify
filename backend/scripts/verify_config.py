@@ -7,7 +7,7 @@ sys.path.append(str(backend_path))
 
 try:
     # UPDATED: Points directly to your new app/core structure
-    from app.core.config import settings
+    from backend.app.config import settings
 except ModuleNotFoundError as e:
     print(f"❌ Custom Path Error: {e}")
     sys.exit(1)
