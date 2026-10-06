@@ -79,7 +79,7 @@ Week  12      🎤 FINAL PRESENTATION (Complete app walkthrough video & wrap-up)
 
 ### ⚙️ Backend Subteam (Janice, Carlos, David, Krish, Edward)
 
-**Shared Task:** Install Python 3.10+, FastAPI, Uvicorn, and Thunder Client. Set up a Firebase project container. Build a standalone FastAPI server implementing `GET /health` and `POST /upload-image` (file upload handler saving locally), verified with Thunder Client.
+**Shared Task:** Install Python 3.10+, FastAPI, and Uvicorn. Set up a Firebase project container. Build a standalone FastAPI server implementing `GET /health` and `POST /upload-image` (file upload handler saving locally), verified with built-in FastAPI Swagger UI (`http://localhost:8000/docs`) and ReDoc (`http://localhost:8000/redoc`).
 
 ```python
 # Illustrative snippet: basic upload endpoint
@@ -91,9 +91,9 @@ async def upload_image(file: UploadFile = File(...)):
 **Shared Subteam Resources:**
 * [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
 * [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
+* [FastAPI Interactive API Docs (Swagger UI & ReDoc)](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
 * [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
 * [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
-* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
 * [Firebase Console Overview](https://console.firebase.google.com/)
 
 * **Janice**
@@ -276,11 +276,11 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5)  # 5 categories
   * **Resources:**
     * [Firestore Add Data with Python](https://firebase.google.com/docs/firestore/manage-data/add-data#python)
     * [Firestore Read Data with Python](https://firebase.google.com/docs/firestore/query-data/get-data#python)
-* **Edward — Thunder Client Collections & Local IP Testing Guide**
-  * **Medium-High Level Task:** Export a shared Thunder Client collection for `/health` and `/api/classify`. Author `docs/TESTING_LOCALLY.md` explaining how teammates find their computer's local Wi-Fi IP and test from physical phones.
+* **Edward — Swagger UI / ReDoc Documentation Suite & Local IP Testing Guide**
+  * **Medium-High Level Task:** Configure interactive Swagger UI (`/docs`) and ReDoc (`/redoc`) documentation with examples for `/health` and `/api/classify`. Author `docs/TESTING_LOCALLY.md` explaining how teammates find their computer's local Wi-Fi IP and test from physical phones and browser docs.
   * **Resources:**
     * [Finding Local IP Address on macOS & Windows](https://www.support.com/how-to/how-to-find-the-ip-address-of-a-computer-10356)
-    * [Thunder Client Environment Variables](https://github.com/rangav/thunder-client-support#environments)
+    * [FastAPI Interactive API Docs](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
 
 ---
 
@@ -968,9 +968,9 @@ model.fc = torch.nn.Linear(model.fc.in_features, 5)  # 5 categories
 * **Caden (Frontend) — Final Comprehensive Demo Video**
   * **Task:** Record a complete end-to-end app video demonstration (auth signup/login, scanning items with live classification, location-specific tips, daily streak increment, history list, stats dashboard). Embed in the presentation deck and present the mobile walkthrough.
   * **Resources:** [Mobile Screen Recording & Voiceover Guide](https://support.apple.com/en-us/HT207935)
-* **Janice (Backend) — Final API Documentation & Postman Export**
-  * **Task:** Finalize API documentation, export full Postman/Thunder Client testing collection with saved examples, and compile backend release notes in `backend/README.md`.
-  * **Resources:** [API Documentation Best Practices](https://swagger.io/resources/articles/best-practices-in-api-documentation/)
+* **Janice (Backend) — Final API Documentation & OpenAPI / Swagger Audit**
+  * **Task:** Finalize API documentation, verify full Swagger UI (`/docs`) and ReDoc (`/redoc`) interactive documentation with schemas and saved request examples, export the complete `openapi.json` specification, and compile backend release notes in `backend/README.md`.
+  * **Resources:** [FastAPI Interactive API Docs](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs), [API Documentation Best Practices](https://swagger.io/resources/articles/best-practices-in-api-documentation/)
 * **Carlos (Backend) — Cloud Production Deployment Health Audit**
   * **Task:** Verify live cloud container deployment (Render/Railway/GCP), test uptime of `/api/health`, and ensure production environment variables and SSL certificates are active.
   * **Resources:** [Cloud Service Uptime Monitoring](https://uptimerobot.com/), [FastAPI Health Check Endpoint](https://fastapi.tiangolo.com/)

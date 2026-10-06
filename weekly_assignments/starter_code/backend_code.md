@@ -115,22 +115,42 @@ if __name__ == "__main__":
 ---
 
 ### Edward (Week 1)
-* **Task:** Thunder Client / Postman Collection Scaffolding
-* **Target File / Output:** `backend/docs/thunder-collection.json`
+* **Task:** FastAPI Interactive Documentation (Swagger UI & ReDoc) Setup & Testing Guide
+* **Target File / Output:** `docs/api-testing-guide.md`
 * **Starter Guidance & Structure:**
 
-```json
-{
-  "clientName": "Thunder Client",
-  "collectionName": "Sortify Local Testing",
-  "requests": [
-    {
-      "name": "Health Check",
-      "url": "http://localhost:8000/health",
-      "method": "GET"
-    }
-  ]
-}
+FastAPI automatically generates interactive API documentation with zero external clients or extensions needed. When the development server runs via `uvicorn main:app --reload` (or `uvicorn backend.main:app --reload`):
+- **Swagger UI (`http://localhost:8000/docs`):** Interactive testing in your browser. Click **"Try it out"**, fill in parameters or upload files via multipart form data, and click **"Execute"** to view live response status codes and JSON bodies.
+- **ReDoc (`http://localhost:8000/redoc`):** Clean, professional documentation displaying all endpoints, schemas, and data models.
+- **OpenAPI Schema (`http://localhost:8000/openapi.json`):** Raw OpenAPI 3.0 specification generated on the fly.
+
+Example starter guide structure for `docs/api-testing-guide.md`:
+
+```markdown
+# Sortify Local API Testing Guide
+
+## 1. Start the Local Server
+```bash
+uvicorn backend.main:app --reload
+```
+
+## 2. Interactive Testing via Swagger UI (`http://localhost:8000/docs`)
+1. Open `http://localhost:8000/docs` in your browser.
+2. Select `GET /health` -> Click **Try it out** -> Click **Execute**. Confirm status 200 and `{"status": "ok"}`.
+3. Select `POST /upload-image` (or `POST /api/classify`) -> Click **Try it out** -> Click **Choose File** to upload a test image -> Click **Execute**.
+4. Review the generated `curl` equivalent and JSON response payload.
+
+## 3. Terminal Testing via curl
+```bash
+# Health check
+curl -X GET "http://localhost:8000/health"
+
+# Image upload
+curl -X POST "http://localhost:8000/upload-image" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@test_image.jpg"
+```
 ```
 
 ---
@@ -411,7 +431,7 @@ class FirestoreService:
 ---
 
 ### Edward (Week 3)
-* **Task:** Automated Pytest Test Harness & Thunder Client Guide
+* **Task:** Automated Pytest Test Harness & Swagger UI / ReDoc Testing Guide
 * **Target File / Output:** `backend/tests/test_health.py`
 * **Starter Guidance & Structure:**
 
@@ -1272,9 +1292,9 @@ services:
 ---
 
 ### Janice (Week 12)
-* **Task:** Final API Documentation Audit & Postman Export
+* **Task:** Final API Documentation Audit & OpenAPI / Swagger Export
 * **Target File / Output:** `docs/api/sortify_api_v1.json`
-* **Starter Guidance & Structure:** Complete Postman / Swagger export for open-source portfolio.
+* **Starter Guidance & Structure:** Complete OpenAPI 3.0 (Swagger UI / ReDoc) schema export for open-source portfolio.
 
 ---
 

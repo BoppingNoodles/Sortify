@@ -102,17 +102,34 @@
 ### ⚙️ Backend Subteam (FastAPI, Uvicorn & Firebase)
 
 > **Shared Learning Exercise & Objective:**  
-> Build a standalone FastAPI server with two core verification endpoints and test them via Thunder Client:
+> Build a standalone FastAPI server with two core verification endpoints and test them using FastAPI's built-in interactive documentation:
 > 1. `GET /health` — returns `{"status": "ok"}`
 > 2. `POST /upload-image` — accepts an image file upload via multipart/form-data, saves it locally, and returns `{"status": "received", "filename": "..."}`
-> 3. Verify both endpoints using Thunder Client in VS Code and ensure Firebase console project is created.
+> 3. Verify both endpoints using **Swagger UI** (`http://localhost:8000/docs`) and **ReDoc** (`http://localhost:8000/redoc`), and ensure Firebase console project is created.
+>
+> ---
+>
+> #### 📖 How to Use FastAPI Built-in Swagger UI & ReDoc
+> FastAPI generates interactive documentation automatically from your route definitions and Pydantic models with zero third-party extensions:
+> * **Interactive Testing with Swagger UI (`http://localhost:8000/docs`):**
+>   1. Start your server: `uvicorn main:app --reload` (or `uvicorn backend.main:app --reload`).
+>   2. Open `http://localhost:8000/docs` in your browser.
+>   3. Click on any route (e.g., `GET /health` or `POST /upload-image`) to expand it.
+>   4. Click the **"Try it out"** button in the upper-right corner.
+>   5. For file uploads, click **Choose File** to select an image from your disk; for JSON payloads, edit the example values in place.
+>   6. Click **"Execute"** to dispatch the real HTTP request.
+>   7. Inspect the rendered `curl` command, HTTP status code (200, 400, etc.), response headers, and JSON body.
+> * **Schema Inspection with ReDoc (`http://localhost:8000/redoc`):**
+>   * Navigate to `http://localhost:8000/redoc` for a clean, publication-quality reference of all API routes, parameters, and response schemas.
+> * **OpenAPI 3.0 Specification (`http://localhost:8000/openapi.json`):**
+>   * Download the raw JSON schema for team sharing or automated tooling.
 
 **Shared Subteam Resources:**
 * [Python Virtual Environments Primer](https://docs.python.org/3/tutorial/venv.html)
 * [FastAPI Official Tutorial](https://fastapi.tiangolo.com/tutorial/)
+* [FastAPI Interactive API Docs (Swagger UI & ReDoc)](https://fastapi.tiangolo.com/tutorial/first-steps/#interactive-api-docs)
 * [FastAPI Request Files & Uploads](https://fastapi.tiangolo.com/tutorial/request-files/)
 * [Uvicorn ASGI Server Documentation](https://www.uvicorn.org/)
-* [Thunder Client VS Code Extension](https://www.thunderclient.com/)
 * [Firebase Console Overview](https://console.firebase.google.com/)
 
 * **Janice**
@@ -124,7 +141,7 @@
     3. Accept invitation to the Firebase project console; verify Firestore Database and Firebase Authentication are enabled.
     4. Create a sandbox `main.py` implementing `GET /health` returning `{"status": "ok"}` and `POST /upload-image` accepting `UploadFile = File(...)`.
     5. Save the uploaded file to a temporary local directory (`temp_uploads/`) and return filename and size in JSON response.
-  * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Thunder Client in VS Code. Attach screenshot of HTTP 200 responses to your PR.
+  * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Swagger UI (`http://localhost:8000/docs`). Attach screenshot of HTTP 200 responses to your PR.
   * **Deliverable & Branch:** `feat/backend/janice/week1-fastapi-exercise`.
 
 * **Carlos**
@@ -135,18 +152,18 @@
     2. Access the shared Firebase console project and review database rules and project settings.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Implement asynchronous file writing using `async with aiofiles.open(...)` or standard file streaming to prevent blocking the event loop.
-  * **Verification:** Run `uvicorn main:app --reload` and send test requests via Thunder Client; verify HTTP 200 responses and local file writes.
+  * **Verification:** Run `uvicorn main:app --reload` and send test requests via Swagger UI (`http://localhost:8000/docs`); verify HTTP 200 responses and local file writes.
   * **Deliverable & Branch:** `feat/backend/carlos/week1-fastapi-exercise`.
 
 * **David**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
   * **Goal & Context:** Master asynchronous file upload handling and request validation in FastAPI.
   * **Action Steps:**
-    1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, python-multipart, and Thunder Client.
+    1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, and python-multipart.
     2. Access the shared Firebase console project and review database rules and project settings.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Add basic validation to `POST /upload-image`: check that `file.content_type` starts with `image/` before saving, returning HTTP 400 for non-image uploads.
-  * **Verification:** Test `POST /upload-image` in Thunder Client with both a valid image and a `.txt` file to confirm 200 and 400 status codes.
+  * **Verification:** Test `POST /upload-image` in Swagger UI (`http://localhost:8000/docs`) with both a valid image and a `.txt` file to confirm 200 and 400 status codes.
   * **Deliverable & Branch:** `feat/backend/david/week1-fastapi-exercise`.
 
 * **Krish**
@@ -157,18 +174,18 @@
     2. Access the team Firebase console; inspect project credentials and verify Cloud Firestore is set up in test mode.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Implement asynchronous file writing using `async with aiofiles.open(...)` or standard file streaming to prevent blocking the event loop.
-  * **Verification:** Send multiple concurrent image upload requests via Thunder Client and verify successful responses without server crashes.
+  * **Verification:** Send multiple concurrent image upload requests via Swagger UI (`http://localhost:8000/docs`) and verify successful responses without server crashes.
   * **Deliverable & Branch:** `feat/backend/krish/week1-fastapi-exercise`.
 
 * **Edward**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
   * **Goal & Context:** Establish local code quality tooling (Ruff) and complete the standardized FastAPI upload endpoint.
   * **Action Steps:**
-    1. Set up local Python environment and configure VS Code with Ruff extension and Thunder Client.
+    1. Set up local Python environment and configure VS Code with Ruff extension.
     2. Join the Firebase project console; check API keys and service account settings.
     3. Implement `main.py` with `GET /health` and `POST /upload-image`.
     4. Run `ruff check .` and `ruff format .` to ensure zero linting errors or formatting warnings.
-  * **Verification:** Verify Thunder Client requests return HTTP 200 with JSON payloads and ensure `ruff check .` reports all checks passed.
+  * **Verification:** Verify Swagger UI (`http://localhost:8000/docs`) requests return HTTP 200 with JSON payloads and ensure `ruff check .` reports all checks passed.
   * **Deliverable & Branch:** `feat/backend/edward/week1-fastapi-exercise`.
 
 ---
@@ -247,6 +264,13 @@
 > **Theme:** High-fidelity UI mockups, API contracts, system architecture, and dataset curation.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [React Navigation — Getting Started & Navigators](https://reactnavigation.org/docs/getting-started)
+* [React Native Styling & StyleSheet Guide](https://reactnative.dev/docs/stylesheet)
+* [Figma to Code: Responsive Mobile Design Tokens](https://help.figma.com/hc/en-us/articles/360040451373-Create-and-manage-styles)
+* [React Native Safe Area Context](https://github.com/th3rdwave/react-native-safe-area-context)
+* [Expo Project Structure & Asset Organization](https://docs.expo.dev/develop/project-structure/)
+
 * **Mong**
   * **Task:** Design high-fidelity UI mockups and design token system in Figma.
   * **Goal & Context:** Provide precise visual specifications, component guidelines, and color palettes for engineering implementation.
@@ -288,6 +312,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/navigation-scaffolding`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Pydantic v2 Models & Schema Validation](https://docs.pydantic.dev/latest/concepts/models/)
+* [Pydantic Settings & Environment Variables](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+* [Google Cloud Firestore Python SDK Documentation](https://cloud.google.com/python/docs/reference/firestore/latest)
+* [Firebase Admin Python SDK Authentication Setup](https://firebase.google.com/docs/admin/setup)
+* [Mermaid Syntax Guide for Architecture & Sequence Diagrams](https://mermaid.js.org/syntax/sequenceDiagram.html)
+
 * **Janice**
   * **Task:** Author API contract specification & starter Pydantic schemas.
   * **Goal & Context:** Define strict request/response data contracts to decouple mobile and backend development.
@@ -344,6 +375,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/firebase-admin-setup`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Pillow (PIL) Image Transformation & EXIF Transpose Guide](https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#PIL.ImageOps.exif_transpose)
+* [Scikit-learn Stratified Train/Val/Test Splits](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)
+* [Computer Vision Dataset Curation & Preprocessing Best Practices](https://cs231n.github.io/neural-networks-2/#datapre)
+* [Exploratory Data Analysis (EDA) for Image Datasets](https://towardsdatascience.com/exploratory-data-analysis-for-computer-vision-9d5843a85954)
+
 * **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
@@ -398,6 +435,13 @@
 > **Theme:** Lay production foundations — camera UI, mock API endpoints, and real model training.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Camera SDK Guide & Viewfinder Implementation](https://docs.expo.dev/versions/latest/sdk/camera/)
+* [React Navigation Bottom Tabs Navigator](https://reactnavigation.org/docs/bottom-tab-navigator/)
+* [React Native Permissions & Camera Authorization](https://docs.expo.dev/guides/permissions/)
+* [React Native Vector Icons & Ionicons Directory](https://icons.expo.fyi/)
+* [React Native Modal & Overlay Guide](https://reactnative.dev/docs/modal)
+
 * **Mong**
   * **Task:** Build Results screen component with mock data.
   * **Goal & Context:** Create the central feedback screen where users discover what bin their item belongs in.
@@ -429,6 +473,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/camera-and-api-service`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [FastAPI Response Models & Status Codes](https://fastapi.tiangolo.com/tutorial/response-model/)
+* [FastAPI Custom Middleware & Logging](https://fastapi.tiangolo.com/tutorial/middleware/)
+* [Cloud Firestore Document CRUD Operations](https://cloud.google.com/firestore/docs/manage-data/add-data)
+* [Testing FastAPI Applications with Pytest & TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
+* [Python Logging Best Practices & Structlog](https://docs.python.org/3/howto/logging.html)
+
 * **Janice**
   * **Task:** Modular FastAPI APIRouter scaffolding & CORS setup.
   * **Goal & Context:** Organize backend codebase into maintainable, domain-specific modules.
@@ -457,7 +508,7 @@
     2. Validate image MIME types (`image/jpeg`, `image/png`, `image/webp`).
     3. Inspect file magic bytes using Pillow or header checks.
     4. Enforce 10MB payload size limit, returning HTTP 413 for oversized payloads.
-  * **Verification:** Send test requests with `.txt`, `.pdf`, and large image files via Thunder Client; verify proper 400 and 413 responses.
+  * **Verification:** Send test requests with `.txt`, `.pdf`, and large image files via Swagger UI (`/docs`); verify proper 400 and 413 responses.
   * **Deliverable & Branch:** `feat/backend/carlos/upload-validation`.
 
 * **David**
@@ -469,7 +520,7 @@
     3. Validate image content type (`image/jpeg`, `image/png`, `image/webp`).
     4. Support optional query parameter `?simulate_category=plastic` to allow manual testing of specific waste bins.
     5. Return full `ClassifyResponse` JSON payload with realistic mock confidence (0.85–0.96), disposal tip, and color badge.
-  * **Verification:** Test endpoint via Thunder Client with sample images; verify response schema matches `ClassifyResponse` model.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`) with sample images; verify response schema matches `ClassifyResponse` model.
   * **Deliverable & Branch:** `feat/backend/david/mock-classify-endpoint`.
 
 * **Krish**
@@ -485,21 +536,28 @@
   * **Deliverable & Branch:** `feat/backend/krish/firestore-service`.
 
 * **Edward**
-  * **Task:** Author API testing guide & Thunder Client collection.
-  * **Goal & Context:** Equip the entire team with automated, pre-configured request collections to test endpoints effortlessly.
+  * **Task:** Author API testing guide & FastAPI Swagger UI / ReDoc documentation suite.
+  * **Goal & Context:** Equip the entire team with clear interactive documentation and request examples to test endpoints effortlessly.
   * **Action Steps:**
-    1. Create a Thunder Client / Postman collection in `backend/tests/Sortify_API_Collection.json`.
-    2. Include saved requests for:
+    1. Configure interactive OpenAPI documentation tags, descriptions, and request/response examples for Swagger UI (`/docs`) and ReDoc (`/redoc`).
+    2. Export the verified OpenAPI 3.0 schema to `backend/tests/Sortify_OpenAPI_Schema.json`.
+    3. Verify interactive execution and schema validation for:
        - `GET /health`
        - `POST /api/classify` (with sample image attachment)
        - `GET /api/rules/berkeley`
        - `POST /api/history`
-    3. Add test scripts in the collection verifying HTTP 200 status and presence of required response fields.
-    4. Author `docs/api-testing-guide.md` with step-by-step setup instructions for both VS Code Thunder Client and terminal `curl`.
-  * **Verification:** Import collection into a clean Thunder Client profile and run all requests successfully against local backend.
+    4. Author `docs/api-testing-guide.md` with step-by-step testing instructions for both browser Swagger UI (`http://localhost:8000/docs`) and terminal `curl`.
+  * **Verification:** Open `http://localhost:8000/docs` in a clean browser session and execute all requests successfully against local backend.
   * **Deliverable & Branch:** `docs/backend/edward/api-testing-guide`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch torchvision.transforms Augmentations](https://pytorch.org/vision/stable/transforms.html)
+* [PyTorch Custom Datasets & DataLoaders](https://pytorch.org/tutorials/beginner/basics/data_tutorial.html)
+* [ResNet Architecture Paper & Torchvision Weights](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html)
+* [Scikit-learn Classification Metrics & Confusion Matrix](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html)
+* [Seaborn Heatmap Visualization for Evaluation](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
+
 * **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
@@ -560,6 +618,13 @@
 > **Theme:** Connect the real PyTorch model to FastAPI and connect the mobile camera to the live classification endpoint.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo FileSystem & File URI Handling](https://docs.expo.dev/versions/latest/sdk/filesystem/)
+* [Uploading Images in React Native with FormData](https://reactnative.dev/docs/network#using-fetch)
+* [React Native ActivityIndicator & Loading States](https://reactnative.dev/docs/activityindicator)
+* [Handling Asynchronous API Requests in React Native](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+* [Designing Mobile Classification Result Cards](https://m3.material.io/components/cards/overview)
+
 * **Mong**
   * **Task:** Build Home Screen UI and navigation flow.
   * **Goal & Context:** Create an engaging, intuitive dashboard welcoming the user and encouraging waste scanning.
@@ -589,6 +654,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/camera-api-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [PyTorch Inference in Production & torch.no_grad()](https://pytorch.org/docs/stable/generated/torch.no_grad.html)
+* [Python io.BytesIO & PIL Image Handling](https://pillow.readthedocs.io/en/stable/reference/Image.html)
+* [FastAPI Asynchronous Request Handlers](https://fastapi.tiangolo.com/async/)
+* [Python Memory Profiling & tracemalloc](https://docs.python.org/3/library/tracemalloc.html)
+* [Async Firestore Client in Python](https://cloud.google.com/firestore/docs/samples/firestore-async-python)
+
 * **Janice**
   * **Task:** Build response formatting & disposal guidance integration.
   * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
@@ -628,7 +700,7 @@
        - Map predicted class to waste bin metadata (bin color, category name).
        - Construct and return `ClassifyResponse` Pydantic model.
     2. Add error handling for corrupted image streams, returning HTTP 422 with descriptive error message.
-  * **Verification:** Send real JPEG trash images via Thunder Client and verify model returns accurate predictions and confidence scores.
+  * **Verification:** Send real JPEG trash images via Swagger UI (`/docs`) and verify model returns accurate predictions and confidence scores.
   * **Deliverable & Branch:** `feat/backend/david/live-classify-integration`.
 
 * **Krish**
@@ -660,6 +732,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/request-validation`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Fine-Tuning & Parameter Freezing Guide](https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html)
+* [PyTorch Learning Rate Schedulers (CosineAnnealingLR)](https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html)
+* [Saving & Loading PyTorch Models (State Dict vs TorchScript)](https://pytorch.org/tutorials/beginner/saving_loading_models.html)
+* [Designing ML Metadata Specifications & Label Mappings](https://cloud.google.com/vertex-ai/docs/training/exporting-model-artifacts)
+
 * **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
@@ -716,6 +794,12 @@
 > **Theme:** Implement location-specific waste rules, verify the full MVP flow end-to-end, and prepare for the mid-semester presentation.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Location SDK & Geolocation Permissions](https://docs.expo.dev/versions/latest/sdk/location/)
+* [Expo Haptics for Tactile Feedback](https://docs.expo.dev/versions/latest/sdk/haptics/)
+* [Dynamic Theming & Bin Color Schemes in React Native](https://reactnative.dev/docs/usecolorscheme)
+* [React Native Toast & Notification Banners](https://reactnative.dev/docs/alert)
+
 * **Mong**
   * **Task:** Build Location Selector modal component.
   * **Goal & Context:** Allow users to switch between municipalities (e.g. Berkeley vs San Francisco) to view location-specific recycling rules.
@@ -740,6 +824,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/location-rules-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Python Caching Strategies (functools.lru_cache & cachetools)](https://cachetools.readthedocs.io/en/latest/)
+* [Firestore Query Optimization & Read Caching](https://cloud.google.com/firestore/docs/query-data/queries)
+* [Designing Modular Rule Engines in Python](https://docs.python.org/3/library/operator.html)
+* [Pytest Parameterized Tests Guide](https://docs.pytest.org/en/stable/how-to/parametrize.html)
+
 * **Janice**
   * **Task:** Implement Municipal Location Rules Engine.
   * **Goal & Context:** Provide customized recycling rules based on regional recycling facility capabilities.
@@ -770,7 +860,7 @@
     2. Return `RuleResponse` containing supported categories, municipal notes, and official waste authority source URL.
     3. Modify `POST /api/classify` to accept optional `location: str = Query("berkeley")`.
     4. Call `rules_engine.apply_location_rules()` and embed municipal guidance inside `ClassifyResponse`.
-  * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Thunder Client; verify municipal notes match.
+  * **Verification:** Test `GET /api/rules/berkeley` and `POST /api/classify?location=san_francisco` in Swagger UI (`/docs`); verify municipal notes match.
   * **Deliverable & Branch:** `feat/backend/david/rules-endpoint-integration`.
 
 * **Krish**
@@ -802,6 +892,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/automated-pytest-suite`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Domain Adaptation & Covariate Shift in Computer Vision](https://en.wikipedia.org/wiki/Domain_adaptation)
+* [Test-Time Augmentation (TTA) Principles in PyTorch](https://github.com/qubvel/ttach)
+* [Temperature Scaling & Softmax Probability Calibration](https://arxiv.org/abs/1706.04599)
+* [Out-of-Distribution (OOD) Detection for Waste Sorting](https://towardsdatascience.com/out-of-distribution-detection-in-deep-neural-networks-99b38031d8c1)
+
 * **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
@@ -868,6 +964,11 @@
 
 ### Member Assignments & Action Plans
 
+**Shared Frontend Resources:**
+* [React Native NetInfo Network State Detection](https://github.com/react-native-netinfo/react-native-netinfo)
+* [React Native Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+* [Recording Mobile Screen Demos on iOS & Android](https://docs.expo.dev/workflow/debugging/)
+
 * **Mong (Frontend)**
   * **Task:** UI Responsiveness Audit & Demo Flow Styling.
   * **Goal & Context:** Ensure the mobile interface is pixel-perfect and visually pristine for the demo recording.
@@ -893,6 +994,12 @@
     4. Embed video directly into presentation Google Slides and prepare live narration.
   * **Verification:** Play back embedded video in presentation mode; verify audio/video sync and crisp resolution.
   * **Deliverable & Branch:** Final Recorded Demo Video (`.mp4`) & slide embedding.
+
+**Shared Backend Resources:**
+* [FastAPI Health Checks & Readiness Probes](https://fastapi.tiangolo.com/advanced/custom-response/)
+* [Benchmarking Python APIs with Locust](https://locust.io/)
+* [GitHub Actions Workflow Syntax for Python](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python)
+* [Cloud Firestore Batch Operations & Transactions](https://cloud.google.com/firestore/docs/manage-data/transactions)
 
 * **Janice (Backend)
   * **Task:** API Documentation & Schema Review.
@@ -945,6 +1052,11 @@
   * **Verification:** Commit retrospective summary to repository; review action items in the next all-hands standup.
   * **Deliverable & Branch:** `docs/retrospective-midsem.md`.
 
+**Shared AI / ML Resources:**
+* [Matplotlib & Seaborn Training Curve Visualization](https://matplotlib.org/stable/gallery/lines_bars_and_markers/simple_plot.html)
+* [Error Analysis & Qualitative Failure Review in Computer Vision](https://cs230.stanford.edu/files/C3M2.pdf)
+* [Jupyter Notebook Best Practices for Client Presentations](https://www.freecodecamp.org/news/how-to-write-a-good-readme-file/)
+
 * **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
   * **Goal & Context:** Document formal machine learning model performance for technical review.
@@ -995,6 +1107,12 @@
 > **Theme:** Implement Firebase user authentication, manage secure sessions on mobile, and protect backend endpoints with JWT middleware.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Firebase Authentication in React Native & Expo](https://docs.expo.dev/guides/using-firebase/#authentication)
+* [Expo SecureStore for Token Persistence](https://docs.expo.dev/versions/latest/sdk/securestore/)
+* [React Context API for Global Auth State Management](https://react.dev/learn/passing-data-deeply-with-context)
+* [React Native Form Validation Techniques](https://reactnative.dev/docs/textinput)
+
 * **Mong**
   * **Task:** Build Login, Register & Forgot Password UI screens.
   * **Goal & Context:** Create clean, accessible entry screens for user onboarding and authentication.
@@ -1020,6 +1138,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/auth-context-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Firebase ID Token Verification in Python](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
+* [FastAPI Security Dependencies (HTTPBearer & OAuth2)](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+* [Firestore Security Rules & User-Level Access](https://firebase.google.com/docs/firestore/security/get-started)
+* [Mocking Auth Tokens in Pytest Suites](https://docs.pytest.org/en/stable/how-to/monkeypatch.html)
+
 * **Janice
   * **Task:** Implement protected user profile route (`GET /api/users/me`).
   * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
@@ -1051,7 +1175,7 @@
     3. Validate request payload (`item_name`, `category`, `confidence`, `location`).
     4. Write scan document to Firestore under `users/{uid}/scans` subcollection with server timestamp.
     5. Return HTTP 201 with saved `scan_id`.
-  * **Verification:** Send authenticated request via Thunder Client; confirm scan document is created in Firestore under correct `uid`.
+  * **Verification:** Send authenticated request via Swagger UI (`/docs`) using the Authorize modal; confirm scan document is created in Firestore under correct `uid`.
   * **Deliverable & Branch:** `feat/backend/david/post-history-endpoint`.
 
 * **Krish**
@@ -1061,7 +1185,7 @@
     1. Implement `GET /api/user/profile` and `PUT /api/user/profile` in `backend/app/routers/auth.py`.
     2. Check if user document exists in Firestore upon first login; initialize profile with `created_at`, `points: 0`, `current_streak: 0`.
     3. Allow updating `display_name` and favorite campus location.
-  * **Verification:** Test profile creation and retrieval for a newly registered user via Thunder Client.
+  * **Verification:** Test profile creation and retrieval for a newly registered user via Swagger UI (`/docs`).
   * **Deliverable & Branch:** `feat/backend/krish/user-profile-sync`.
 
 * **Edward**
@@ -1077,6 +1201,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/auth-security-tests`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [MobileNetV2 in Torchvision & Depthwise Separable Convolutions](https://pytorch.org/vision/stable/models/mobilenetv2.html)
+* [Exporting PyTorch Models to ONNX (torch.onnx.export)](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html)
+* [Model Profiling: FLOPs, Parameter Counts & Latency](https://pytorch.org/docs/stable/profiler.html)
+* [Edge AI: Choosing Architectures for Mobile Devices](https://arxiv.org/abs/1801.04381)
+
 * **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
@@ -1130,6 +1260,11 @@
 > **Theme:** Drive daily student habits through streak tracking, eco-points, and scan history.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Lottie Animations in React Native (lottie-react-native)](https://docs.expo.dev/versions/latest/sdk/lottie/)
+* [React Native FlatList Performance & History Feeds](https://reactnative.dev/docs/optimizing-flatlist-configuration)
+* [Building Interactive Progress Bars & Gamified Badges](https://reactnative.dev/docs/view#style)
+
 * **Mong**
   * **Task:** Build Stats & Gamification Dashboard screen.
   * **Goal & Context:** Motivate students by visualizing their personal environmental impact and sorting streak.
@@ -1156,6 +1291,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/history-screen-flatlist`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Cloud Firestore Atomic Numeric Increments](https://firebase.google.com/docs/firestore/manage-data/add-data#increment_a_numeric_value)
+* [Python 3.9+ ZoneInfo Timezone Management](https://docs.python.org/3/library/zoneinfo.html)
+* [Cloud Firestore Distributed Counters](https://cloud.google.com/firestore/docs/solutions/counters)
+* [Designing Resilient Streak Tracking Algorithms](https://en.wikipedia.org/wiki/Gamification)
+
 * **Janice
   * **Task:** Implement paginated scan history endpoint (`GET /api/history`).
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
@@ -1187,7 +1328,7 @@
        - Eco-points calculation: `total_scans * 10`.
        - Category breakdown dictionary: `{"compost": 12, "plastic": 8, "paper": 5, "glass": 2, "landfill": 1}`.
     3. Return structured `UserStatsResponse` Pydantic model.
-  * **Verification:** Test endpoint via Thunder Client; verify category counts accurately reflect total scans.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`); verify category counts accurately reflect total scans.
   * **Deliverable & Branch:** `feat/backend/david/stats-aggregation-endpoint`.
 
 * **Krish**
@@ -1216,10 +1357,15 @@
        - **Los Angeles** (LA Sanitation / RecycLA)
     2. Update `backend/app/data/rules.json` with verified guidelines and official portal URLs.
     3. Update `GET /api/rules/{location}` so unknown cities return a helpful 404 listing supported cities.
-  * **Verification:** Query all 5 cities via Thunder Client; verify accurate municipal rules and URLs return.
+  * **Verification:** Query all 5 cities via Swagger UI (`/docs`); verify accurate municipal rules and URLs return.
   * **Deliverable & Branch:** `feat/backend/edward/expand-municipal-rules`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Static & Dynamic Post-Training Quantization](https://pytorch.org/docs/stable/quantization.html)
+* [Quantization-Aware Training (QAT) Overview](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html)
+* [Benchmarking Quantized Model Latency on CPU](https://pytorch.org/tutorials/recipes/quantization.html)
+
 * **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
@@ -1276,6 +1422,11 @@
 > **Theme:** Stress-test every component, eliminate cross-subteam bugs, and calibrate model confidence thresholds.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [AsyncStorage for Offline Client Persistence](https://react-native-async-storage.github.io/async-storage/docs/usage)
+* [React Native Accessibility (a11y) Guidelines](https://reactnative.dev/docs/accessibility)
+* [Testing React Native Components with Jest & RNTL](https://callstack.github.io/react-native-testing-library/)
+
 * **Mong**
   * **Task:** Implement loading skeletons, empty states & accessibility audit.
   * **Goal & Context:** Elevate mobile user experience from functional prototype to polished consumer app.
@@ -1298,6 +1449,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/performance-and-cleanup`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [SlowAPI — Rate Limiting for FastAPI](https://slowapi.readthedocs.io/en/latest/)
+* [Tenacity — Python Retrying Library](https://tenacity.readthedocs.io/en/latest/)
+* [Firebase Local Emulator Suite Guide](https://firebase.google.com/docs/emulator-suite)
+* [OWASP API Security Top 10 Guidelines](https://owasp.org/www-project-api-security/)
+
 * **Janice
   * **Task:** API endpoint unit tests with pytest.
   * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
@@ -1360,6 +1517,11 @@
   * **Deliverable & Branch:** `docs/backend/edward/edge-cases-and-docs`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Benchmarking PyTorch Inference Latency (torch.utils.benchmark)](https://pytorch.org/tutorials/recipes/recipes/benchmark.html)
+* [Evaluating Neural Network Robustness to Common Corruptions](https://github.com/hendrycks/robustness)
+* [Defensive Preprocessing & Input Sanitization in Computer Vision](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
+
 * **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
@@ -1420,6 +1582,12 @@
 > **Theme:** Make Sortify feel like a consumer-grade app: haptic feedback, dark mode, Dockerization, and clear setup guides.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo SplashScreen API & Configuration](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
+* [Expo App Icons & Asset Configuration](https://docs.expo.dev/develop/user-interface/app-icons/)
+* [React Native Appearance & Dark Mode Styling](https://reactnative.dev/docs/appearance)
+* [React Native Performance Profiling with Hermes](https://reactnative.dev/docs/profiling)
+
 * **Mong**
   * **Task:** Implement onboarding walkthrough & Dark Mode theme.
   * **Goal & Context:** Welcome first-time users with an educational walkthrough and support system-wide dark mode.
@@ -1447,6 +1615,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/haptics-and-polish`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Dockerizing FastAPI Applications with Multi-Stage Builds](https://fastapi.tiangolo.com/deployment/docker/)
+* [FastAPI CORS Middleware Configuration](https://fastapi.tiangolo.com/tutorial/cors/)
+* [Cloud Firestore Composite Indexing](https://cloud.google.com/firestore/docs/query-data/indexing)
+* [RFC 7807 Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc7807)
+* [pip-audit — Python Dependency Vulnerability Scanner](https://pypi.org/project/pip-audit/)
+
 * **Janice
   * **Task:** Error handling middleware, custom exception handlers & standardized error responses.
   * **Goal & Context:** Ensure consistent error responses across all endpoints.
@@ -1484,7 +1659,7 @@
        - `model_version`: version string
        - `firestore_connected`: boolean (verified with ping)
        - `system_memory_usage`: percentage memory used via `psutil`
-  * **Verification:** Query endpoint in Thunder Client; confirm all subsystem health indicators report true.
+  * **Verification:** Query endpoint in Swagger UI (`/docs`); confirm all subsystem health indicators report true.
   * **Deliverable & Branch:** `feat/backend/david/health-diagnostics`.
 
 * **Krish**
@@ -1518,6 +1693,11 @@
   * **Deliverable & Branch:** `docs/backend/edward/openapi-polish`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Scikit-learn Probability Calibration (CalibratedClassifierCV)](https://scikit-learn.org/stable/modules/calibration.html)
+* [Confidence-Based Reject Option & Fallback Heuristics](https://arxiv.org/abs/1706.03038)
+* [Waste Contamination Rules & Heuristic Post-Processing](https://www.epa.gov/recycle)
+
 * **Aarav**
   * **Task:** Verify Dockerized model inference performance.
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
@@ -1570,6 +1750,11 @@
 > **Theme:** Deploy backend to cloud, generate standalone mobile builds, and explore advanced stretch features in isolated branches.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Application Services (EAS) Build Guide](https://docs.expo.dev/build/introduction/)
+* [Configuring eas.json for Android & iOS Builds](https://docs.expo.dev/build/eas-json/)
+* [Internal Distribution & Standalone APK Generation](https://docs.expo.dev/build/internal-distribution/)
+
 * **Mong**
   * **Task:** Design App Store & portfolio visual marketing assets.
   * **Goal & Context:** Create visual assets showcasing Sortify on realistic mobile device frames for the portfolio release.
@@ -1595,6 +1780,12 @@
   * **Deliverable & Branch:** Standalone APK build link + `feat/frontend/caden/eas-standalone-build`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Deploying Containerized FastAPI to Google Cloud Run](https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service)
+* [Deploying FastAPI to Render](https://render.com/docs/deploy-fastapi)
+* [Structured JSON Logging in Production Python](https://docs.python.org/3/library/logging.html)
+* [Cloud Firestore Automated Backups & Export](https://cloud.google.com/firestore/docs/manage-data/export-import-entities)
+
 * **Janice
   * **Task:** OpenAPI Swagger documentation polish & backend setup guide.
   * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
@@ -1624,7 +1815,7 @@
        - Create `POST /api/classify-multi`.
        - Define response schema returning `detected_items: list[DetectedItem]` where each item includes: `item_name`, `category`, `confidence`, and bounding box coordinates `[x_min, y_min, x_max, y_max]`.
     2. Return structured mock multi-item data to test object detection response schemas.
-  * **Verification:** Test endpoint via Thunder Client; verify multi-item array payload validates against Pydantic schema.
+  * **Verification:** Test endpoint via Swagger UI (`/docs`); verify multi-item array payload validates against Pydantic schema.
   * **Deliverable & Branch:** `feat/backend/david/classify-multi`.
 
 * **Krish**
@@ -1655,6 +1846,11 @@
   * **Deliverable & Branch:** `feat/backend/edward/contamination-heuristics`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [TorchScript Production Tracing (torch.jit.trace)](https://pytorch.org/docs/stable/jit.html)
+* [ONNX Runtime Python API for CPU/GPU Inference](https://onnxruntime.ai/docs/get-started/with-python.html)
+* [Optimizing PyTorch Multi-Threading for Web Serving](https://pytorch.org/docs/stable/notes/cpu_threading_torchscript_inference.html)
+
 * **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
@@ -1718,6 +1914,11 @@
 
 ### Member Assignments & Action Plans
 
+**Shared Frontend Resources:**
+* [Google Play & Apple App Store Asset Specifications](https://developer.apple.com/design/human-interface-guidelines)
+* [Expo Release Channels & Updates Guide](https://docs.expo.dev/eas-update/introduction/)
+* [Creating Mobile Portfolio Demos & Case Studies](https://docs.github.com/en/get-started/writing-on-github)
+
 * **Mong (Frontend)**
   * **Task:** Mobile UI Final Polish & Architecture Documentation.
   * **Goal & Context:** Polish final visual details and document mobile component architecture for open-source portfolio.
@@ -1743,14 +1944,21 @@
   * **Verification:** Play back video in the presentation venue; confirm crystal-clear playback and crisp audio.
   * **Deliverable & Branch:** Final Demo Video (`.mp4`) & mobile presentation walkthrough.
 
-* **Janice (Backend)
-  * **Task:** Final API Documentation Audit & Postman Export.
-  * **Goal & Context:** Finalize API documentation and test collections for the portfolio release.
+**Shared Backend Resources:**
+* [OpenAPI 3.0 Specification Reference](https://swagger.io/specification/)
+* [Coverage.py & Code Coverage Badges](https://coverage.readthedocs.io/en/latest/)
+* [Semantic Versioning 2.0.0](https://semver.org/)
+* [GitHub Release Management & Production Checklists](https://docs.github.com/en/repositories/releasing-projects-on-github)
+
+* **Janice (Backend)**
+  * **Task:** Final API Documentation Audit & OpenAPI / Swagger Export.
+  * **Goal & Context:** Finalize API documentation and OpenAPI schemas for the portfolio release.
   * **Action Steps:**
-    1. Finalize API documentation and export Postman / Thunder Client collections with saved request examples.
-    2. Compile backend release notes and API usage guide in `backend/README.md`.
-    3. Verify all endpoints have accurate docstrings and schemas.
-  * **Verification:** Review backend documentation and test collection import cleanly into a fresh workspace.
+    1. Finalize API documentation and verify complete Swagger UI (`/docs`) and ReDoc (`/redoc`) coverage with detailed schemas and examples.
+    2. Export the verified OpenAPI 3.0 specification file (`openapi.json`).
+    3. Compile backend release notes and API usage guide in `backend/README.md`.
+    4. Verify all endpoints have accurate docstrings and schemas.
+  * **Verification:** Review backend documentation and verify OpenAPI schema and Swagger UI render cleanly without errors.
   * **Deliverable & Branch:** `docs/backend/janice/final-api-docs`.
 
 * **Carlos (Backend)
@@ -1794,6 +2002,11 @@
     3. Author comprehensive API usage section in `backend/README.md` with example curl commands and response payloads.
   * **Verification:** Verify all 5 cities return verified municipal guidelines and interactive Swagger docs are complete.
   * **Deliverable & Branch:** `docs/backend/edward/rules-audit`.
+
+**Shared AI / ML Resources:**
+* [Hugging Face Model Cards Guide & Template](https://huggingface.co/docs/hub/model-cards)
+* [Model Governance & Responsible AI Standards](https://arxiv.org/abs/1810.03993)
+* [Packaging ML Weights & Reproducibility Artifacts](https://github.com/readme/guides)
 
 * **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.
@@ -1850,7 +2063,7 @@
 | **Carlos** | Backend | W1 FastAPI upload exercise, backend config module, multipart upload validation | Model singleton inference service, classify pipeline hardening, demo telemetry | History & streak service, history indexing optimization, full integration test suite | Docker containerization, production cloud deployment, production health audit |
 | **David** | Backend | W1 FastAPI exercise, architecture diagrams & config, mock classify endpoint | Live `/api/classify` model integration, rules endpoint, demo environment setup | `POST /api/history` validated logging, `GET /api/stats` aggregation, latency profiling | Health check diagnostics, multi-object API prototype, latency profiling report |
 | **Krish** | Backend | W1 FastAPI exercise, Firestore schema & test script, Firestore CRUD | Tips engine with sub-tips, request logging middleware, Firestore data audit | User profile sync & `GET /api/user/profile`, daily streak calculator, rate limiting | Global exception handling, admin analytics endpoint, repo cleanup & backend docs |
-| **Edward** | Backend | W1 FastAPI exercise, Firebase Admin SDK setup & test, Thunder Client guide | Request validation, automated Pytest suite, retro & feedback compilation | Auth security test suite, expand rules to 5 cities with 404 validation, edge case tests | OpenAPI Swagger polish with examples, contamination warning logic, rules engine verification |
+| **Edward** | Backend | W1 FastAPI exercise, Firebase Admin SDK setup & test, Swagger UI / ReDoc guide | Request validation, automated Pytest suite, retro & feedback compilation | Auth security test suite, expand rules to 5 cities with 404 validation, edge case tests | OpenAPI Swagger polish with examples, contamination warning logic, rules engine verification |
 | **Aarav** | AI / ML | W1 Transfer learning exercise, dataset aggregation, training pipeline script | Model fine-tuning, final MVP checkpoint selection, mid-sem metrics summary | Dynamic quantization, TTA experimentation, adversarial robustness testing | Docker inference validation, YOLOv8 multi-object prototype, quantization benchmark report |
 | **Kathleen** | AI / ML | W1 Transfer learning exercise, train/val/test split script, dataloaders & augmentations | Model export packaging with classes.json, campus photo benchmark, demo item testing | Targeted dataset expansion, model log & loader helper, empirical threshold testing | Interactive demo notebook, contamination heuristics, campus benchmark report |
 | **Max** | AI / ML | W1 Transfer learning exercise, preprocessing pipeline, baseline ResNet-18 training | MobileNetV2 benchmark, domain gap analysis, failure modes catalog | Retraining expanded data, ONNX export pipeline, model comparison evaluation | Mobile inference research, final metrics comparative charts, model evolution summary |

@@ -121,6 +121,12 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Pillow (PIL) Image Transformation & EXIF Transpose Guide](https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#PIL.ImageOps.exif_transpose)
+* [Scikit-learn Stratified Train/Val/Test Splits](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)
+* [Computer Vision Dataset Curation & Preprocessing Best Practices](https://cs231n.github.io/neural-networks-2/#datapre)
+* [Exploratory Data Analysis (EDA) for Image Datasets](https://towardsdatascience.com/exploratory-data-analysis-for-computer-vision-9d5843a85954)
+
 * **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
@@ -176,6 +182,13 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch torchvision.transforms Augmentations](https://pytorch.org/vision/stable/transforms.html)
+* [PyTorch Custom Datasets & DataLoaders](https://pytorch.org/tutorials/beginner/basics/data_tutorial.html)
+* [ResNet Architecture Paper & Torchvision Weights](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html)
+* [Scikit-learn Classification Metrics & Confusion Matrix](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html)
+* [Seaborn Heatmap Visualization for Evaluation](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
+
 * **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
@@ -237,6 +250,12 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Fine-Tuning & Parameter Freezing Guide](https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html)
+* [PyTorch Learning Rate Schedulers (CosineAnnealingLR)](https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html)
+* [Saving & Loading PyTorch Models (State Dict vs TorchScript)](https://pytorch.org/tutorials/beginner/saving_loading_models.html)
+* [Designing ML Metadata Specifications & Label Mappings](https://cloud.google.com/vertex-ai/docs/training/exporting-model-artifacts)
+
 * **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
@@ -294,6 +313,12 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Domain Adaptation & Covariate Shift in Computer Vision](https://en.wikipedia.org/wiki/Domain_adaptation)
+* [Test-Time Augmentation (TTA) Principles in PyTorch](https://github.com/qubvel/ttach)
+* [Temperature Scaling & Softmax Probability Calibration](https://arxiv.org/abs/1706.04599)
+* [Out-of-Distribution (OOD) Detection for Waste Sorting](https://towardsdatascience.com/out-of-distribution-detection-in-deep-neural-networks-99b38031d8c1)
+
 * **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
@@ -361,6 +386,11 @@
 
 ### Subteam Member Presentation Assignments
 
+**Shared Subteam Resources:**
+* [Matplotlib & Seaborn Training Curve Visualization](https://matplotlib.org/stable/gallery/lines_bars_and_markers/simple_plot.html)
+* [Error Analysis & Qualitative Failure Review in Computer Vision](https://cs230.stanford.edu/files/C3M2.pdf)
+* [Jupyter Notebook Best Practices for Client Presentations](https://www.freecodecamp.org/news/how-to-write-a-good-readme-file/)
+
 * **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
   * **Goal & Context:** Document formal machine learning model performance for technical review.
@@ -415,6 +445,12 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [MobileNetV2 in Torchvision & Depthwise Separable Convolutions](https://pytorch.org/vision/stable/models/mobilenetv2.html)
+* [Exporting PyTorch Models to ONNX (torch.onnx.export)](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html)
+* [Model Profiling: FLOPs, Parameter Counts & Latency](https://pytorch.org/docs/stable/profiler.html)
+* [Edge AI: Choosing Architectures for Mobile Devices](https://arxiv.org/abs/1801.04381)
+
 * **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
@@ -469,6 +505,11 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Static & Dynamic Post-Training Quantization](https://pytorch.org/docs/stable/quantization.html)
+* [Quantization-Aware Training (QAT) Overview](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html)
+* [Benchmarking Quantized Model Latency on CPU](https://pytorch.org/tutorials/recipes/quantization.html)
+
 * **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
@@ -526,6 +567,11 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Benchmarking PyTorch Inference Latency (torch.utils.benchmark)](https://pytorch.org/tutorials/recipes/recipes/benchmark.html)
+* [Evaluating Neural Network Robustness to Common Corruptions](https://github.com/hendrycks/robustness)
+* [Defensive Preprocessing & Input Sanitization in Computer Vision](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
+
 * **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
@@ -587,6 +633,11 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Scikit-learn Probability Calibration (CalibratedClassifierCV)](https://scikit-learn.org/stable/modules/calibration.html)
+* [Confidence-Based Reject Option & Fallback Heuristics](https://arxiv.org/abs/1706.03038)
+* [Waste Contamination Rules & Heuristic Post-Processing](https://www.epa.gov/recycle)
+
 * **Aarav**
   * **Task:** Verify Dockerized model inference performance.
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
@@ -640,6 +691,11 @@
 ---
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [TorchScript Production Tracing (torch.jit.trace)](https://pytorch.org/docs/stable/jit.html)
+* [ONNX Runtime Python API for CPU/GPU Inference](https://onnxruntime.ai/docs/get-started/with-python.html)
+* [Optimizing PyTorch Multi-Threading for Web Serving](https://pytorch.org/docs/stable/notes/cpu_threading_torchscript_inference.html)
+
 * **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
@@ -703,6 +759,11 @@
 ---
 
 ### Subteam Member Presentation Assignments
+
+**Shared Subteam Resources:**
+* [Hugging Face Model Cards Guide & Template](https://huggingface.co/docs/hub/model-cards)
+* [Model Governance & Responsible AI Standards](https://arxiv.org/abs/1810.03993)
+* [Packaging ML Weights & Reproducibility Artifacts](https://github.com/readme/guides)
 
 * **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.
