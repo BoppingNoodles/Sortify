@@ -1,23 +1,20 @@
 import os
 import sys
-import time
 
-from backend.services.firebase import db  # Import the db instance
+# Ensure repository root is on sys.path prior to local module imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from backend.app.services.firebase import verify_firebase_connection
 
-def verify_firebase_connection():
-    start = time.time()
-    
-    # 1. Write a test doc
-    doc_ref = db.collection("test").document("ping")
-    doc_ref.set({"status": "active"})
-    
-    # 2. Delete the test doc
-    doc_ref.delete()
-    
-    end = time.time()
-    print(f"Firebase connection successful! Latency: {(end - start) * 1000:.2f}ms")
+
+def main():
+    try:
+        latency = verify_firebase_connection()
+        print(f"Firebase connection successful! Latency: {latency:.2f}ms")
+    except Exception as e:  # noqa: BLE001
+        print(f"Firebase connection failed: {e}")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    verify_firebase_connection()
+    main()
