@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from backend.app.models.schemas import RuleResponse
+from backend.app.schemas import RuleResponse
 
 router = APIRouter()
 

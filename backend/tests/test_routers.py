@@ -8,6 +8,8 @@ from backend.app.main import app
 
 client = TestClient(app)
 
+AUTH_HEADERS = {"Authorization": "Bearer test-valid-token"}
+
 
 def test_classify_endpoint_success():
     fake_image = io.BytesIO(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01")
@@ -31,8 +33,20 @@ def test_classify_endpoint_invalid_file():
         "/api/classify",
         files={"file": ("test.txt", fake_file, "text/plain")},
     )
-    assert response.status_code == 400
-    assert "Invalid file type" in response.json()["detail"]
+    assert response.status_code == 415
+    assert "Unsupported media type" in response.json()["detail"]
+
+
+def test_classify_endpoint_oversized_file():
+    # 10.5 MB payload
+    oversized_data = b"0" * (11 * 1024 * 1024)
+    fake_large_file = io.BytesIO(oversized_data)
+    response = client.post(
+        "/api/classify",
+        files={"file": ("huge_image.jpg", fake_large_file, "image/jpeg")},
+    )
+    assert response.status_code == 413
+    assert "Payload too large" in response.json()["detail"]
 
 
 def test_rules_endpoint_get_city():
@@ -58,13 +72,23 @@ def test_rules_endpoint_get_all():
     assert "berkeley" in data["supported_cities"]
 
 
-def test_auth_me_endpoint():
-    response = client.get("/api/auth/me")
+def test_auth_me_endpoint_success():
+    response = client.get("/api/auth/me", headers=AUTH_HEADERS)
     assert response.status_code == 200
     data = response.json()
     assert "uid" in data
     assert "email" in data
     assert "current_streak" in data
+
+
+def test_auth_me_endpoint_unauthorized():
+    # Missing authorization header
+    response = client.get("/api/auth/me")
+    assert response.status_code == 401
+
+    # Malformed authorization header
+    bad_resp = client.get("/api/auth/me", headers={"Authorization": "Bearer invalid"})
+    assert bad_resp.status_code == 401
 
 
 def test_auth_verify_endpoint():
@@ -81,8 +105,8 @@ def test_auth_verify_endpoint():
     assert bad_resp.status_code == 401
 
 
-def test_history_get_endpoint():
-    response = client.get("/api/history?limit=10&offset=0")
+def test_history_get_endpoint_success():
+    response = client.get("/api/history?limit=10&offset=0", headers=AUTH_HEADERS)
     assert response.status_code == 200
     data = response.json()
     assert "scans" in data
@@ -90,7 +114,12 @@ def test_history_get_endpoint():
     assert data["offset"] == 0
 
 
-def test_history_post_endpoint():
+def test_history_get_endpoint_unauthorized():
+    response = client.get("/api/history?limit=10&offset=0")
+    assert response.status_code == 401
+
+
+def test_history_post_endpoint_success():
     payload = {
         "scan_id": "scan-unit-test-1",
         "user_id": "user-test",
@@ -100,10 +129,24 @@ def test_history_post_endpoint():
         "confidence": 0.95,
         "location": "berkeley",
     }
-    response = client.post("/api/history", json=payload)
+    response = client.post("/api/history", json=payload, headers=AUTH_HEADERS)
     assert response.status_code == 201
     assert response.json()["status"] == "created"
     assert response.json()["scan_id"] == "scan-unit-test-1"
+
+
+def test_history_post_endpoint_unauthorized():
+    payload = {
+        "scan_id": "scan-unit-test-2",
+        "user_id": "user-test",
+        "timestamp": "2026-10-07T12:00:00Z",
+        "category": "paper",
+        "item_name": "Cardboard Box",
+        "confidence": 0.95,
+        "location": "berkeley",
+    }
+    response = client.post("/api/history", json=payload)
+    assert response.status_code == 401
 
 
 def test_cors_headers():
