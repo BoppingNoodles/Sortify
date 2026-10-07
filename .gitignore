@@ -30,7 +30,6 @@ wheels/
 .env
 .env.local
 .env.*.local
-.server_logs/
 *.pem
 serviceAccountKey.json
 firebase-adminsdk*.json
