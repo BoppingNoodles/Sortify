@@ -1,6 +1,6 @@
 """Classification schemas module for Sortify."""
 
-from backend.app.models.schemas import (
+from backend.app.schemas.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
     DisposalTip,

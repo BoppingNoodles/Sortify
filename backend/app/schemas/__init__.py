@@ -1,6 +1,6 @@
 """Sortify Schemas Package."""
 
-from backend.app.models.schemas import (
+from backend.app.schemas.schemas import (
     ALLOWED_CATEGORIES,
     BIN_COLORS,
     ClassificationAlternative,
