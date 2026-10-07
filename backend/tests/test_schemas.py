@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from backend.app.models.schemas import (
+from backend.app.schemas import (
     ClassifyResponse,
     RuleResponse,
     ScanRecord,

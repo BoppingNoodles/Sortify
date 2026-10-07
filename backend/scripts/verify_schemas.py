@@ -10,7 +10,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from pydantic import ValidationError
 
-from backend.app.models.schemas import (
+from backend.app.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
     RuleResponse,
