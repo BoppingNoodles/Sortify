@@ -144,6 +144,13 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Pydantic v2 Models & Schema Validation](https://docs.pydantic.dev/latest/concepts/models/)
+* [Pydantic Settings & Environment Variables](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+* [Google Cloud Firestore Python SDK Documentation](https://cloud.google.com/python/docs/reference/firestore/latest)
+* [Firebase Admin Python SDK Authentication Setup](https://firebase.google.com/docs/admin/setup)
+* [Mermaid Syntax Guide for Architecture & Sequence Diagrams](https://mermaid.js.org/syntax/sequenceDiagram.html)
+
 * **Janice**
   * **Task:** Author API contract specification & starter Pydantic schemas.
   * **Goal & Context:** Define strict request/response data contracts to decouple mobile and backend development.
@@ -207,6 +214,13 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [FastAPI Response Models & Status Codes](https://fastapi.tiangolo.com/tutorial/response-model/)
+* [FastAPI Custom Middleware & Logging](https://fastapi.tiangolo.com/tutorial/middleware/)
+* [Cloud Firestore Document CRUD Operations](https://cloud.google.com/firestore/docs/manage-data/add-data)
+* [Testing FastAPI Applications with Pytest & TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
+* [Python Logging Best Practices & Structlog](https://docs.python.org/3/howto/logging.html)
+
 * **Janice**
   * **Task:** Modular FastAPI APIRouter scaffolding & CORS setup.
   * **Goal & Context:** Organize backend codebase into maintainable, domain-specific modules.
@@ -285,6 +299,13 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [PyTorch Inference in Production & torch.no_grad()](https://pytorch.org/docs/stable/generated/torch.no_grad.html)
+* [Python io.BytesIO & PIL Image Handling](https://pillow.readthedocs.io/en/stable/reference/Image.html)
+* [FastAPI Asynchronous Request Handlers](https://fastapi.tiangolo.com/async/)
+* [Python Memory Profiling & tracemalloc](https://docs.python.org/3/library/tracemalloc.html)
+* [Async Firestore Client in Python](https://cloud.google.com/firestore/docs/samples/firestore-async-python)
+
 * **Janice**
   * **Task:** Build response formatting & disposal guidance integration.
   * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
@@ -363,6 +384,12 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Python Caching Strategies (functools.lru_cache & cachetools)](https://cachetools.readthedocs.io/en/latest/)
+* [Firestore Query Optimization & Read Caching](https://cloud.google.com/firestore/docs/query-data/queries)
+* [Designing Modular Rule Engines in Python](https://docs.python.org/3/library/operator.html)
+* [Pytest Parameterized Tests Guide](https://docs.pytest.org/en/stable/how-to/parametrize.html)
+
 * **Janice**
   * **Task:** Implement Municipal Location Rules Engine.
   * **Goal & Context:** Provide customized recycling rules based on regional recycling facility capabilities.
@@ -443,6 +470,12 @@
 
 ### Subteam Member Presentation Assignments
 
+**Shared Subteam Resources:**
+* [FastAPI Health Checks & Readiness Probes](https://fastapi.tiangolo.com/advanced/custom-response/)
+* [Benchmarking Python APIs with Locust](https://locust.io/)
+* [GitHub Actions Workflow Syntax for Python](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python)
+* [Cloud Firestore Batch Operations & Transactions](https://cloud.google.com/firestore/docs/manage-data/transactions)
+
 * **Janice (Backend)
   * **Task:** API Documentation & Schema Review.
   * **Goal & Context:** Audit API schemas and ensure route parameters and responses are clearly documented for presentation materials.
@@ -503,6 +536,12 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Firebase ID Token Verification in Python](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
+* [FastAPI Security Dependencies (HTTPBearer & OAuth2)](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+* [Firestore Security Rules & User-Level Access](https://firebase.google.com/docs/firestore/security/get-started)
+* [Mocking Auth Tokens in Pytest Suites](https://docs.pytest.org/en/stable/how-to/monkeypatch.html)
+
 * **Janice
   * **Task:** Implement protected user profile route (`GET /api/users/me`).
   * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
@@ -567,6 +606,12 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Cloud Firestore Atomic Numeric Increments](https://firebase.google.com/docs/firestore/manage-data/add-data#increment_a_numeric_value)
+* [Python 3.9+ ZoneInfo Timezone Management](https://docs.python.org/3/library/zoneinfo.html)
+* [Cloud Firestore Distributed Counters](https://cloud.google.com/firestore/docs/solutions/counters)
+* [Designing Resilient Streak Tracking Algorithms](https://en.wikipedia.org/wiki/Gamification)
+
 * **Janice
   * **Task:** Implement paginated scan history endpoint (`GET /api/history`).
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
@@ -638,6 +683,12 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [SlowAPI — Rate Limiting for FastAPI](https://slowapi.readthedocs.io/en/latest/)
+* [Tenacity — Python Retrying Library](https://tenacity.readthedocs.io/en/latest/)
+* [Firebase Local Emulator Suite Guide](https://firebase.google.com/docs/emulator-suite)
+* [OWASP API Security Top 10 Guidelines](https://owasp.org/www-project-api-security/)
+
 * **Janice
   * **Task:** API endpoint unit tests with pytest.
   * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
@@ -707,6 +758,13 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Dockerizing FastAPI Applications with Multi-Stage Builds](https://fastapi.tiangolo.com/deployment/docker/)
+* [FastAPI CORS Middleware Configuration](https://fastapi.tiangolo.com/tutorial/cors/)
+* [Cloud Firestore Composite Indexing](https://cloud.google.com/firestore/docs/query-data/indexing)
+* [RFC 7807 Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc7807)
+* [pip-audit — Python Dependency Vulnerability Scanner](https://pypi.org/project/pip-audit/)
+
 * **Janice
   * **Task:** Error handling middleware, custom exception handlers & standardized error responses.
   * **Goal & Context:** Ensure consistent error responses across all endpoints.
@@ -785,6 +843,12 @@
 ---
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Deploying Containerized FastAPI to Google Cloud Run](https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service)
+* [Deploying FastAPI to Render](https://render.com/docs/deploy-fastapi)
+* [Structured JSON Logging in Production Python](https://docs.python.org/3/library/logging.html)
+* [Cloud Firestore Automated Backups & Export](https://cloud.google.com/firestore/docs/manage-data/export-import-entities)
+
 * **Janice
   * **Task:** OpenAPI Swagger documentation polish & backend setup guide.
   * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
@@ -862,6 +926,12 @@
 ---
 
 ### Subteam Member Presentation Assignments
+
+**Shared Subteam Resources:**
+* [OpenAPI 3.0 Specification Reference](https://swagger.io/specification/)
+* [Coverage.py & Code Coverage Badges](https://coverage.readthedocs.io/en/latest/)
+* [Semantic Versioning 2.0.0](https://semver.org/)
+* [GitHub Release Management & Production Checklists](https://docs.github.com/en/repositories/releasing-projects-on-github)
 
 * **Janice (Backend)**
   * **Task:** Final API Documentation Audit & OpenAPI / Swagger Export.

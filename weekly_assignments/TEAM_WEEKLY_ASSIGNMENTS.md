@@ -264,6 +264,13 @@
 > **Theme:** High-fidelity UI mockups, API contracts, system architecture, and dataset curation.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [React Navigation — Getting Started & Navigators](https://reactnavigation.org/docs/getting-started)
+* [React Native Styling & StyleSheet Guide](https://reactnative.dev/docs/stylesheet)
+* [Figma to Code: Responsive Mobile Design Tokens](https://help.figma.com/hc/en-us/articles/360040451373-Create-and-manage-styles)
+* [React Native Safe Area Context](https://github.com/th3rdwave/react-native-safe-area-context)
+* [Expo Project Structure & Asset Organization](https://docs.expo.dev/develop/project-structure/)
+
 * **Mong**
   * **Task:** Design high-fidelity UI mockups and design token system in Figma.
   * **Goal & Context:** Provide precise visual specifications, component guidelines, and color palettes for engineering implementation.
@@ -305,6 +312,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/navigation-scaffolding`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Pydantic v2 Models & Schema Validation](https://docs.pydantic.dev/latest/concepts/models/)
+* [Pydantic Settings & Environment Variables](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+* [Google Cloud Firestore Python SDK Documentation](https://cloud.google.com/python/docs/reference/firestore/latest)
+* [Firebase Admin Python SDK Authentication Setup](https://firebase.google.com/docs/admin/setup)
+* [Mermaid Syntax Guide for Architecture & Sequence Diagrams](https://mermaid.js.org/syntax/sequenceDiagram.html)
+
 * **Janice**
   * **Task:** Author API contract specification & starter Pydantic schemas.
   * **Goal & Context:** Define strict request/response data contracts to decouple mobile and backend development.
@@ -361,6 +375,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/firebase-admin-setup`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Pillow (PIL) Image Transformation & EXIF Transpose Guide](https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#PIL.ImageOps.exif_transpose)
+* [Scikit-learn Stratified Train/Val/Test Splits](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)
+* [Computer Vision Dataset Curation & Preprocessing Best Practices](https://cs231n.github.io/neural-networks-2/#datapre)
+* [Exploratory Data Analysis (EDA) for Image Datasets](https://towardsdatascience.com/exploratory-data-analysis-for-computer-vision-9d5843a85954)
+
 * **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
@@ -415,6 +435,13 @@
 > **Theme:** Lay production foundations — camera UI, mock API endpoints, and real model training.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Camera SDK Guide & Viewfinder Implementation](https://docs.expo.dev/versions/latest/sdk/camera/)
+* [React Navigation Bottom Tabs Navigator](https://reactnavigation.org/docs/bottom-tab-navigator/)
+* [React Native Permissions & Camera Authorization](https://docs.expo.dev/guides/permissions/)
+* [React Native Vector Icons & Ionicons Directory](https://icons.expo.fyi/)
+* [React Native Modal & Overlay Guide](https://reactnative.dev/docs/modal)
+
 * **Mong**
   * **Task:** Build Results screen component with mock data.
   * **Goal & Context:** Create the central feedback screen where users discover what bin their item belongs in.
@@ -446,6 +473,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/camera-and-api-service`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [FastAPI Response Models & Status Codes](https://fastapi.tiangolo.com/tutorial/response-model/)
+* [FastAPI Custom Middleware & Logging](https://fastapi.tiangolo.com/tutorial/middleware/)
+* [Cloud Firestore Document CRUD Operations](https://cloud.google.com/firestore/docs/manage-data/add-data)
+* [Testing FastAPI Applications with Pytest & TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
+* [Python Logging Best Practices & Structlog](https://docs.python.org/3/howto/logging.html)
+
 * **Janice**
   * **Task:** Modular FastAPI APIRouter scaffolding & CORS setup.
   * **Goal & Context:** Organize backend codebase into maintainable, domain-specific modules.
@@ -517,6 +551,13 @@
   * **Deliverable & Branch:** `docs/backend/edward/api-testing-guide`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch torchvision.transforms Augmentations](https://pytorch.org/vision/stable/transforms.html)
+* [PyTorch Custom Datasets & DataLoaders](https://pytorch.org/tutorials/beginner/basics/data_tutorial.html)
+* [ResNet Architecture Paper & Torchvision Weights](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html)
+* [Scikit-learn Classification Metrics & Confusion Matrix](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html)
+* [Seaborn Heatmap Visualization for Evaluation](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
+
 * **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
@@ -577,6 +618,13 @@
 > **Theme:** Connect the real PyTorch model to FastAPI and connect the mobile camera to the live classification endpoint.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo FileSystem & File URI Handling](https://docs.expo.dev/versions/latest/sdk/filesystem/)
+* [Uploading Images in React Native with FormData](https://reactnative.dev/docs/network#using-fetch)
+* [React Native ActivityIndicator & Loading States](https://reactnative.dev/docs/activityindicator)
+* [Handling Asynchronous API Requests in React Native](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+* [Designing Mobile Classification Result Cards](https://m3.material.io/components/cards/overview)
+
 * **Mong**
   * **Task:** Build Home Screen UI and navigation flow.
   * **Goal & Context:** Create an engaging, intuitive dashboard welcoming the user and encouraging waste scanning.
@@ -606,6 +654,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/camera-api-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [PyTorch Inference in Production & torch.no_grad()](https://pytorch.org/docs/stable/generated/torch.no_grad.html)
+* [Python io.BytesIO & PIL Image Handling](https://pillow.readthedocs.io/en/stable/reference/Image.html)
+* [FastAPI Asynchronous Request Handlers](https://fastapi.tiangolo.com/async/)
+* [Python Memory Profiling & tracemalloc](https://docs.python.org/3/library/tracemalloc.html)
+* [Async Firestore Client in Python](https://cloud.google.com/firestore/docs/samples/firestore-async-python)
+
 * **Janice**
   * **Task:** Build response formatting & disposal guidance integration.
   * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
@@ -677,6 +732,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/request-validation`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Fine-Tuning & Parameter Freezing Guide](https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html)
+* [PyTorch Learning Rate Schedulers (CosineAnnealingLR)](https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html)
+* [Saving & Loading PyTorch Models (State Dict vs TorchScript)](https://pytorch.org/tutorials/beginner/saving_loading_models.html)
+* [Designing ML Metadata Specifications & Label Mappings](https://cloud.google.com/vertex-ai/docs/training/exporting-model-artifacts)
+
 * **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
@@ -733,6 +794,12 @@
 > **Theme:** Implement location-specific waste rules, verify the full MVP flow end-to-end, and prepare for the mid-semester presentation.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Location SDK & Geolocation Permissions](https://docs.expo.dev/versions/latest/sdk/location/)
+* [Expo Haptics for Tactile Feedback](https://docs.expo.dev/versions/latest/sdk/haptics/)
+* [Dynamic Theming & Bin Color Schemes in React Native](https://reactnative.dev/docs/usecolorscheme)
+* [React Native Toast & Notification Banners](https://reactnative.dev/docs/alert)
+
 * **Mong**
   * **Task:** Build Location Selector modal component.
   * **Goal & Context:** Allow users to switch between municipalities (e.g. Berkeley vs San Francisco) to view location-specific recycling rules.
@@ -757,6 +824,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/location-rules-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Python Caching Strategies (functools.lru_cache & cachetools)](https://cachetools.readthedocs.io/en/latest/)
+* [Firestore Query Optimization & Read Caching](https://cloud.google.com/firestore/docs/query-data/queries)
+* [Designing Modular Rule Engines in Python](https://docs.python.org/3/library/operator.html)
+* [Pytest Parameterized Tests Guide](https://docs.pytest.org/en/stable/how-to/parametrize.html)
+
 * **Janice**
   * **Task:** Implement Municipal Location Rules Engine.
   * **Goal & Context:** Provide customized recycling rules based on regional recycling facility capabilities.
@@ -819,6 +892,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/automated-pytest-suite`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Domain Adaptation & Covariate Shift in Computer Vision](https://en.wikipedia.org/wiki/Domain_adaptation)
+* [Test-Time Augmentation (TTA) Principles in PyTorch](https://github.com/qubvel/ttach)
+* [Temperature Scaling & Softmax Probability Calibration](https://arxiv.org/abs/1706.04599)
+* [Out-of-Distribution (OOD) Detection for Waste Sorting](https://towardsdatascience.com/out-of-distribution-detection-in-deep-neural-networks-99b38031d8c1)
+
 * **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
@@ -885,6 +964,11 @@
 
 ### Member Assignments & Action Plans
 
+**Shared Frontend Resources:**
+* [React Native NetInfo Network State Detection](https://github.com/react-native-netinfo/react-native-netinfo)
+* [React Native Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+* [Recording Mobile Screen Demos on iOS & Android](https://docs.expo.dev/workflow/debugging/)
+
 * **Mong (Frontend)**
   * **Task:** UI Responsiveness Audit & Demo Flow Styling.
   * **Goal & Context:** Ensure the mobile interface is pixel-perfect and visually pristine for the demo recording.
@@ -910,6 +994,12 @@
     4. Embed video directly into presentation Google Slides and prepare live narration.
   * **Verification:** Play back embedded video in presentation mode; verify audio/video sync and crisp resolution.
   * **Deliverable & Branch:** Final Recorded Demo Video (`.mp4`) & slide embedding.
+
+**Shared Backend Resources:**
+* [FastAPI Health Checks & Readiness Probes](https://fastapi.tiangolo.com/advanced/custom-response/)
+* [Benchmarking Python APIs with Locust](https://locust.io/)
+* [GitHub Actions Workflow Syntax for Python](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python)
+* [Cloud Firestore Batch Operations & Transactions](https://cloud.google.com/firestore/docs/manage-data/transactions)
 
 * **Janice (Backend)
   * **Task:** API Documentation & Schema Review.
@@ -962,6 +1052,11 @@
   * **Verification:** Commit retrospective summary to repository; review action items in the next all-hands standup.
   * **Deliverable & Branch:** `docs/retrospective-midsem.md`.
 
+**Shared AI / ML Resources:**
+* [Matplotlib & Seaborn Training Curve Visualization](https://matplotlib.org/stable/gallery/lines_bars_and_markers/simple_plot.html)
+* [Error Analysis & Qualitative Failure Review in Computer Vision](https://cs230.stanford.edu/files/C3M2.pdf)
+* [Jupyter Notebook Best Practices for Client Presentations](https://www.freecodecamp.org/news/how-to-write-a-good-readme-file/)
+
 * **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
   * **Goal & Context:** Document formal machine learning model performance for technical review.
@@ -1012,6 +1107,12 @@
 > **Theme:** Implement Firebase user authentication, manage secure sessions on mobile, and protect backend endpoints with JWT middleware.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Firebase Authentication in React Native & Expo](https://docs.expo.dev/guides/using-firebase/#authentication)
+* [Expo SecureStore for Token Persistence](https://docs.expo.dev/versions/latest/sdk/securestore/)
+* [React Context API for Global Auth State Management](https://react.dev/learn/passing-data-deeply-with-context)
+* [React Native Form Validation Techniques](https://reactnative.dev/docs/textinput)
+
 * **Mong**
   * **Task:** Build Login, Register & Forgot Password UI screens.
   * **Goal & Context:** Create clean, accessible entry screens for user onboarding and authentication.
@@ -1037,6 +1138,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/auth-context-integration`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Firebase ID Token Verification in Python](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
+* [FastAPI Security Dependencies (HTTPBearer & OAuth2)](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+* [Firestore Security Rules & User-Level Access](https://firebase.google.com/docs/firestore/security/get-started)
+* [Mocking Auth Tokens in Pytest Suites](https://docs.pytest.org/en/stable/how-to/monkeypatch.html)
+
 * **Janice
   * **Task:** Implement protected user profile route (`GET /api/users/me`).
   * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
@@ -1094,6 +1201,12 @@
   * **Deliverable & Branch:** `feat/backend/edward/auth-security-tests`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [MobileNetV2 in Torchvision & Depthwise Separable Convolutions](https://pytorch.org/vision/stable/models/mobilenetv2.html)
+* [Exporting PyTorch Models to ONNX (torch.onnx.export)](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html)
+* [Model Profiling: FLOPs, Parameter Counts & Latency](https://pytorch.org/docs/stable/profiler.html)
+* [Edge AI: Choosing Architectures for Mobile Devices](https://arxiv.org/abs/1801.04381)
+
 * **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
@@ -1147,6 +1260,11 @@
 > **Theme:** Drive daily student habits through streak tracking, eco-points, and scan history.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Lottie Animations in React Native (lottie-react-native)](https://docs.expo.dev/versions/latest/sdk/lottie/)
+* [React Native FlatList Performance & History Feeds](https://reactnative.dev/docs/optimizing-flatlist-configuration)
+* [Building Interactive Progress Bars & Gamified Badges](https://reactnative.dev/docs/view#style)
+
 * **Mong**
   * **Task:** Build Stats & Gamification Dashboard screen.
   * **Goal & Context:** Motivate students by visualizing their personal environmental impact and sorting streak.
@@ -1173,6 +1291,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/history-screen-flatlist`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Cloud Firestore Atomic Numeric Increments](https://firebase.google.com/docs/firestore/manage-data/add-data#increment_a_numeric_value)
+* [Python 3.9+ ZoneInfo Timezone Management](https://docs.python.org/3/library/zoneinfo.html)
+* [Cloud Firestore Distributed Counters](https://cloud.google.com/firestore/docs/solutions/counters)
+* [Designing Resilient Streak Tracking Algorithms](https://en.wikipedia.org/wiki/Gamification)
+
 * **Janice
   * **Task:** Implement paginated scan history endpoint (`GET /api/history`).
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
@@ -1237,6 +1361,11 @@
   * **Deliverable & Branch:** `feat/backend/edward/expand-municipal-rules`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [PyTorch Static & Dynamic Post-Training Quantization](https://pytorch.org/docs/stable/quantization.html)
+* [Quantization-Aware Training (QAT) Overview](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html)
+* [Benchmarking Quantized Model Latency on CPU](https://pytorch.org/tutorials/recipes/quantization.html)
+
 * **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
@@ -1293,6 +1422,11 @@
 > **Theme:** Stress-test every component, eliminate cross-subteam bugs, and calibrate model confidence thresholds.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [AsyncStorage for Offline Client Persistence](https://react-native-async-storage.github.io/async-storage/docs/usage)
+* [React Native Accessibility (a11y) Guidelines](https://reactnative.dev/docs/accessibility)
+* [Testing React Native Components with Jest & RNTL](https://callstack.github.io/react-native-testing-library/)
+
 * **Mong**
   * **Task:** Implement loading skeletons, empty states & accessibility audit.
   * **Goal & Context:** Elevate mobile user experience from functional prototype to polished consumer app.
@@ -1315,6 +1449,12 @@
   * **Deliverable & Branch:** `feat/frontend/caden/performance-and-cleanup`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [SlowAPI — Rate Limiting for FastAPI](https://slowapi.readthedocs.io/en/latest/)
+* [Tenacity — Python Retrying Library](https://tenacity.readthedocs.io/en/latest/)
+* [Firebase Local Emulator Suite Guide](https://firebase.google.com/docs/emulator-suite)
+* [OWASP API Security Top 10 Guidelines](https://owasp.org/www-project-api-security/)
+
 * **Janice
   * **Task:** API endpoint unit tests with pytest.
   * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
@@ -1377,6 +1517,11 @@
   * **Deliverable & Branch:** `docs/backend/edward/edge-cases-and-docs`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Benchmarking PyTorch Inference Latency (torch.utils.benchmark)](https://pytorch.org/tutorials/recipes/recipes/benchmark.html)
+* [Evaluating Neural Network Robustness to Common Corruptions](https://github.com/hendrycks/robustness)
+* [Defensive Preprocessing & Input Sanitization in Computer Vision](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
+
 * **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
@@ -1437,6 +1582,12 @@
 > **Theme:** Make Sortify feel like a consumer-grade app: haptic feedback, dark mode, Dockerization, and clear setup guides.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo SplashScreen API & Configuration](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
+* [Expo App Icons & Asset Configuration](https://docs.expo.dev/develop/user-interface/app-icons/)
+* [React Native Appearance & Dark Mode Styling](https://reactnative.dev/docs/appearance)
+* [React Native Performance Profiling with Hermes](https://reactnative.dev/docs/profiling)
+
 * **Mong**
   * **Task:** Implement onboarding walkthrough & Dark Mode theme.
   * **Goal & Context:** Welcome first-time users with an educational walkthrough and support system-wide dark mode.
@@ -1464,6 +1615,13 @@
   * **Deliverable & Branch:** `feat/frontend/caden/haptics-and-polish`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Dockerizing FastAPI Applications with Multi-Stage Builds](https://fastapi.tiangolo.com/deployment/docker/)
+* [FastAPI CORS Middleware Configuration](https://fastapi.tiangolo.com/tutorial/cors/)
+* [Cloud Firestore Composite Indexing](https://cloud.google.com/firestore/docs/query-data/indexing)
+* [RFC 7807 Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc7807)
+* [pip-audit — Python Dependency Vulnerability Scanner](https://pypi.org/project/pip-audit/)
+
 * **Janice
   * **Task:** Error handling middleware, custom exception handlers & standardized error responses.
   * **Goal & Context:** Ensure consistent error responses across all endpoints.
@@ -1535,6 +1693,11 @@
   * **Deliverable & Branch:** `docs/backend/edward/openapi-polish`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [Scikit-learn Probability Calibration (CalibratedClassifierCV)](https://scikit-learn.org/stable/modules/calibration.html)
+* [Confidence-Based Reject Option & Fallback Heuristics](https://arxiv.org/abs/1706.03038)
+* [Waste Contamination Rules & Heuristic Post-Processing](https://www.epa.gov/recycle)
+
 * **Aarav**
   * **Task:** Verify Dockerized model inference performance.
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
@@ -1587,6 +1750,11 @@
 > **Theme:** Deploy backend to cloud, generate standalone mobile builds, and explore advanced stretch features in isolated branches.
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Application Services (EAS) Build Guide](https://docs.expo.dev/build/introduction/)
+* [Configuring eas.json for Android & iOS Builds](https://docs.expo.dev/build/eas-json/)
+* [Internal Distribution & Standalone APK Generation](https://docs.expo.dev/build/internal-distribution/)
+
 * **Mong**
   * **Task:** Design App Store & portfolio visual marketing assets.
   * **Goal & Context:** Create visual assets showcasing Sortify on realistic mobile device frames for the portfolio release.
@@ -1612,6 +1780,12 @@
   * **Deliverable & Branch:** Standalone APK build link + `feat/frontend/caden/eas-standalone-build`.
 
 ### ⚙️ Backend Subteam
+**Shared Subteam Resources:**
+* [Deploying Containerized FastAPI to Google Cloud Run](https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-python-service)
+* [Deploying FastAPI to Render](https://render.com/docs/deploy-fastapi)
+* [Structured JSON Logging in Production Python](https://docs.python.org/3/library/logging.html)
+* [Cloud Firestore Automated Backups & Export](https://cloud.google.com/firestore/docs/manage-data/export-import-entities)
+
 * **Janice
   * **Task:** OpenAPI Swagger documentation polish & backend setup guide.
   * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
@@ -1672,6 +1846,11 @@
   * **Deliverable & Branch:** `feat/backend/edward/contamination-heuristics`.
 
 ### 🤖 AI / ML Subteam
+**Shared Subteam Resources:**
+* [TorchScript Production Tracing (torch.jit.trace)](https://pytorch.org/docs/stable/jit.html)
+* [ONNX Runtime Python API for CPU/GPU Inference](https://onnxruntime.ai/docs/get-started/with-python.html)
+* [Optimizing PyTorch Multi-Threading for Web Serving](https://pytorch.org/docs/stable/notes/cpu_threading_torchscript_inference.html)
+
 * **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
@@ -1735,6 +1914,11 @@
 
 ### Member Assignments & Action Plans
 
+**Shared Frontend Resources:**
+* [Google Play & Apple App Store Asset Specifications](https://developer.apple.com/design/human-interface-guidelines)
+* [Expo Release Channels & Updates Guide](https://docs.expo.dev/eas-update/introduction/)
+* [Creating Mobile Portfolio Demos & Case Studies](https://docs.github.com/en/get-started/writing-on-github)
+
 * **Mong (Frontend)**
   * **Task:** Mobile UI Final Polish & Architecture Documentation.
   * **Goal & Context:** Polish final visual details and document mobile component architecture for open-source portfolio.
@@ -1759,6 +1943,12 @@
     3. Embed video in final Google Slides presentation deck and lead the live mobile presentation.
   * **Verification:** Play back video in the presentation venue; confirm crystal-clear playback and crisp audio.
   * **Deliverable & Branch:** Final Demo Video (`.mp4`) & mobile presentation walkthrough.
+
+**Shared Backend Resources:**
+* [OpenAPI 3.0 Specification Reference](https://swagger.io/specification/)
+* [Coverage.py & Code Coverage Badges](https://coverage.readthedocs.io/en/latest/)
+* [Semantic Versioning 2.0.0](https://semver.org/)
+* [GitHub Release Management & Production Checklists](https://docs.github.com/en/repositories/releasing-projects-on-github)
 
 * **Janice (Backend)**
   * **Task:** Final API Documentation Audit & OpenAPI / Swagger Export.
@@ -1812,6 +2002,11 @@
     3. Author comprehensive API usage section in `backend/README.md` with example curl commands and response payloads.
   * **Verification:** Verify all 5 cities return verified municipal guidelines and interactive Swagger docs are complete.
   * **Deliverable & Branch:** `docs/backend/edward/rules-audit`.
+
+**Shared AI / ML Resources:**
+* [Hugging Face Model Cards Guide & Template](https://huggingface.co/docs/hub/model-cards)
+* [Model Governance & Responsible AI Standards](https://arxiv.org/abs/1810.03993)
+* [Packaging ML Weights & Reproducibility Artifacts](https://github.com/readme/guides)
 
 * **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.

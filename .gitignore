@@ -42,6 +42,7 @@ data/
 *.pt
 *.onnx
 *.tflite
+*.zip
 
 # Node / React Native / Expo
 node_modules/

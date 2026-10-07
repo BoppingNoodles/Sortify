@@ -97,6 +97,13 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [React Navigation — Getting Started & Navigators](https://reactnavigation.org/docs/getting-started)
+* [React Native Styling & StyleSheet Guide](https://reactnative.dev/docs/stylesheet)
+* [Figma to Code: Responsive Mobile Design Tokens](https://help.figma.com/hc/en-us/articles/360040451373-Create-and-manage-styles)
+* [React Native Safe Area Context](https://github.com/th3rdwave/react-native-safe-area-context)
+* [Expo Project Structure & Asset Organization](https://docs.expo.dev/develop/project-structure/)
+
 * **Mong**
   * **Task:** Design high-fidelity UI mockups and design token system in Figma.
   * **Goal & Context:** Provide precise visual specifications, component guidelines, and color palettes for engineering implementation.
@@ -145,6 +152,13 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Camera SDK Guide & Viewfinder Implementation](https://docs.expo.dev/versions/latest/sdk/camera/)
+* [React Navigation Bottom Tabs Navigator](https://reactnavigation.org/docs/bottom-tab-navigator/)
+* [React Native Permissions & Camera Authorization](https://docs.expo.dev/guides/permissions/)
+* [React Native Vector Icons & Ionicons Directory](https://icons.expo.fyi/)
+* [React Native Modal & Overlay Guide](https://reactnative.dev/docs/modal)
+
 * **Mong**
   * **Task:** Build Results screen component with mock data.
   * **Goal & Context:** Create the central feedback screen where users discover what bin their item belongs in.
@@ -183,6 +197,13 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo FileSystem & File URI Handling](https://docs.expo.dev/versions/latest/sdk/filesystem/)
+* [Uploading Images in React Native with FormData](https://reactnative.dev/docs/network#using-fetch)
+* [React Native ActivityIndicator & Loading States](https://reactnative.dev/docs/activityindicator)
+* [Handling Asynchronous API Requests in React Native](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+* [Designing Mobile Classification Result Cards](https://m3.material.io/components/cards/overview)
+
 * **Mong**
   * **Task:** Build Home Screen UI and navigation flow.
   * **Goal & Context:** Create an engaging, intuitive dashboard welcoming the user and encouraging waste scanning.
@@ -219,6 +240,12 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Location SDK & Geolocation Permissions](https://docs.expo.dev/versions/latest/sdk/location/)
+* [Expo Haptics for Tactile Feedback](https://docs.expo.dev/versions/latest/sdk/haptics/)
+* [Dynamic Theming & Bin Color Schemes in React Native](https://reactnative.dev/docs/usecolorscheme)
+* [React Native Toast & Notification Banners](https://reactnative.dev/docs/alert)
+
 * **Mong**
   * **Task:** Build Location Selector modal component.
   * **Goal & Context:** Allow users to switch between municipalities (e.g. Berkeley vs San Francisco) to view location-specific recycling rules.
@@ -261,6 +288,11 @@
 
 ### Subteam Member Presentation Assignments
 
+**Shared Subteam Resources:**
+* [React Native NetInfo Network State Detection](https://github.com/react-native-netinfo/react-native-netinfo)
+* [React Native Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+* [Recording Mobile Screen Demos on iOS & Android](https://docs.expo.dev/workflow/debugging/)
+
 * **Mong (Frontend)**
   * **Task:** UI Responsiveness Audit & Demo Flow Styling.
   * **Goal & Context:** Ensure the mobile interface is pixel-perfect and visually pristine for the demo recording.
@@ -296,6 +328,12 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Firebase Authentication in React Native & Expo](https://docs.expo.dev/guides/using-firebase/#authentication)
+* [Expo SecureStore for Token Persistence](https://docs.expo.dev/versions/latest/sdk/securestore/)
+* [React Context API for Global Auth State Management](https://react.dev/learn/passing-data-deeply-with-context)
+* [React Native Form Validation Techniques](https://reactnative.dev/docs/textinput)
+
 * **Mong**
   * **Task:** Build Login, Register & Forgot Password UI screens.
   * **Goal & Context:** Create clean, accessible entry screens for user onboarding and authentication.
@@ -328,6 +366,11 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Lottie Animations in React Native (lottie-react-native)](https://docs.expo.dev/versions/latest/sdk/lottie/)
+* [React Native FlatList Performance & History Feeds](https://reactnative.dev/docs/optimizing-flatlist-configuration)
+* [Building Interactive Progress Bars & Gamified Badges](https://reactnative.dev/docs/view#style)
+
 * **Mong**
   * **Task:** Build Stats & Gamification Dashboard screen.
   * **Goal & Context:** Motivate students by visualizing their personal environmental impact and sorting streak.
@@ -361,6 +404,11 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [AsyncStorage for Offline Client Persistence](https://react-native-async-storage.github.io/async-storage/docs/usage)
+* [React Native Accessibility (a11y) Guidelines](https://reactnative.dev/docs/accessibility)
+* [Testing React Native Components with Jest & RNTL](https://callstack.github.io/react-native-testing-library/)
+
 * **Mong**
   * **Task:** Implement loading skeletons, empty states & accessibility audit.
   * **Goal & Context:** Elevate mobile user experience from functional prototype to polished consumer app.
@@ -390,6 +438,12 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo SplashScreen API & Configuration](https://docs.expo.dev/versions/latest/sdk/splash-screen/)
+* [Expo App Icons & Asset Configuration](https://docs.expo.dev/develop/user-interface/app-icons/)
+* [React Native Appearance & Dark Mode Styling](https://reactnative.dev/docs/appearance)
+* [React Native Performance Profiling with Hermes](https://reactnative.dev/docs/profiling)
+
 * **Mong**
   * **Task:** Implement onboarding walkthrough & Dark Mode theme.
   * **Goal & Context:** Welcome first-time users with an educational walkthrough and support system-wide dark mode.
@@ -424,6 +478,11 @@
 ---
 
 ### 📱 Frontend Subteam
+**Shared Subteam Resources:**
+* [Expo Application Services (EAS) Build Guide](https://docs.expo.dev/build/introduction/)
+* [Configuring eas.json for Android & iOS Builds](https://docs.expo.dev/build/eas-json/)
+* [Internal Distribution & Standalone APK Generation](https://docs.expo.dev/build/internal-distribution/)
+
 * **Mong**
   * **Task:** Design App Store & portfolio visual marketing assets.
   * **Goal & Context:** Create visual assets showcasing Sortify on realistic mobile device frames for the portfolio release.
@@ -466,6 +525,11 @@
 ---
 
 ### Subteam Member Presentation Assignments
+
+**Shared Subteam Resources:**
+* [Google Play & Apple App Store Asset Specifications](https://developer.apple.com/design/human-interface-guidelines)
+* [Expo Release Channels & Updates Guide](https://docs.expo.dev/eas-update/introduction/)
+* [Creating Mobile Portfolio Demos & Case Studies](https://docs.github.com/en/get-started/writing-on-github)
 
 * **Mong (Frontend)**
   * **Task:** Mobile UI Final Polish & Architecture Documentation.
