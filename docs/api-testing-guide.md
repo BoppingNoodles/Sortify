@@ -55,13 +55,3 @@ curl -X POST http://127.0.0.1:8000/api/history
 
 - Swagger UI: http://127.0.0.1:8000/docs
 - ReDoc: http://127.0.0.1:8000/redoc
-
-## 5. Testing from Mobile (Local Wi-Fi)
-1. **Find your local IP:**
-   - **macOS:** `ipconfig getifaddr en0` (or check Network settings).
-   - **Windows:** Run `ipconfig` in CMD and look for "IPv4 Address" under your active Wi-Fi adapter.
-2. **Update your mobile API service:**
-   In `mobile/src/services/api.js`, update the base URL to:
-   `const BASE_URL = "http://<YOUR_LOCAL_IP>:8000";`
-3. **Ensure Firewall is open:**
-   Ensure your computer's firewall allows incoming connections on port 8000.

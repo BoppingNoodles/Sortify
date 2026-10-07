@@ -32,9 +32,11 @@ wheels/
 .env.*.local
 *.pem
 *.logs
-server_logs/
+.json1
+.server_logs/
 serviceAccountKey.json
 firebase-adminsdk*.json
+backend/serviceAccountKey.json
 
 # Machine Learning & Datasets
 data/
