@@ -33,6 +33,7 @@ wheels/
 *.pem
 serviceAccountKey.json
 firebase-adminsdk*.json
+backend/serviceAccountKey.json
 
 # Machine Learning & Datasets
 data/
