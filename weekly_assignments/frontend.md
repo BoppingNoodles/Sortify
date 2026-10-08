@@ -60,6 +60,7 @@
 
 * **Mong**
   * **Task:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits).
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-1](starter_code/frontend_code.md#mong-week-1)
   * **Goal & Context:** Establish the visual blueprint and navigation flow of the Sortify mobile app before writing code.
   * **Action Steps:**
     1. Register for a free Figma Education account using your `@berkeley.edu` email and create the shared `Sortify Mobile` Figma project.
@@ -75,6 +76,7 @@
 
 * **Caden**
   * **Task:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits).
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-1](starter_code/frontend_code.md#caden-week-1)
   * **Goal & Context:** Ensure the Figma designs translate cleanly into React Native components and initialize the mobile workspace.
   * **Action Steps:**
     1. Join the shared Figma project, review Mong's wireframes for layout feasibility, touch targets (minimum 44×44 pt), and mobile navigation standards.
@@ -106,6 +108,7 @@
 
 * **Mong**
   * **Task:** Design high-fidelity UI mockups and design token system in Figma.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-2](starter_code/frontend_code.md#mong-week-2)
   * **Goal & Context:** Provide precise visual specifications, component guidelines, and color palettes for engineering implementation.
   * **Action Steps:**
     1. Create high-fidelity Figma components for the 5 waste bin categories:
@@ -121,6 +124,7 @@
 
 * **Caden**
   * **Task:** Configure mobile navigation stack and directory structure.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-2](starter_code/frontend_code.md#caden-week-2)
   * **Goal & Context:** Establish the production React Native project architecture and seamless bottom tab navigation.
   * **Action Steps:**
     1. Install React Navigation dependencies:
@@ -161,6 +165,7 @@
 
 * **Mong**
   * **Task:** Build Results screen component with mock data.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-3](starter_code/frontend_code.md#mong-week-3)
   * **Goal & Context:** Create the central feedback screen where users discover what bin their item belongs in.
   * **Action Steps:**
     1. Implement `src/screens/ResultScreen.js` accepting route parameters or mock result payload.
@@ -176,6 +181,7 @@
 
 * **Caden**
   * **Task:** Build full Camera capture screen & API client service.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-3](starter_code/frontend_code.md#caden-week-3)
   * **Goal & Context:** Provide responsive camera viewfinder with photo preview and scaffold the HTTP network layer.
   * **Action Steps:**
     1. Build `src/screens/ScanScreen.js` using `expo-camera`:
@@ -206,6 +212,7 @@
 
 * **Mong**
   * **Task:** Build Home Screen UI and navigation flow.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-4](starter_code/frontend_code.md#mong-week-4)
   * **Goal & Context:** Create an engaging, intuitive dashboard welcoming the user and encouraging waste scanning.
   * **Action Steps:**
     1. Implement `src/screens/HomeScreen.js`:
@@ -220,6 +227,7 @@
 
 * **Caden**
   * **Task:** Integrate live mobile camera scanning with backend API.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-4](starter_code/frontend_code.md#caden-week-4)
   * **Goal & Context:** Achieve the complete camera-to-cloud classification flow on physical devices.
   * **Action Steps:**
     1. Connect `ScanScreen.js` with `classifyImage()` in `src/services/api.js`.
@@ -248,6 +256,7 @@
 
 * **Mong**
   * **Task:** Build Location Selector modal component.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-5](starter_code/frontend_code.md#mong-week-5)
   * **Goal & Context:** Allow users to switch between municipalities (e.g. Berkeley vs San Francisco) to view location-specific recycling rules.
   * **Action Steps:**
     1. Create `src/components/LocationSelector.js`:
@@ -260,6 +269,7 @@
 
 * **Caden**
   * **Task:** Location rules integration & app hardening.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-5](starter_code/frontend_code.md#caden-week-5)
   * **Goal & Context:** Integrate municipal location selection with camera scans and harden app flow.
   * **Action Steps:**
     1. Connect `LocationSelector` modal to app state, allowing user to select or switch current municipality (Berkeley, San Francisco, Oakland).
@@ -295,6 +305,7 @@
 
 * **Mong (Frontend)**
   * **Task:** UI Responsiveness Audit & Demo Flow Styling.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-6](starter_code/frontend_code.md#mong-week-6)
   * **Goal & Context:** Ensure the mobile interface is pixel-perfect and visually pristine for the demo recording.
   * **Action Steps:**
     1. Audit app layout across multiple screen sizes (iPhone SE, iPhone 14/15, Android pixel devices).
@@ -304,8 +315,9 @@
   * **Verification:** Review screen recording preview; verify zero visual glitches or layout jumps.
   * **Deliverable & Branch:** `feat/frontend/mong/ui-audit-polish`.
 
-* **Caden (Frontend)
+* **Caden (Frontend)**
   * **Task:** App Demo Video Production & Mobile Walkthrough.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-6](starter_code/frontend_code.md#caden-week-6)
   * **Goal & Context:** Produce a smooth, high-resolution video recording of the working app to embed in the presentation deck.
   * **Action Steps:**
     1. Set up high-res screen recording on a physical phone with clean test environment.
@@ -336,6 +348,7 @@
 
 * **Mong**
   * **Task:** Build Login, Register & Forgot Password UI screens.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-7](starter_code/frontend_code.md#mong-week-7)
   * **Goal & Context:** Create clean, accessible entry screens for user onboarding and authentication.
   * **Action Steps:**
     1. Implement `src/screens/LoginScreen.js` and `src/screens/RegisterScreen.js`:
@@ -347,8 +360,9 @@
   * **Verification:** Test form inputs on physical phone; verify keyboard dismissing and input validation banners.
   * **Deliverable & Branch:** `feat/frontend/mong/auth-screens-ui`.
 
-* **Caden
+* **Caden**
   * **Task:** Integrate Firebase Auth client SDK & React AuthContext.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-7](starter_code/frontend_code.md#caden-week-7)
   * **Goal & Context:** Manage global login state, secure token storage, and authenticated API requests.
   * **Action Steps:**
     1. Set up Firebase client SDK in `src/services/firebase.js`.
@@ -373,6 +387,7 @@
 
 * **Mong**
   * **Task:** Build Stats & Gamification Dashboard screen.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-8](starter_code/frontend_code.md#mong-week-8)
   * **Goal & Context:** Motivate students by visualizing their personal environmental impact and sorting streak.
   * **Action Steps:**
     1. Implement `src/screens/StatsScreen.js`:
@@ -384,8 +399,9 @@
   * **Verification:** Test chart rendering with varying sample data; verify chart fits seamlessly on both small and large phone screens.
   * **Deliverable & Branch:** `feat/frontend/mong/stats-screen-ui`.
 
-* **Caden
+* **Caden**
   * **Task:** Implement History Screen with FlatList & auto-logging.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-8](starter_code/frontend_code.md#caden-week-8)
   * **Goal & Context:** Provide responsive, paginated browsing of past scans with thumbnail previews.
   * **Action Steps:**
     1. Implement `src/screens/HistoryScreen.js` using `<FlatList>`:
@@ -411,6 +427,7 @@
 
 * **Mong**
   * **Task:** Implement loading skeletons, empty states & accessibility audit.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-9](starter_code/frontend_code.md#mong-week-9)
   * **Goal & Context:** Elevate mobile user experience from functional prototype to polished consumer app.
   * **Action Steps:**
     1. Replace generic activity spinners with animated skeleton cards on History and Stats screens.
@@ -420,8 +437,9 @@
   * **Verification:** Test app with iOS VoiceOver or Android TalkBack enabled; verify all buttons are clearly announced.
   * **Deliverable & Branch:** `feat/frontend/mong/accessibility-and-skeletons`.
 
-* **Caden
+* **Caden**
   * **Task:** Cross-device testing & memory leak cleanup.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-9](starter_code/frontend_code.md#caden-week-9)
   * **Goal & Context:** Ensure stable app performance on low-end and high-end devices without crashing or memory leaks.
   * **Action Steps:**
     1. Audit camera lifecycle in `ScanScreen.js`: ensure camera stream is actively unmounted when navigating to History or Profile tabs to release camera hardware memory.
@@ -446,6 +464,7 @@
 
 * **Mong**
   * **Task:** Implement onboarding walkthrough & Dark Mode theme.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-10](starter_code/frontend_code.md#mong-week-10)
   * **Goal & Context:** Welcome first-time users with an educational walkthrough and support system-wide dark mode.
   * **Action Steps:**
     1. Implement 3-step swipeable onboarding flow (`src/screens/OnboardingScreen.js`):
@@ -457,8 +476,9 @@
   * **Verification:** Test first-time app launch on physical phone; verify onboarding displays once, dismisses smoothly, and dark mode toggles seamlessly with system settings.
   * **Deliverable & Branch:** `feat/frontend/mong/onboarding-and-dark-mode`.
 
-* **Caden
+* **Caden**
   * **Task:** Integrate haptic feedback, safe areas & icon audit.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-10](starter_code/frontend_code.md#caden-week-10)
   * **Goal & Context:** Add tactile responsiveness to mobile interactions and fix notch/home-bar padding.
   * **Action Steps:**
     1. Install and configure `expo-haptics`: `npx expo install expo-haptics`.
@@ -485,6 +505,7 @@
 
 * **Mong**
   * **Task:** Design App Store & portfolio visual marketing assets.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-11](starter_code/frontend_code.md#mong-week-11)
   * **Goal & Context:** Create visual assets showcasing Sortify on realistic mobile device frames for the portfolio release.
   * **Action Steps:**
     1. Design 4 high-resolution screenshot cards on iPhone mockups:
@@ -496,8 +517,9 @@
   * **Verification:** Export visual assets at 2x resolution and upload to `docs/portfolio_assets/`.
   * **Deliverable & Branch:** `docs/portfolio_assets/` in repository.
 
-* **Caden
+* **Caden**
   * **Task:** Generate standalone APK via EAS Build & preview distribution.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-11](starter_code/frontend_code.md#caden-week-11)
   * **Goal & Context:** Produce an installable Android `.apk` file for physical device validation.
   * **Action Steps:**
     1. Configure Expo Application Services (`eas.json`):
@@ -533,6 +555,7 @@
 
 * **Mong (Frontend)**
   * **Task:** Mobile UI Final Polish & Architecture Documentation.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-12](starter_code/frontend_code.md#mong-week-12)
   * **Goal & Context:** Polish final visual details and document mobile component architecture for open-source portfolio.
   * **Action Steps:**
     1. Perform final visual audit across all screens: verify color contrast, typography consistency, and safe areas.
@@ -541,8 +564,9 @@
   * **Verification:** Run linter across mobile codebase; ensure zero lint errors or warnings.
   * **Deliverable & Branch:** `mobile/README.md`.
 
-* **Caden (Frontend)
+* **Caden (Frontend)**
   * **Task:** Final Comprehensive Demo Video & Mobile Presentation.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-12](starter_code/frontend_code.md#caden-week-12)
   * **Goal & Context:** Produce the definitive, high-impact video demonstration of the Sortify app to showcase in the final presentation.
   * **Action Steps:**
     1. Record a comprehensive 2-minute walkthrough on a physical device:
