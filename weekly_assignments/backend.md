@@ -88,7 +88,7 @@
     FastAPI is a Python web framework that creates an API (Application Programming Interface). Think of an API like a restaurant waiter: when a customer (the mobile app) orders food (makes an HTTP request), the waiter (FastAPI) takes the order to the kitchen (your Python function) and brings back the plate (a JSON response). This week, you are creating a tiny server on your machine that can answer two basic requests:
     1. `GET /health`: "Are you awake and healthy?" -> responds `{"status": "ok"}`
     2. `POST /upload-image`: "Here is an image file from the camera, please save it." -> saves it to a folder and responds `{"status": "received", "filename": "..."}`.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Open your terminal in the repository root:**
        - Ensure your terminal is in the project folder (`Sortify/`).
     2. **Set up and activate your Python virtual environment:**  
@@ -248,7 +248,7 @@
   * **Goal & Context:** Define strict request/response data contracts to decouple mobile and backend development.
   * **Beginner Primer (What is this and why are we doing it?):**  
     In app development, the frontend (mobile app) and backend need an agreement on what data looks like. For example, when our AI classifies trash, what fields should the backend send back? If the backend sends `{"item": "bottle"}` but the mobile phone looks for `{"item_name": "bottle"}`, the app crashes! A **Pydantic schema** is a strict Python blueprint that checks every single data field, its name, and its type (text, number, list). If incoming or outgoing data doesn't match the blueprint, Pydantic immediately rejects it with a helpful error message before your program crashes.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Create the schemas package directory:**
        - Create `backend/app/schemas/` if it doesn't already exist.
        - Create an empty `backend/app/schemas/__init__.py` file (this tells Python this folder is a package).
@@ -418,7 +418,7 @@
     - `routers/auth.py`: handles user login and profiles
     - `routers/history.py`: handles past scans  
     In `main.py`, we plug them together using `app.include_router()`. We also add **CORS** (Cross-Origin Resource Sharing) middleware, which is a web security permission that allows our mobile app (running on a phone or simulator) to talk to our backend without getting blocked by the browser.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Create the router directory structure:**
        - Create `backend/app/routers/` with an empty `__init__.py`.
     2. **Create the 4 modular router files:**
@@ -591,7 +591,7 @@
   * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Our machine learning model only outputs a raw category name (like `"plastic"` or `"glass"`) and a confidence number (like `0.93`). But a real student holding a coffee cup or soda can needs to know: "What bin does this go into? Do I rinse it? Does the lid go in compost or landfill?" In Week 4, you build a helper service (`tips_service.py`) that takes the raw category and bundles it into our rich `ClassifyResponse` schema with clear disposal actions, bin colors, and advice.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Create the disposal guidance service (`backend/app/services/tips_service.py`):**
        - Create `backend/app/services/` if it doesn't already exist.
        - Implement the disposal advice lookup table:
@@ -769,7 +769,7 @@
   * **Goal & Context:** Provide customized recycling rules based on regional recycling facility capabilities.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Recycling rules change depending on where you are! For example, Berkeley has strict compost guidelines for food packaging, while San Francisco allows bundled plastic bags in recycling. In Week 5, you build a **rules engine** that stores city guidelines in a simple JSON file (`rules.json`) and gives back the exact disposal guidelines for a given city ("berkeley", "san francisco", etc.), with an automatic fallback if an unknown city is requested.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Create the rules data file (`backend/app/data/rules.json`):**
        - Create `backend/app/data/` if it doesn't exist yet.
        - Create `backend/app/data/rules.json` with municipal details:
@@ -930,7 +930,7 @@
   * **Goal & Context:** Audit API schemas and ensure route parameters and responses are clearly documented for presentation materials.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Week 6 is our Mid-Semester Presentation and Video Demo! Your job is to make sure our API is completely documented and clean so the frontend team and PMs have accurate request and response examples for slides and recorded demos. You don't need to write complex algorithms this week; your focus is auditing our routes, ensuring Swagger UI displays clear descriptions, and exporting clean sample JSON responses.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Audit Swagger UI interactive documentation:**
        - Launch your server: `uvicorn backend.app.main:app --reload`.
        - Open `http://localhost:8000/docs` in your browser.
@@ -1027,7 +1027,7 @@
   * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Now that the team has Firebase Authentication enabled, users log in on their phones with their Berkeley email. When the phone calls `GET /api/users/me`, our backend checks the user's login token (like a wristband at a concert), finds out who they are, looks up their user profile in Firestore, and returns their display name, email, and member stats.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Understand FastAPI Dependencies (`Depends`):**  
        *Why:* In FastAPI, `Depends(get_current_user)` acts like a security guard. Before running your route, FastAPI calls `get_current_user` to inspect the `Authorization: Bearer <token>` header. If the token is valid, it passes the user's information directly into your route function!
     2. **Implement the profile route in `backend/app/routers/auth.py`:**
@@ -1146,7 +1146,7 @@
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
   * **Beginner Primer (What is this and why are we doing it?):**  
     If an active student scans 200 items over a semester, loading all 200 items in one request would make the mobile app lag or consume lots of phone data! **Pagination** solves this: we send only 10 items at a time, along with a bookmark (called a `cursor` or `next_cursor`). When the user scrolls down on their phone, the app asks for the next 10 items starting from that cursor.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Define the history schema in `backend/app/schemas/history.py`:**
        ```python
        from typing import List, Optional
@@ -1291,7 +1291,7 @@
   * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Instead of manually opening Swagger UI and clicking buttons every single day to see if our API works, we write **automated unit tests**. An automated test is a Python function that uses FastAPI's `TestClient` to send requests to our server in memory and asserts that the response code is 200. When we run `pytest`, Python runs all tests in 2 seconds and reports all green checks!
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Install pytest and httpx (if not already installed):**
        ```bash
        pip install pytest httpx
@@ -1425,7 +1425,7 @@
   * **Goal & Context:** Ensure consistent error responses across all endpoints.
   * **Beginner Primer (What is this and why are we doing it?):**  
     When an unexpected error happens (like a missing file or bad parameter), we never want Python to crash or return an ugly, confusing HTML error page. Instead, an **exception handler** catches errors and converts them into a clean, predictable JSON response: `{"error": true, "code": "RESOURCE_NOT_FOUND", "message": "City not found"}`. A **middleware** is a checkpoint that runs on every single request, recording how long it took in milliseconds so we can spot slow endpoints.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Create custom exception class (`backend/app/core/exceptions.py`):**
        - Create `backend/app/core/` with `__init__.py`.
        - In `exceptions.py`:
@@ -1566,7 +1566,7 @@
   * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
   * **Beginner Primer (What is this and why are we doing it?):**  
     Great documentation is what separates an amateur school project from a professional, industry-grade portfolio release. In Week 11, you will write a complete, welcoming setup guide in `backend/README.md` so that any teammate, recruiter, or grading instructor can clone the repository and get the backend running in under 3 minutes with zero confusion.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Polish Swagger metadata in `backend/app/main.py`:**
        - Add professional title, description, and contact info:
          ```python
@@ -1690,7 +1690,7 @@
   * **Goal & Context:** Finalize API documentation and OpenAPI schemas for the portfolio release.
   * **Beginner Primer (What is this and why are we doing it?):**  
     This is the final week! You will freeze the backend specification by exporting the official OpenAPI 3.0 specification (`openapi.json`). This JSON file contains the complete mathematical blueprint of our entire API, which can be imported into tools like Postman or used to generate mobile API clients. You will also compile the backend release summary for our final team presentation and portfolio.
-  * **Action Steps (Step-by-Step Hand-Holding):**
+  * **Action Steps:**
     1. **Export the OpenAPI JSON schema:**
        - Make sure your server is running: `uvicorn backend.app.main:app --reload`.
        - Run this one-line Python command to download the live schema file:
