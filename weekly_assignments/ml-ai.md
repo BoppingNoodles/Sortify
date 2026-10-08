@@ -65,6 +65,7 @@
 
 * **Aarav**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-1](starter_code/ml-ai_code.md#aarav-week-1)
   * **Goal & Context:** Establish local GPU/MPS/CPU training capability and understand fine-tuning head replacement.
   * **Action Steps:**
     1. Install Python 3.10+, PyTorch (`torch`), `torchvision`, `torchaudio`, and `jupyterlab`. Check device availability (`torch.cuda.is_available()` or `torch.backends.mps.is_available()`).
@@ -79,6 +80,7 @@
 
 * **Kathleen**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-1](starter_code/ml-ai_code.md#kathleen-week-1)
   * **Goal & Context:** Master PyTorch Dataset/DataLoader pipeline and model fine-tuning mechanics.
   * **Action Steps:**
     1. Set up PyTorch, torchvision, and JupyterLab environment.
@@ -91,6 +93,7 @@
 
 * **Max**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-1](starter_code/ml-ai_code.md#max-week-1)
   * **Goal & Context:** Learn PyTorch tensor operations, device handling (CPU vs GPU), and classification evaluation.
   * **Action Steps:**
     1. Set up PyTorch dev environment with JupyterLab.
@@ -103,6 +106,7 @@
 
 * **Doil**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-1](starter_code/ml-ai_code.md#doil-week-1)
   * **Goal & Context:** Familiarize with model inspection, parameter counts, and output classification logits.
   * **Action Steps:**
     1. Set up PyTorch and JupyterLab; verify library versions in terminal.
@@ -129,6 +133,7 @@
 
 * **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-2](starter_code/ml-ai_code.md#aarav-week-2)
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
   * **Action Steps:**
     1. Download TrashNet and Kaggle waste datasets into `data/raw/`.
@@ -140,6 +145,7 @@
 
 * **Kathleen**
   * **Task:** Build train / validation / test partitioning script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-2](starter_code/ml-ai_code.md#kathleen-week-2)
   * **Goal & Context:** Ensure reproducible, stratified data splits across train, validation, and test datasets.
   * **Action Steps:**
     1. Create `ml/scripts/split_data.py` taking `--input_dir` and `--output_dir` arguments.
@@ -152,6 +158,7 @@
 
 * **Max**
   * **Task:** Build image preprocessing pipeline.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-2](starter_code/ml-ai_code.md#max-week-2)
   * **Goal & Context:** Normalize images to prevent training instability and optimize input dimensions for ResNet.
   * **Action Steps:**
     1. Implement `ml/scripts/preprocess.py` using Pillow and torchvision.
@@ -164,6 +171,7 @@
 
 * **Doil**
   * **Task:** Exploratory Data Analysis (EDA) notebook.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-2](starter_code/ml-ai_code.md#doil-week-2)
   * **Goal & Context:** Uncover class imbalances, resolution anomalies, and guide augmentation strategies.
   * **Action Steps:**
     1. Create Jupyter notebook `ml/notebooks/exploration.ipynb`.
@@ -191,6 +199,7 @@
 
 * **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-3](starter_code/ml-ai_code.md#aarav-week-3)
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
   * **Action Steps:**
     1. Create `ml/scripts/train.py` with CLI arguments (`--epochs`, `--batch_size`, `--lr`, `--data_dir`, `--output_dir`).
@@ -203,6 +212,7 @@
 
 * **Kathleen**
   * **Task:** Configure PyTorch DataLoaders with data augmentations.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-3](starter_code/ml-ai_code.md#kathleen-week-3)
   * **Goal & Context:** Prevent model overfitting by applying rich visual transformations to training data.
   * **Action Steps:**
     1. Create `ml/scripts/dataset.py` implementing `get_dataloaders(data_dir, batch_size)`.
@@ -220,6 +230,7 @@
 
 * **Max**
   * **Task:** Execute ResNet-18 baseline training run.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-3](starter_code/ml-ai_code.md#max-week-3)
   * **Goal & Context:** Establish the first real benchmark performance on the composite dataset.
   * **Action Steps:**
     1. Run `ml/scripts/train.py` on the full processed dataset for 10 epochs.
@@ -232,6 +243,7 @@
 
 * **Doil**
   * **Task:** Implement model evaluation & confusion matrix script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-3](starter_code/ml-ai_code.md#doil-week-3)
   * **Goal & Context:** Provide deep diagnostic insight into per-class accuracy and category confusions.
   * **Action Steps:**
     1. Create `ml/scripts/evaluate.py` taking `--model_path` and `--test_dir`.
@@ -258,6 +270,7 @@
 
 * **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-4](starter_code/ml-ai_code.md#aarav-week-4)
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
   * **Action Steps:**
     1. Unfreeze `layer4` of ResNet-18 in `ml/scripts/train.py` to allow higher-level feature fine-tuning.
@@ -270,6 +283,7 @@
 
 * **Kathleen**
   * **Task:** Build model export and packaging script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-4](starter_code/ml-ai_code.md#kathleen-week-4)
   * **Goal & Context:** Package model weights alongside label maps and metadata for seamless backend integration.
   * **Action Steps:**
     1. Create `ml/scripts/export_model.py`.
@@ -283,6 +297,7 @@
 
 * **Max**
   * **Task:** MobileNetV2 architecture experiment & benchmark.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-4](starter_code/ml-ai_code.md#max-week-4)
   * **Goal & Context:** Compare lightweight MobileNet against ResNet-18 for latency and memory advantages.
   * **Action Steps:**
     1. Create `ml/scripts/train_mobilenet.py` using `torchvision.models.mobilenet_v2(pretrained=True)`.
@@ -295,6 +310,7 @@
 
 * **Doil**
   * **Task:** Detailed error analysis & misclassification breakdown.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-4](starter_code/ml-ai_code.md#doil-week-4)
   * **Goal & Context:** Identify top failure modes to guide targeted data acquisition and user guidance.
   * **Action Steps:**
     1. Create `ml/scripts/error_analysis.py`.
@@ -321,6 +337,7 @@
 
 * **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-5](starter_code/ml-ai_code.md#aarav-week-5)
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
   * **Action Steps:**
     1. Conduct final tuning run with optimal batch size (32), learning rate (1e-4 with cosine decay), and weight decay (1e-4).
@@ -333,6 +350,7 @@
 
 * **Kathleen**
   * **Task:** Campus test dataset collection & real-world photo evaluation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-5](starter_code/ml-ai_code.md#kathleen-week-5)
   * **Goal & Context:** Test the model on actual trash photographed across UC Berkeley campus waste bins.
   * **Action Steps:**
     1. Walk through UC Berkeley campus (MLK Student Union, Moffitt Library, Memorial Glade).
@@ -345,6 +363,7 @@
 
 * **Max**
   * **Task:** Domain gap evaluation report & demo item identification.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-5](starter_code/ml-ai_code.md#max-week-5)
   * **Goal & Context:** Bridge the gap between training distribution and physical camera conditions.
   * **Action Steps:**
     1. Analyze Kathleen's campus test results; identify specific visual factors causing confidence drops (shadows, background clutter, item crumpling).
@@ -355,6 +374,7 @@
 
 * **Doil**
   * **Task:** ML presentation visualizer script & metrics summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-5](starter_code/ml-ai_code.md#doil-week-5)
   * **Goal & Context:** Generate high-impact visual charts and metrics slides for the mid-semester presentation.
   * **Action Steps:**
     1. Create `ml/scripts/generate_presentation_charts.py`.
@@ -393,6 +413,7 @@
 
 * **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-6](starter_code/ml-ai_code.md#aarav-week-6)
   * **Goal & Context:** Document formal machine learning model performance for technical review.
   * **Action Steps:**
     1. Compile final training metrics table: ResNet-18 baseline vs Fine-tuned ResNet-18.
@@ -403,6 +424,7 @@
 
 * **Kathleen (AI/ML)**
   * **Task:** Physical Demo Items Benchmark & Preparation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-6](starter_code/ml-ai_code.md#kathleen-week-6)
   * **Goal & Context:** Ensure the items chosen for the video demo yield flawless classification results.
   * **Action Steps:**
     1. Benchmark 10 candidate physical waste items against the frozen MVP model.
@@ -416,6 +438,7 @@
 
 * **Max (AI/ML)**
   * **Task:** Catalog of Known Limitations & Failure Modes.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-6](starter_code/ml-ai_code.md#max-week-6)
   * **Goal & Context:** Formulate thoughtful responses for presentation Q&A regarding model limitations.
   * **Action Steps:**
     1. Document known failure modes identified during testing (e.g. crumpled black plastic, translucent glass, items with food residue).
@@ -426,6 +449,7 @@
 
 * **Doil (AI/ML)**
   * **Task:** Presentation Rehearsal Timing & Speaker Coordination.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-6](starter_code/ml-ai_code.md#doil-week-6)
   * **Goal & Context:** Keep presentation strictly within the allotted time limit and ensure seamless speaker handoffs.
   * **Action Steps:**
     1. Coordinate a 45-minute dry-run rehearsal with all 10 members.
@@ -453,6 +477,7 @@
 
 * **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-7](starter_code/ml-ai_code.md#aarav-week-7)
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
   * **Action Steps:**
     1. Implement dynamic quantization script `ml/scripts/quantize.py`.
@@ -465,6 +490,7 @@
 
 * **Kathleen**
   * **Task:** Targeted dataset expansion for weak classes.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-7](starter_code/ml-ai_code.md#kathleen-week-7)
   * **Goal & Context:** Boost accuracy on difficult waste items identified during Week 4 error analysis.
   * **Action Steps:**
     1. Collect 120 additional images focused on historically confused items:
@@ -478,6 +504,7 @@
 
 * **Max**
   * **Task:** Retrain model on expanded dataset v2.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-7](starter_code/ml-ai_code.md#max-week-7)
   * **Goal & Context:** Train new model weights leveraging the expanded dataset to improve edge case handling.
   * **Action Steps:**
     1. Run `train.py` on `data/processed_v2/` for 15 epochs.
@@ -489,6 +516,7 @@
 
 * **Doil**
   * **Task:** Comprehensive model evaluation report v2.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-7](starter_code/ml-ai_code.md#doil-week-7)
   * **Goal & Context:** Document performance gains achieved by dataset expansion and model retraining.
   * **Action Steps:**
     1. Compare v1 vs v2 model metrics side-by-side in a comparative table.
@@ -512,6 +540,7 @@
 
 * **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-8](starter_code/ml-ai_code.md#aarav-week-8)
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
   * **Action Steps:**
     1. Implement `ml/scripts/tta_eval.py` applying 4 test-time transforms per test image:
@@ -527,6 +556,7 @@
 
 * **Kathleen**
   * **Task:** Model version logging & loading helper script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-8](starter_code/ml-ai_code.md#kathleen-week-8)
   * **Goal & Context:** Establish clean model checkpoint tracking and seamless switching between model versions.
   * **Action Steps:**
     1. Create `ml/models/MODEL_LOG.md` recording all trained checkpoints:
@@ -538,6 +568,7 @@
 
 * **Max**
   * **Task:** PyTorch to ONNX export pipeline & validation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-8](starter_code/ml-ai_code.md#max-week-8)
   * **Goal & Context:** Export model to vendor-neutral ONNX format for accelerated inference runtimes.
   * **Action Steps:**
     1. Create `ml/scripts/export_onnx.py`.
@@ -551,6 +582,7 @@
 
 * **Doil**
   * **Task:** Prototype ONNX to TensorFlow Lite (`.tflite`) conversion.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-8](starter_code/ml-ai_code.md#doil-week-8)
   * **Goal & Context:** Investigate potential for future on-device mobile neural execution.
   * **Action Steps:**
     1. Test conversion of `sortify.onnx` into `.tflite` format using `onnx2tf` or Google AI Edge Torch.
@@ -574,6 +606,7 @@
 
 * **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-9](starter_code/ml-ai_code.md#aarav-week-9)
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
   * **Action Steps:**
     1. Collect 30 challenging out-of-distribution images:
@@ -587,6 +620,7 @@
 
 * **Kathleen**
   * **Task:** Empirical confidence threshold calibration.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-9](starter_code/ml-ai_code.md#kathleen-week-9)
   * **Goal & Context:** Determine the optimal confidence threshold to balance false positives vs false rejections.
   * **Action Steps:**
     1. Create `ml/scripts/calibrate_threshold.py`.
@@ -600,6 +634,7 @@
 
 * **Max**
   * **Task:** Comparative model evaluation & checkpoint recommendation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-9](starter_code/ml-ai_code.md#max-week-9)
   * **Goal & Context:** Objectively compare all trained model checkpoints to select the single best production candidate.
   * **Action Steps:**
     1. Create `ml/scripts/compare_models.py`.
@@ -614,6 +649,7 @@
 
 * **Doil**
   * **Task:** Author official Model Card documentation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-9](starter_code/ml-ai_code.md#doil-week-9)
   * **Goal & Context:** Provide standard industry documentation for the computer vision model per Hugging Face / Google standards.
   * **Action Steps:**
     1. Author `ml/MODEL_CARD.md` following standard format:
@@ -640,6 +676,7 @@
 
 * **Aarav**
   * **Task:** Verify Dockerized model inference performance.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-10](starter_code/ml-ai_code.md#aarav-week-10)
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
   * **Action Steps:**
     1. Pull Carlos's Docker container build locally.
@@ -651,6 +688,7 @@
 
 * **Kathleen**
   * **Task:** Build interactive model demo Jupyter notebook.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-10](starter_code/ml-ai_code.md#kathleen-week-10)
   * **Goal & Context:** Create an accessible interactive playground for non-technical team members and evaluators.
   * **Action Steps:**
     1. Create `ml/notebooks/demo.ipynb` using `ipywidgets`.
@@ -662,6 +700,7 @@
 
 * **Max**
   * **Task:** On-device mobile inference research & benchmarks.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-10](starter_code/ml-ai_code.md#max-week-10)
   * **Goal & Context:** Document the architectural path for running Sortify without an internet connection in future releases.
   * **Action Steps:**
     1. Research mobile deployment options: TensorFlow Lite for React Native vs ONNX Runtime Mobile vs PyTorch Mobile (ExecuTorch).
@@ -672,6 +711,7 @@
 
 * **Doil**
   * **Task:** Author verified step-by-step model retraining guide in `ml/README.md`.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-10](starter_code/ml-ai_code.md#doil-week-10)
   * **Goal & Context:** Provide clear documentation so any contributor can retrain the model from scratch.
   * **Action Steps:**
     1. Author comprehensive `ml/README.md` containing:
@@ -698,6 +738,7 @@
 
 * **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-11](starter_code/ml-ai_code.md#aarav-week-11)
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
   * **Action Steps:**
     1. In branch `feat/ml/aarav/yolov8-multiobject`:
@@ -710,6 +751,7 @@
 
 * **Kathleen**
   * **Task:** Contamination classification heuristic prototype.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-11](starter_code/ml-ai_code.md#kathleen-week-11)
   * **Goal & Context:** Research secondary computer vision classifier to distinguish clean vs food-soiled recyclables.
   * **Action Steps:**
     1. Curate a small test set of 40 clean vs soiled recyclable items.
@@ -720,6 +762,7 @@
 
 * **Max**
   * **Task:** Final performance metrics & comparative presentation visuals.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-11](starter_code/ml-ai_code.md#max-week-11)
   * **Goal & Context:** Generate definitive comparative charts illustrating the model's evolution across the semester.
   * **Action Steps:**
     1. Generate publication-quality figures for the final presentation:
@@ -732,6 +775,7 @@
 
 * **Doil**
   * **Task:** Author Future Work & Edge Hardware Roadmap.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-11](starter_code/ml-ai_code.md#doil-week-11)
   * **Goal & Context:** Formulate the long-term technical vision for Sortify beyond the 12-week semester.
   * **Action Steps:**
     1. Author `docs/ml/future-work-roadmap.md`:
@@ -767,6 +811,7 @@
 
 * **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-12](starter_code/ml-ai_code.md#aarav-week-12)
   * **Goal & Context:** Document machine learning optimization techniques applied throughout the semester.
   * **Action Steps:**
     1. Benchmark final quantized INT8 model vs unquantized FP32 model on CPU inference speed and RAM usage.
@@ -777,6 +822,7 @@
 
 * **Kathleen (AI/ML)**
   * **Task:** Campus Real-World Testing Final Report.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-12](starter_code/ml-ai_code.md#kathleen-week-12)
   * **Goal & Context:** Summarize empirical performance across UC Berkeley campus waste bins.
   * **Action Steps:**
     1. Compile full test results from campus waste photo evaluations across the semester into `data/campus_test/CAMPUS_BENCHMARKS.md`.
@@ -787,6 +833,7 @@
 
 * **Max (AI/ML)**
   * **Task:** Semester Model Evolution Technical Summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-12](starter_code/ml-ai_code.md#max-week-12)
   * **Goal & Context:** Detail the mathematical and experimental journey from initial baseline to final production model.
   * **Action Steps:**
     1. Author `ml/docs/MODEL_EVOLUTION.md` detailing:
@@ -800,6 +847,7 @@
 
 * **Doil (AI/ML)**
   * **Task:** Project Wrap-Up Summary & Individual Contribution Log.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-12](starter_code/ml-ai_code.md#doil-week-12)
   * **Goal & Context:** Celebrate the team's achievements and formally document individual contributions.
   * **Action Steps:**
     1. Author `docs/CONTRIBUTIONS.md` celebrating individual contributions across all 10 members (Frontend, Backend, ML).

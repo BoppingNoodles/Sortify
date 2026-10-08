@@ -68,6 +68,7 @@
 
 * **Mong**
   * **Task:** Figma Wireframing & User Journey Mapping (Primary) + Expo Camera Sandbox (If time permits).
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-1](starter_code/frontend_code.md#mong-week-1)
   * **Goal & Context:** Establish the visual blueprint and navigation flow of the Sortify mobile app before writing code.
   * **Action Steps:**
     1. Register for a free Figma Education account using your `@berkeley.edu` email and create the shared `Sortify Mobile` Figma project.
@@ -83,6 +84,7 @@
 
 * **Caden**
   * **Task:** Figma Wireframing Review & Mobile Repo Setup (Primary) + Expo Camera Sandbox (If time permits).
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-1](starter_code/frontend_code.md#caden-week-1)
   * **Goal & Context:** Ensure the Figma designs translate cleanly into React Native components and initialize the mobile workspace.
   * **Action Steps:**
     1. Join the shared Figma project, review Mong's wireframes for layout feasibility, touch targets (minimum 44×44 pt), and mobile navigation standards.
@@ -134,18 +136,106 @@
 
 * **Janice**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-1](starter_code/backend_code.md#janice-week-1)
   * **Goal & Context:** Build foundational proficiency with FastAPI's request-handling and file streaming mechanics.
-  * **Action Steps:**
-    1. Install Python 3.10+ and create a virtual environment (`python -m venv venv && source venv/bin/activate` or `.\venv\Scripts\Activate.ps1`).
-    2. Install core packages: `pip install fastapi uvicorn python-multipart pydantic ruff`.
-    3. Accept invitation to the Firebase project console; verify Firestore Database and Firebase Authentication are enabled.
-    4. Create a sandbox `main.py` implementing `GET /health` returning `{"status": "ok"}` and `POST /upload-image` accepting `UploadFile = File(...)`.
-    5. Save the uploaded file to a temporary local directory (`temp_uploads/`) and return filename and size in JSON response.
-  * **Verification:** Run `uvicorn main:app --reload` and execute `GET /health` and `POST /upload-image` (with a sample `.jpg`) using Swagger UI (`http://localhost:8000/docs`). Attach screenshot of HTTP 200 responses to your PR.
-  * **Deliverable & Branch:** `feat/backend/janice/week1-fastapi-exercise`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    FastAPI is a Python web framework that creates an API (Application Programming Interface). Think of an API like a restaurant waiter: when a customer (the mobile app) orders food (makes an HTTP request), the waiter (FastAPI) takes the order to the kitchen (your Python function) and brings back the plate (a JSON response). This week, you are creating a tiny server on your machine that can answer two basic requests:
+    1. `GET /health`: "Are you awake and healthy?" -> responds `{"status": "ok"}`
+    2. `POST /upload-image`: "Here is an image file from the camera, please save it." -> saves it to a folder and responds `{"status": "received", "filename": "..."}`.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Open your terminal in the repository root:**
+       - Ensure your terminal is in the project folder (`Sortify/`).
+    2. **Set up and activate your Python virtual environment:**  
+       *Why:* A virtual environment is an isolated box for Python packages so project tools don't clash with anything else on your computer.
+       - **On Windows (PowerShell):**
+         ```powershell
+         python -m venv venv
+         .\venv\Scripts\Activate.ps1
+         ```
+         *(If you see an error saying "running scripts is disabled", run: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` and re-run `.\venv\Scripts\Activate.ps1`).*
+       - **On macOS / Linux:**
+         ```bash
+         python3 -m venv venv
+         source venv/bin/activate
+         ```
+       *(You will know it worked because you will see `(venv)` at the beginning of your terminal line).*
+    3. **Install the required Python tools:**
+       ```bash
+       pip install fastapi uvicorn python-multipart pydantic ruff
+       ```
+    4. **Accept your Firebase Console invitation:**
+       - Open your `@berkeley.edu` email and accept the team invitation to the Firebase project.
+       - Go to [console.firebase.google.com](https://console.firebase.google.com/) and open the `Sortify` project.
+       - In the left sidebar under **Build**, click **Firestore Database** and verify the database is active.
+       - Under **Build**, click **Authentication** and verify it is enabled.
+    5. **Create your starter sandbox server file (`sandbox/main.py`):**
+       - Create the `sandbox/` folder if it doesn't exist yet.
+       - Open `sandbox/main.py` and copy the starter code from [starter_code/backend_code.md#janice-week-1](starter_code/backend_code.md#janice-week-1).
+       - Ensure your file looks like this:
+         ```python
+         from pathlib import Path
+         import shutil
+         from fastapi import FastAPI, File, UploadFile
+
+         app = FastAPI(title="Sortify Backend Sandbox")
+
+         # Create local upload directory if it doesn't already exist
+         UPLOAD_DIR = Path("temp_uploads")
+         UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+         @app.get("/health")
+         def health_check():
+             """Simple check to verify the server is running."""
+             return {"status": "ok"}
+
+
+         @app.post("/upload-image")
+         async def upload_image(file: UploadFile = File(...)):
+             """Receives an uploaded file and saves it to local disk."""
+             destination = UPLOAD_DIR / file.filename
+             with open(destination, "wb") as buffer:
+                 shutil.copyfileobj(file.file, buffer)
+             return {
+                 "status": "received",
+                 "filename": file.filename,
+                 "size_bytes": destination.stat().st_size,
+             }
+         ```
+    6. **Launch your local development server:**
+       In your terminal (with `(venv)` active), run:
+       ```bash
+       uvicorn sandbox.main:app --reload
+       ```
+       *(The `--reload` flag means every time you save edits to your code, Uvicorn will automatically restart the server for you).*
+    7. **Test your endpoints using FastAPI's built-in Swagger UI:**
+       - Open your browser to `http://localhost:8000/docs`.
+       - **Test 1 (`GET /health`):** Click the blue `/health` row -> Click the white **"Try it out"** button on the right -> Click the big blue **"Execute"** button. You should see a green box with `Code: 200` and `{"status": "ok"}`!
+       - **Test 2 (`POST /upload-image`):** Click the green `/upload-image` row -> Click **"Try it out"** -> Click the **"Choose File"** button and select any small photo (.jpg or .png) -> Click **"Execute"**. You should see `Code: 200` with the file name and byte size!
+       - Check your project folder: you will see a new `temp_uploads/` folder containing your uploaded image!
+    8. **Run code quality check:**
+       Open a second terminal window (with venv activated) and run:
+       ```bash
+       ruff check .
+       ruff format .
+       ```
+    9. **Save your work to your git branch:**
+       ```bash
+       git checkout -b feat/backend/janice/week1-fastapi-exercise
+       git add sandbox/main.py
+       git commit -m "feat(backend): complete week 1 fastapi sandbox with health and upload endpoints"
+       ```
+  * **Verification:**
+    1. Terminal displays `Application startup complete` on `http://127.0.0.1:8000`.
+    2. Browser loads `http://localhost:8000/docs` with interactive `/health` and `/upload-image` documentation.
+    3. Executing `/health` returns HTTP status 200 and `{"status": "ok"}`.
+    4. Uploading an image via `/upload-image` saves the file into `temp_uploads/` and returns HTTP status 200.
+    5. `ruff check .` reports no errors. Take a screenshot of the Swagger UI 200 response for your PR.
+  * **Deliverable & Branch:** `feat/backend/janice/week1-fastapi-exercise`
 
 * **Carlos**
   * **Task:** Dev environment setup, FastAPI multipart file streaming sandbox & local temporary file storage verification.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-1](starter_code/backend_code.md#carlos-week-1)
   * **Goal & Context:** Master asynchronous file upload handling and request validation in FastAPI.
   * **Action Steps:**
     1. Set up local Python 3.10+ virtual environment and install dependencies (`fastapi`, `uvicorn`, `python-multipart`, `aiofiles`).
@@ -157,6 +247,7 @@
 
 * **David**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-1](starter_code/backend_code.md#david-week-1)
   * **Goal & Context:** Master asynchronous file upload handling and request validation in FastAPI.
   * **Action Steps:**
     1. Set up Python 3.10+ virtual environment and install FastAPI, Uvicorn, and python-multipart.
@@ -168,6 +259,7 @@
 
 * **Krish**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-1](starter_code/backend_code.md#krish-week-1)
   * **Goal & Context:** Understand FastAPI request lifecycle, asynchronous endpoints, and Firebase console administration.
   * **Action Steps:**
     1. Set up local Python 3.10+ virtual environment and install required dependencies (`fastapi`, `uvicorn`, `python-multipart`).
@@ -179,6 +271,7 @@
 
 * **Edward**
   * **Task:** Dev environment setup, Firebase console onboarding & complete Backend FastAPI learning exercise.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-1](starter_code/backend_code.md#edward-week-1)
   * **Goal & Context:** Establish local code quality tooling (Ruff) and complete the standardized FastAPI upload endpoint.
   * **Action Steps:**
     1. Set up local Python environment and configure VS Code with Ruff extension.
@@ -209,6 +302,7 @@
 
 * **Aarav**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-1](starter_code/ml-ai_code.md#aarav-week-1)
   * **Goal & Context:** Establish local GPU/MPS/CPU training capability and understand fine-tuning head replacement.
   * **Action Steps:**
     1. Install Python 3.10+, PyTorch (`torch`), `torchvision`, `torchaudio`, and `jupyterlab`. Check device availability (`torch.cuda.is_available()` or `torch.backends.mps.is_available()`).
@@ -223,6 +317,7 @@
 
 * **Kathleen**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-1](starter_code/ml-ai_code.md#kathleen-week-1)
   * **Goal & Context:** Master PyTorch Dataset/DataLoader pipeline and model fine-tuning mechanics.
   * **Action Steps:**
     1. Set up PyTorch, torchvision, and JupyterLab environment.
@@ -235,6 +330,7 @@
 
 * **Max**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-1](starter_code/ml-ai_code.md#max-week-1)
   * **Goal & Context:** Learn PyTorch tensor operations, device handling (CPU vs GPU), and classification evaluation.
   * **Action Steps:**
     1. Set up PyTorch dev environment with JupyterLab.
@@ -247,6 +343,7 @@
 
 * **Doil**
   * **Task:** PyTorch environment setup & complete AI/ML Transfer Learning exercise.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-1](starter_code/ml-ai_code.md#doil-week-1)
   * **Goal & Context:** Familiarize with model inspection, parameter counts, and output classification logits.
   * **Action Steps:**
     1. Set up PyTorch and JupyterLab; verify library versions in terminal.
@@ -273,6 +370,7 @@
 
 * **Mong**
   * **Task:** Design high-fidelity UI mockups and design token system in Figma.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-2](starter_code/frontend_code.md#mong-week-2)
   * **Goal & Context:** Provide precise visual specifications, component guidelines, and color palettes for engineering implementation.
   * **Action Steps:**
     1. Create high-fidelity Figma components for the 5 waste bin categories:
@@ -288,6 +386,7 @@
 
 * **Caden**
   * **Task:** Configure mobile navigation stack and directory structure.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-2](starter_code/frontend_code.md#caden-week-2)
   * **Goal & Context:** Establish the production React Native project architecture and seamless bottom tab navigation.
   * **Action Steps:**
     1. Install React Navigation dependencies:
@@ -321,19 +420,111 @@
 
 * **Janice**
   * **Task:** Author API contract specification & starter Pydantic schemas.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-2](starter_code/backend_code.md#janice-week-2)
   * **Goal & Context:** Define strict request/response data contracts to decouple mobile and backend development.
-  * **Action Steps:**
-    1. Write formal API specification in `docs/api-specification.md` detailing HTTP methods, request headers, query params, and JSON response bodies.
-    2. Implement Pydantic v2 models in `backend/app/models/schemas.py`:
-       - `ClassifyResponse`: `item_name: str`, `category: str`, `confidence: float`, `disposal_tip: str`, `bin_color: str`, `alternatives: list[dict]`.
-       - `RuleResponse`: `city: str`, `rules: dict[str, str]`, `source_url: str`.
-       - `ScanRecord`: `scan_id: str`, `user_id: str`, `timestamp: str`, `category: str`, `item_name: str`, `confidence: float`.
-    3. Add field validators (e.g. confidence must be between 0.0 and 1.0; category must be one of the 5 allowed bins).
-  * **Verification:** Write a small Python script instantiating valid and invalid Pydantic models to verify validation triggers on bad data.
-  * **Deliverable & Branch:** `feat/backend/janice/api-contracts-and-schemas`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    In app development, the frontend (mobile app) and backend need an agreement on what data looks like. For example, when our AI classifies trash, what fields should the backend send back? If the backend sends `{"item": "bottle"}` but the mobile phone looks for `{"item_name": "bottle"}`, the app crashes! A **Pydantic schema** is a strict Python blueprint that checks every single data field, its name, and its type (text, number, list). If incoming or outgoing data doesn't match the blueprint, Pydantic immediately rejects it with a helpful error message before your program crashes.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Create the schemas package directory:**
+       - Create `backend/app/schemas/` if it doesn't already exist.
+       - Create an empty `backend/app/schemas/__init__.py` file (this tells Python this folder is a package).
+    2. **Create the classification response schema (`backend/app/schemas/classify.py`):**
+       - Copy the starter code from [starter_code/backend_code.md#janice-week-2](starter_code/backend_code.md#janice-week-2).
+       - Notice the structure:
+         ```python
+         from typing import List, Optional
+         from pydantic import BaseModel, Field
+
+
+         class ClassificationAlternative(BaseModel):
+             category: str  # e.g., "plastic", "compost"
+             confidence: float = Field(
+                 ..., ge=0.0, le=1.0
+             )  # Must be a float between 0.0 and 1.0
+
+
+         class DisposalTip(BaseModel):
+             action: str  # e.g., "Rinse container thoroughly"
+             bin_type: str  # e.g., "blue_recycling"
+             notes: Optional[str] = None  # Optional extra advice (can be omitted)
+
+
+         class ClassifyResponse(BaseModel):
+             item_name: str  # e.g., "Water Bottle"
+             category: str  # e.g., "plastic"
+             confidence: float = Field(..., ge=0.0, le=1.0)
+             bin: str  # e.g., "recycle"
+             disposal_tips: DisposalTip  # Nested schema with actionable guidance
+             alternatives: List[ClassificationAlternative] = []
+             location: str = "berkeley"
+         ```
+    3. **Create the municipal rules schema (`backend/app/schemas/rules.py`):**
+       - Define schemas for municipal disposal rules:
+         ```python
+         from typing import Dict, List
+         from pydantic import BaseModel
+
+
+         class CategoryRule(BaseModel):
+             accepted: bool
+             bin: str
+             special_instructions: str
+
+
+         class LocationRulesResponse(BaseModel):
+             city: str
+             rules: Dict[str, CategoryRule]
+             last_updated: str
+         ```
+    4. **Write a quick verification script (`sandbox/test_schemas.py`):**
+       - Let's test that valid data passes and invalid data raises a validation error:
+         ```python
+         from backend.app.schemas.classify import ClassifyResponse, DisposalTip
+         from pydantic import ValidationError
+
+         # 1. Test valid model
+         sample = ClassifyResponse(
+             item_name="Aluminium Can",
+             category="metal",
+             confidence=0.94,
+             bin="blue_recycling",
+             disposal_tips=DisposalTip(action="Rinse and crush", bin_type="blue_recycling"),
+         )
+         print("SUCCESS: Valid model created:", sample.item_name)
+
+         # 2. Test invalid confidence (should be caught by Pydantic)
+         try:
+             bad = ClassifyResponse(
+                 item_name="Bad Item",
+                 category="plastic",
+                 confidence=1.5,  # Invalid: cannot exceed 1.0!
+                 bin="recycle",
+                 disposal_tips=DisposalTip(action="Rinse", bin_type="recycle"),
+             )
+         except ValidationError as e:
+             print("SUCCESS: Pydantic correctly blocked invalid confidence > 1.0!")
+         ```
+    5. **Run your test script:**
+       ```bash
+       python sandbox/test_schemas.py
+       ```
+       Confirm both success messages print in your terminal.
+    6. **Check code quality and commit:**
+       ```bash
+       ruff check backend/app/schemas/
+       git checkout -b feat/backend/janice/api-contracts-and-schemas
+       git add backend/app/schemas/ sandbox/test_schemas.py
+       git commit -m "feat(schemas): define pydantic models for classification and municipal rules"
+       ```
+  * **Verification:**
+    1. `python sandbox/test_schemas.py` runs cleanly and prints validation confirmation.
+    2. Pydantic successfully rejects invalid data (e.g., confidence greater than 1.0).
+    3. `ruff check .` reports no lint errors.
+  * **Deliverable & Branch:** `feat/backend/janice/api-contracts-and-schemas`
 
 * **Carlos**
   * **Task:** Backend environment configuration module & settings management.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-2](starter_code/backend_code.md#carlos-week-2)
   * **Goal & Context:** Provide centralized, typed environment configuration parsing with `.env` support.
   * **Action Steps:**
     1. Implement `backend/app/config.py` using `pydantic-settings`.
@@ -344,6 +535,7 @@
 
 * **David**
   * **Task:** Create architecture diagrams & pipeline latency specifications.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-2](starter_code/backend_code.md#david-week-2)
   * **Goal & Context:** Document the entire system data flow and define latency targets.
   * **Action Steps:**
     1. Diagram system architecture using Mermaid in `docs/architecture.md`: Mobile Client → FastAPI Gateway → PyTorch Model / Rules Engine → Cloud Firestore.
@@ -353,6 +545,7 @@
 
 * **Krish**
   * **Task:** Design Firestore schema & database initialization test script.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-2](starter_code/backend_code.md#krish-week-2)
   * **Goal & Context:** Establish the NoSQL data model for users and scan logs and verify database connectivity.
   * **Action Steps:**
     1. Document Firestore schema hierarchy in `docs/firestore-schema.md`:
@@ -365,6 +558,7 @@
 
 * **Edward**
   * **Task:** Configure Firebase Admin SDK & connection verification script.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-2](starter_code/backend_code.md#edward-week-2)
   * **Goal & Context:** Create secure, reusable Firebase initialization service handling credentials cleanly.
   * **Action Steps:**
     1. Implement `backend/app/services/firebase.py` initializing Firebase Admin with service account key credentials from environment variable or JSON path.
@@ -383,6 +577,7 @@
 
 * **Aarav**
   * **Task:** Download and assemble composite waste classification dataset.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-2](starter_code/ml-ai_code.md#aarav-week-2)
   * **Goal & Context:** Aggregate real-world waste images from public datasets and map disparate labels to our 5 target classes.
   * **Action Steps:**
     1. Download TrashNet and Kaggle waste datasets into `data/raw/`.
@@ -394,6 +589,7 @@
 
 * **Kathleen**
   * **Task:** Build train / validation / test partitioning script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-2](starter_code/ml-ai_code.md#kathleen-week-2)
   * **Goal & Context:** Ensure reproducible, stratified data splits across train, validation, and test datasets.
   * **Action Steps:**
     1. Create `ml/scripts/split_data.py` taking `--input_dir` and `--output_dir` arguments.
@@ -406,6 +602,7 @@
 
 * **Max**
   * **Task:** Build image preprocessing pipeline.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-2](starter_code/ml-ai_code.md#max-week-2)
   * **Goal & Context:** Normalize images to prevent training instability and optimize input dimensions for ResNet.
   * **Action Steps:**
     1. Implement `ml/scripts/preprocess.py` using Pillow and torchvision.
@@ -418,6 +615,7 @@
 
 * **Doil**
   * **Task:** Exploratory Data Analysis (EDA) notebook.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-2](starter_code/ml-ai_code.md#doil-week-2)
   * **Goal & Context:** Uncover class imbalances, resolution anomalies, and guide augmentation strategies.
   * **Action Steps:**
     1. Create Jupyter notebook `ml/notebooks/exploration.ipynb`.
@@ -444,6 +642,7 @@
 
 * **Mong**
   * **Task:** Build Results screen component with mock data.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-3](starter_code/frontend_code.md#mong-week-3)
   * **Goal & Context:** Create the central feedback screen where users discover what bin their item belongs in.
   * **Action Steps:**
     1. Implement `src/screens/ResultScreen.js` accepting route parameters or mock result payload.
@@ -459,6 +658,7 @@
 
 * **Caden**
   * **Task:** Build full Camera capture screen & API client service.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-3](starter_code/frontend_code.md#caden-week-3)
   * **Goal & Context:** Provide responsive camera viewfinder with photo preview and scaffold the HTTP network layer.
   * **Action Steps:**
     1. Build `src/screens/ScanScreen.js` using `expo-camera`:
@@ -482,26 +682,116 @@
 
 * **Janice**
   * **Task:** Modular FastAPI APIRouter scaffolding & CORS setup.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-3](starter_code/backend_code.md#janice-week-3)
   * **Goal & Context:** Organize backend codebase into maintainable, domain-specific modules.
-  * **Action Steps:**
-    1. Restructure `backend/app/` with modular routing:
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Instead of putting every single API endpoint in one giant file (which becomes messy and impossible to work on with teammates), FastAPI provides **APIRouter**. Think of an APIRouter like a chapter in a book or an organized folder:
+    - `routers/classify.py`: handles image scanning and model predictions
+    - `routers/rules.py`: handles municipal city rules
+    - `routers/auth.py`: handles user login and profiles
+    - `routers/history.py`: handles past scans  
+    In `main.py`, we plug them together using `app.include_router()`. We also add **CORS** (Cross-Origin Resource Sharing) middleware, which is a web security permission that allows our mobile app (running on a phone or simulator) to talk to our backend without getting blocked by the browser.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Create the router directory structure:**
+       - Create `backend/app/routers/` with an empty `__init__.py`.
+    2. **Create the 4 modular router files:**
+       - In `backend/app/routers/classify.py`:
+         ```python
+         from fastapi import APIRouter
+
+         router = APIRouter(prefix="/classify", tags=["Classification"])
+
+
+         @router.get("/status")
+         def classify_status():
+             return {"status": "classification router active"}
+         ```
+       - In `backend/app/routers/rules.py`:
+         ```python
+         from fastapi import APIRouter
+
+         router = APIRouter(prefix="/rules", tags=["Municipal Rules"])
+
+
+         @router.get("/")
+         def get_rules():
+             return {"rules": "rules router active"}
+         ```
+       - In `backend/app/routers/auth.py`:
+         ```python
+         from fastapi import APIRouter
+
+         router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+         @router.get("/status")
+         def auth_status():
+             return {"status": "auth router active"}
+         ```
+       - In `backend/app/routers/history.py`:
+         ```python
+         from fastapi import APIRouter
+
+         router = APIRouter(prefix="/history", tags=["History"])
+
+
+         @router.get("/")
+         def get_history():
+             return {"history": "history router active"}
+         ```
+    3. **Mount all routers and add CORS in `backend/app/main.py`:**
+       - Copy the structure from [starter_code/backend_code.md#janice-week-3](starter_code/backend_code.md#janice-week-3):
+         ```python
+         from fastapi import FastAPI
+         from fastapi.middleware.cors import CORSMiddleware
+         from backend.app.routers import classify, rules, auth, history
+
+         app = FastAPI(
+             title="Sortify API",
+             version="1.0.0",
+             description="Waste classification and municipal recycling guide backend.",
+         )
+
+         # Allow mobile app to connect without CORS errors
+         app.add_middleware(
+             CORSMiddleware,
+             allow_origins=["*"],
+             allow_credentials=True,
+             allow_methods=["*"],
+             allow_headers=["*"],
+         )
+
+         # Mount each router with the /api prefix
+         app.include_router(classify.router, prefix="/api")
+         app.include_router(rules.router, prefix="/api")
+         app.include_router(auth.router, prefix="/api")
+         app.include_router(history.router, prefix="/api")
+
+
+         @app.get("/health", tags=["Health"])
+         def health():
+             return {"status": "ok"}
+         ```
+    4. **Launch and inspect in your browser:**
+       ```bash
+       uvicorn backend.app.main:app --reload
        ```
-       backend/app/
-       ├── routers/
-       │   ├── classify.py
-       │   ├── rules.py
-       │   ├── auth.py
-       │   └── history.py
-       ├── main.py
+       Open `http://localhost:8000/docs`. You will see distinct, beautifully tagged sections for **Health**, **Classification**, **Municipal Rules**, **Authentication**, and **History**!
+    5. **Save your work with Git:**
+       ```bash
+       git checkout -b feat/backend/janice/router-scaffolding
+       git add backend/app/
+       git commit -m "feat(routers): scaffold modular apirouters and cors middleware"
        ```
-    2. Configure `backend/app/main.py` mounting routers with `/api` prefixes.
-    3. Configure `CORSMiddleware` in `main.py` allowing requests from Expo dev server (`localhost:19006`, local Wi-Fi subnet IPs, and `*` in development).
-    4. Implement `GET /health` endpoint verifying server status.
-  * **Verification:** Launch server with `uvicorn app.main:app --reload`; visit `http://localhost:8000/docs` and confirm all router sections appear in Swagger UI.
-  * **Deliverable & Branch:** `feat/backend/janice/router-scaffolding`.
+  * **Verification:**
+    1. Server starts cleanly via `uvicorn backend.app.main:app --reload`.
+    2. Visiting `http://localhost:8000/docs` displays all four modular API sections grouped by their tags.
+    3. Executing `/health` and each router status endpoint returns HTTP status 200.
+  * **Deliverable & Branch:** `feat/backend/janice/router-scaffolding`
 
 * **Carlos**
   * **Task:** Implement multipart upload validation & request streaming middleware.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-3](starter_code/backend_code.md#carlos-week-3)
   * **Goal & Context:** Protect backend endpoints from invalid formats, oversized streams, and corrupted payloads.
   * **Action Steps:**
     1. Implement upload validation in `backend/app/routers/classify.py`.
@@ -513,6 +803,7 @@
 
 * **David**
   * **Task:** Implement mock classification endpoint with validation.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-3](starter_code/backend_code.md#david-week-3)
   * **Goal & Context:** Give the mobile team a realistic, interactive endpoint to integrate against while ML completes training.
   * **Action Steps:**
     1. Implement `POST /api/classify` in `backend/app/routers/classify.py`.
@@ -525,6 +816,7 @@
 
 * **Krish**
   * **Task:** Implement Firestore read/write service layer.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-3](starter_code/backend_code.md#krish-week-3)
   * **Goal & Context:** Encapsulate database operations behind clean, reusable Python functions.
   * **Action Steps:**
     1. Create `backend/app/services/firestore_service.py`.
@@ -537,6 +829,7 @@
 
 * **Edward**
   * **Task:** Author API testing guide & FastAPI Swagger UI / ReDoc documentation suite.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-3](starter_code/backend_code.md#edward-week-3)
   * **Goal & Context:** Equip the entire team with clear interactive documentation and request examples to test endpoints effortlessly.
   * **Action Steps:**
     1. Configure interactive OpenAPI documentation tags, descriptions, and request/response examples for Swagger UI (`/docs`) and ReDoc (`/redoc`).
@@ -560,6 +853,7 @@
 
 * **Aarav**
   * **Task:** Build end-to-end PyTorch training pipeline script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-3](starter_code/ml-ai_code.md#aarav-week-3)
   * **Goal & Context:** Create the reproducible training backbone used for all subsequent model experiments.
   * **Action Steps:**
     1. Create `ml/scripts/train.py` with CLI arguments (`--epochs`, `--batch_size`, `--lr`, `--data_dir`, `--output_dir`).
@@ -572,6 +866,7 @@
 
 * **Kathleen**
   * **Task:** Configure PyTorch DataLoaders with data augmentations.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-3](starter_code/ml-ai_code.md#kathleen-week-3)
   * **Goal & Context:** Prevent model overfitting by applying rich visual transformations to training data.
   * **Action Steps:**
     1. Create `ml/scripts/dataset.py` implementing `get_dataloaders(data_dir, batch_size)`.
@@ -589,6 +884,7 @@
 
 * **Max**
   * **Task:** Execute ResNet-18 baseline training run.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-3](starter_code/ml-ai_code.md#max-week-3)
   * **Goal & Context:** Establish the first real benchmark performance on the composite dataset.
   * **Action Steps:**
     1. Run `ml/scripts/train.py` on the full processed dataset for 10 epochs.
@@ -601,6 +897,7 @@
 
 * **Doil**
   * **Task:** Implement model evaluation & confusion matrix script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-3](starter_code/ml-ai_code.md#doil-week-3)
   * **Goal & Context:** Provide deep diagnostic insight into per-class accuracy and category confusions.
   * **Action Steps:**
     1. Create `ml/scripts/evaluate.py` taking `--model_path` and `--test_dir`.
@@ -627,6 +924,7 @@
 
 * **Mong**
   * **Task:** Build Home Screen UI and navigation flow.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-4](starter_code/frontend_code.md#mong-week-4)
   * **Goal & Context:** Create an engaging, intuitive dashboard welcoming the user and encouraging waste scanning.
   * **Action Steps:**
     1. Implement `src/screens/HomeScreen.js`:
@@ -641,6 +939,7 @@
 
 * **Caden**
   * **Task:** Integrate live mobile camera scanning with backend API.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-4](starter_code/frontend_code.md#caden-week-4)
   * **Goal & Context:** Achieve the complete camera-to-cloud classification flow on physical devices.
   * **Action Steps:**
     1. Connect `ScanScreen.js` with `classifyImage()` in `src/services/api.js`.
@@ -663,16 +962,107 @@
 
 * **Janice**
   * **Task:** Build response formatting & disposal guidance integration.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-4](starter_code/backend_code.md#janice-week-4)
   * **Goal & Context:** Format model output and disposal tips into clean Pydantic response payloads.
-  * **Action Steps:**
-    1. Connect `tips_service.py` guidance helper into classification responses.
-    2. Construct `ClassifyResponse` objects with category badges and bin colors.
-    3. Add descriptive error models for unclassified items.
-  * **Verification:** Verify endpoint returns structured JSON conforming to `ClassifyResponse` schema.
-  * **Deliverable & Branch:** `feat/backend/janice/tips-response-formatting`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Our machine learning model only outputs a raw category name (like `"plastic"` or `"glass"`) and a confidence number (like `0.93`). But a real student holding a coffee cup or soda can needs to know: "What bin does this go into? Do I rinse it? Does the lid go in compost or landfill?" In Week 4, you build a helper service (`tips_service.py`) that takes the raw category and bundles it into our rich `ClassifyResponse` schema with clear disposal actions, bin colors, and advice.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Create the disposal guidance service (`backend/app/services/tips_service.py`):**
+       - Create `backend/app/services/` if it doesn't already exist.
+       - Implement the disposal advice lookup table:
+         ```python
+         from backend.app.schemas.classify import ClassifyResponse, DisposalTip
+
+         DISPOSAL_GUIDANCE = {
+             "plastic": {
+                 "bin": "blue_recycling",
+                 "action": "Empty liquids and rinse container clean.",
+                 "notes": "Accepted: rigid plastics #1-#7. Straws and plastic film go in landfill.",
+             },
+             "paper": {
+                 "bin": "brown_paper",
+                 "action": "Flatten cardboard and keep clean and dry.",
+                 "notes": "Greasy pizza box bottoms belong in compost, not paper recycling.",
+             },
+             "glass": {
+                 "bin": "teal_glass",
+                 "action": "Rinse bottle or jar. Remove metal/plastic caps.",
+                 "notes": "Do not break glass; place gently into the bin.",
+             },
+             "compost": {
+                 "bin": "green_compost",
+                 "action": "Scrape all food scraps and soiled paper napkins into bin.",
+                 "notes": "No plastic bags or styrofoam cups.",
+             },
+             "landfill": {
+                 "bin": "gray_landfill",
+                 "action": "Place in general landfill trash bin.",
+                 "notes": "Items that cannot be recycled or composted.",
+             },
+         }
+
+
+         def format_classification_response(
+             item_name: str, category: str, confidence: float, alternatives: list = None
+         ) -> ClassifyResponse:
+             """Wraps model prediction into a complete ClassifyResponse schema."""
+             cat_key = category.lower()
+             guidance = DISPOSAL_GUIDANCE.get(
+                 cat_key,
+                 {
+                     "bin": "gray_landfill",
+                     "action": "When in doubt, dispose in landfill.",
+                     "notes": "Unrecognized category.",
+                 },
+             )
+             tip = DisposalTip(
+                 action=guidance["action"], bin_type=guidance["bin"], notes=guidance["notes"]
+             )
+             return ClassifyResponse(
+                 item_name=item_name,
+                 category=cat_key,
+                 confidence=confidence,
+                 bin=guidance["bin"],
+                 disposal_tips=tip,
+                 alternatives=alternatives or [],
+                 location="berkeley",
+             )
+         ```
+    2. **Connect the service into `backend/app/routers/classify.py`:**
+       - Open `backend/app/routers/classify.py`.
+       - Import `format_classification_response` and use it in your endpoint:
+         ```python
+         from fastapi import APIRouter
+         from backend.app.schemas.classify import ClassifyResponse
+         from backend.app.services.tips_service import format_classification_response
+
+         router = APIRouter(prefix="/classify", tags=["Classification"])
+
+
+         @router.post("/mock", response_model=ClassifyResponse)
+         def mock_classify(item_name: str = "Plastic Water Bottle", category: str = "plastic"):
+             """Mock classification route to test tips formatting."""
+             return format_classification_response(item_name, category, 0.94)
+         ```
+    3. **Test in Swagger UI:**
+       - Start your server: `uvicorn backend.app.main:app --reload`.
+       - Go to `http://localhost:8000/docs`, open `POST /api/classify/mock`, and click **Try it out** -> **Execute**.
+       - Verify the response JSON contains `bin`, `disposal_tips`, `action`, and `notes`.
+    4. **Git commit and branch:**
+       ```bash
+       git checkout -b feat/backend/janice/tips-response-formatting
+       git add backend/app/services/tips_service.py backend/app/routers/classify.py
+       git commit -m "feat(classify): integrate disposal tips formatting into classification response"
+       ```
+  * **Verification:**
+    1. Calling `format_classification_response("Soda Can", "metal", 0.95)` generates a valid `ClassifyResponse`.
+    2. Swagger UI displays the complete nested response schema including disposal tips.
+    3. Fallback logic safely handles unrecognized categories without throwing exceptions.
+  * **Deliverable & Branch:** `feat/backend/janice/tips-response-formatting`
 
 * **Carlos**
   * **Task:** Build PyTorch model inference service layer.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-4](starter_code/backend_code.md#carlos-week-4)
   * **Goal & Context:** Load PyTorch model into server memory once at startup and execute fast, thread-safe inference.
   * **Action Steps:**
     1. Create `backend/app/services/inference.py`.
@@ -691,6 +1081,7 @@
 
 * **David**
   * **Task:** Connect live model inference to `POST /api/classify`.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-4](starter_code/backend_code.md#david-week-4)
   * **Goal & Context:** Replace mock classify endpoint with real PyTorch model predictions.
   * **Action Steps:**
     1. Update `backend/app/routers/classify.py`:
@@ -705,6 +1096,7 @@
 
 * **Krish**
   * **Task:** Build waste disposal tips and educational sub-tips engine.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-4](starter_code/backend_code.md#krish-week-4)
   * **Goal & Context:** Provide actionable, item-specific preparation guidance alongside raw bin classification.
   * **Action Steps:**
     1. Create `backend/app/data/tips.json` storing disposal instructions and preparation rules for each category.
@@ -721,6 +1113,7 @@
 
 * **Edward**
   * **Task:** Implement request validation & payload size limits.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-4](starter_code/backend_code.md#edward-week-4)
   * **Goal & Context:** Protect backend from malicious uploads, invalid formats, and memory exhaustion.
   * **Action Steps:**
     1. Implement validation helper in `backend/app/utils/validators.py`:
@@ -740,6 +1133,7 @@
 
 * **Aarav**
   * **Task:** Fine-tune ResNet-18 model and optimize learning rate schedule.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-4](starter_code/ml-ai_code.md#aarav-week-4)
   * **Goal & Context:** Improve model generalization and accuracy above the 80% mark on validation data.
   * **Action Steps:**
     1. Unfreeze `layer4` of ResNet-18 in `ml/scripts/train.py` to allow higher-level feature fine-tuning.
@@ -752,6 +1146,7 @@
 
 * **Kathleen**
   * **Task:** Build model export and packaging script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-4](starter_code/ml-ai_code.md#kathleen-week-4)
   * **Goal & Context:** Package model weights alongside label maps and metadata for seamless backend integration.
   * **Action Steps:**
     1. Create `ml/scripts/export_model.py`.
@@ -765,6 +1160,7 @@
 
 * **Max**
   * **Task:** MobileNetV2 architecture experiment & benchmark.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-4](starter_code/ml-ai_code.md#max-week-4)
   * **Goal & Context:** Compare lightweight MobileNet against ResNet-18 for latency and memory advantages.
   * **Action Steps:**
     1. Create `ml/scripts/train_mobilenet.py` using `torchvision.models.mobilenet_v2(pretrained=True)`.
@@ -777,6 +1173,7 @@
 
 * **Doil**
   * **Task:** Detailed error analysis & misclassification breakdown.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-4](starter_code/ml-ai_code.md#doil-week-4)
   * **Goal & Context:** Identify top failure modes to guide targeted data acquisition and user guidance.
   * **Action Steps:**
     1. Create `ml/scripts/error_analysis.py`.
@@ -802,6 +1199,7 @@
 
 * **Mong**
   * **Task:** Build Location Selector modal component.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-5](starter_code/frontend_code.md#mong-week-5)
   * **Goal & Context:** Allow users to switch between municipalities (e.g. Berkeley vs San Francisco) to view location-specific recycling rules.
   * **Action Steps:**
     1. Create `src/components/LocationSelector.js`:
@@ -814,6 +1212,7 @@
 
 * **Caden**
   * **Task:** Location rules integration & app hardening.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-5](starter_code/frontend_code.md#caden-week-5)
   * **Goal & Context:** Integrate municipal location selection with camera scans and harden app flow.
   * **Action Steps:**
     1. Connect `LocationSelector` modal to app state, allowing user to select or switch current municipality (Berkeley, San Francisco, Oakland).
@@ -832,18 +1231,90 @@
 
 * **Janice**
   * **Task:** Implement Municipal Location Rules Engine.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-5](starter_code/backend_code.md#janice-week-5)
   * **Goal & Context:** Provide customized recycling rules based on regional recycling facility capabilities.
-  * **Action Steps:**
-    1. Create `backend/app/data/rules.json` storing municipal rules for Berkeley, San Francisco, and Default California.
-    2. Implement `backend/app/services/rules_engine.py`:
-       - `get_rules_for_location(city: str) -> dict`.
-       - `apply_location_rules(category: str, city: str) -> dict`: modifies bin color and disposal notes based on municipal regulations (e.g. soft plastic film rules in SF vs Berkeley).
-    3. Case-insensitive matching and fallback to default rules for unrecognized cities.
-  * **Verification:** Write unit test testing rule lookups for "berkeley", "san francisco", and an unknown city; verify correct JSON rules return.
-  * **Deliverable & Branch:** `feat/backend/janice/location-rules-engine`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Recycling rules change depending on where you are! For example, Berkeley has strict compost guidelines for food packaging, while San Francisco allows bundled plastic bags in recycling. In Week 5, you build a **rules engine** that stores city guidelines in a simple JSON file (`rules.json`) and gives back the exact disposal guidelines for a given city ("berkeley", "san francisco", etc.), with an automatic fallback if an unknown city is requested.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Create the rules data file (`backend/app/data/rules.json`):**
+       - Create `backend/app/data/` if it doesn't exist yet.
+       - Create `backend/app/data/rules.json` with municipal details:
+         ```json
+         {
+           "berkeley": {
+             "compost_accepted": ["food scraps", "soiled paper", "certified compostable cups"],
+             "plastic_accepted": ["#1 PETE", "#2 HDPE", "#5 PP"],
+             "guidance": "Berkeley uses 3-bin sorting: Blue (Recycling), Green (Compost), Gray (Landfill)."
+           },
+           "san francisco": {
+             "compost_accepted": ["all food scraps", "soiled paper", "plant debris"],
+             "plastic_accepted": ["all rigid plastics", "clean plastic bags bundled"],
+             "guidance": "San Francisco accepts clean bundled plastic film in blue recycling bins."
+           },
+           "default": {
+             "compost_accepted": ["food scraps"],
+             "plastic_accepted": ["bottles and jugs #1 and #2"],
+             "guidance": "Standard California municipal recycling regulations."
+           }
+         }
+         ```
+    2. **Build the rules lookup service (`backend/app/services/rules_engine.py`):**
+       - Copy from [starter_code/backend_code.md#janice-week-5](starter_code/backend_code.md#janice-week-5):
+         ```python
+         import json
+         from pathlib import Path
+
+         RULES_FILE = Path(__file__).resolve().parent.parent / "data" / "rules.json"
+
+
+         def load_rules() -> dict:
+             if not RULES_FILE.exists():
+                 return {}
+             with open(RULES_FILE, "r", encoding="utf-8") as f:
+                 return json.load(f)
+
+
+         def get_rules_for_location(city: str) -> dict:
+             """Returns city rules with automatic fallback for unknown locations."""
+             rules_db = load_rules()
+             city_key = city.strip().lower()
+             if city_key in rules_db:
+                 return {"city": city_key, "rules": rules_db[city_key], "is_fallback": False}
+             return {"city": city_key, "rules": rules_db.get("default", {}), "is_fallback": True}
+         ```
+    3. **Add the route in `backend/app/routers/rules.py`:**
+       ```python
+       from fastapi import APIRouter
+       from backend.app.services.rules_engine import get_rules_for_location
+
+       router = APIRouter(prefix="/rules", tags=["Municipal Rules"])
+
+
+       @router.get("/{location}")
+       def get_location_rules(location: str):
+           """Returns waste sorting rules for a specific municipality."""
+           return get_rules_for_location(location)
+       ```
+    4. **Test in Swagger UI:**
+       - Open `http://localhost:8000/docs`.
+       - Find `GET /api/rules/{location}`. Click **Try it out**.
+       - Type `berkeley` into the location box -> Click **Execute** -> confirm Berkeley rules return with `is_fallback: false`.
+       - Type `chicago` -> Click **Execute** -> confirm default rules return with `is_fallback: true`!
+    5. **Save and commit:**
+       ```bash
+       git checkout -b feat/backend/janice/location-rules-engine
+       git add backend/app/data/rules.json backend/app/services/rules_engine.py backend/app/routers/rules.py
+       git commit -m "feat(rules): implement municipal rules engine with fallback"
+       ```
+  * **Verification:**
+    1. Querying `/api/rules/berkeley` returns Berkeley rules (`is_fallback: False`).
+    2. Querying `/api/rules/unknowncity` returns default rules (`is_fallback: True`).
+    3. Swagger UI displays the `{location}` parameter input box and executes with HTTP 200.
+  * **Deliverable & Branch:** `feat/backend/janice/location-rules-engine`
 
 * **Carlos**
   * **Task:** Classification pipeline hardening & error resilience.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-5](starter_code/backend_code.md#carlos-week-5)
   * **Goal & Context:** Ensure inference pipeline handles real-world anomalies without crashing.
   * **Action Steps:**
     1. Add timeout protection and exception catching in `POST /api/classify`.
@@ -854,6 +1325,7 @@
 
 * **David**
   * **Task:** Expose Rules API endpoint & integrate into `/api/classify`.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-5](starter_code/backend_code.md#david-week-5)
   * **Goal & Context:** Deliver location guidance via dedicated endpoint and embedded inside classification responses.
   * **Action Steps:**
     1. Implement `GET /api/rules/{location}` in `backend/app/routers/rules.py`.
@@ -865,6 +1337,7 @@
 
 * **Krish**
   * **Task:** Implement request logging & telemetry middleware.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-5](starter_code/backend_code.md#krish-week-5)
   * **Goal & Context:** Provide real-time operational visibility into API requests, latency, and client IPs.
   * **Action Steps:**
     1. Create `backend/app/middleware/logging.py`.
@@ -879,6 +1352,7 @@
 
 * **Edward**
   * **Task:** Implement automated Pytest test suite for core endpoints.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-5](starter_code/backend_code.md#edward-week-5)
   * **Goal & Context:** Ensure API stability, prevent regression bugs, and establish continuous testing.
   * **Action Steps:**
     1. Install `pytest` and `httpx`: `pip install pytest httpx`.
@@ -900,6 +1374,7 @@
 
 * **Aarav**
   * **Task:** Hyperparameter optimization & model checkpoint freeze.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-5](starter_code/ml-ai_code.md#aarav-week-5)
   * **Goal & Context:** Lock the official MVP model weights ahead of the mid-semester presentation demo.
   * **Action Steps:**
     1. Conduct final tuning run with optimal batch size (32), learning rate (1e-4 with cosine decay), and weight decay (1e-4).
@@ -912,6 +1387,7 @@
 
 * **Kathleen**
   * **Task:** Campus test dataset collection & real-world photo evaluation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-5](starter_code/ml-ai_code.md#kathleen-week-5)
   * **Goal & Context:** Test the model on actual trash photographed across UC Berkeley campus waste bins.
   * **Action Steps:**
     1. Walk through UC Berkeley campus (MLK Student Union, Moffitt Library, Memorial Glade).
@@ -924,6 +1400,7 @@
 
 * **Max**
   * **Task:** Domain gap evaluation report & demo item identification.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-5](starter_code/ml-ai_code.md#max-week-5)
   * **Goal & Context:** Bridge the gap between training distribution and physical camera conditions.
   * **Action Steps:**
     1. Analyze Kathleen's campus test results; identify specific visual factors causing confidence drops (shadows, background clutter, item crumpling).
@@ -934,6 +1411,7 @@
 
 * **Doil**
   * **Task:** ML presentation visualizer script & metrics summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-5](starter_code/ml-ai_code.md#doil-week-5)
   * **Goal & Context:** Generate high-impact visual charts and metrics slides for the mid-semester presentation.
   * **Action Steps:**
     1. Create `ml/scripts/generate_presentation_charts.py`.
@@ -971,6 +1449,7 @@
 
 * **Mong (Frontend)**
   * **Task:** UI Responsiveness Audit & Demo Flow Styling.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-6](starter_code/frontend_code.md#mong-week-6)
   * **Goal & Context:** Ensure the mobile interface is pixel-perfect and visually pristine for the demo recording.
   * **Action Steps:**
     1. Audit app layout across multiple screen sizes (iPhone SE, iPhone 14/15, Android pixel devices).
@@ -980,8 +1459,9 @@
   * **Verification:** Review screen recording preview; verify zero visual glitches or layout jumps.
   * **Deliverable & Branch:** `feat/frontend/mong/ui-audit-polish`.
 
-* **Caden (Frontend)
+* **Caden (Frontend)**
   * **Task:** App Demo Video Production & Mobile Walkthrough.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-6](starter_code/frontend_code.md#caden-week-6)
   * **Goal & Context:** Produce a smooth, high-resolution video recording of the working app to embed in the presentation deck.
   * **Action Steps:**
     1. Set up high-res screen recording on a physical phone with clean test environment.
@@ -1001,18 +1481,46 @@
 * [GitHub Actions Workflow Syntax for Python](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python)
 * [Cloud Firestore Batch Operations & Transactions](https://cloud.google.com/firestore/docs/manage-data/transactions)
 
-* **Janice (Backend)
-  * **Task:** API Documentation & Schema Review.
+* **Janice (Backend)**
+  * **Task:** API Documentation & Schema Review (Mid-Semester Presentation).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-6](starter_code/backend_code.md#janice-week-6)
   * **Goal & Context:** Audit API schemas and ensure route parameters and responses are clearly documented for presentation materials.
-  * **Action Steps:**
-    1. Document route parameters and schemas for `/health`, `/api/classify`, and `/api/rules`.
-    2. Verify docstrings and OpenAPI descriptions match implemented schemas.
-    3. Export sample JSON responses for presentation slides.
-  * **Verification:** Review Swagger UI documentation at `http://localhost:8000/docs` and confirm clean schema rendering.
-  * **Deliverable & Branch:** `docs/backend/janice/api-schema-review`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Week 6 is our Mid-Semester Presentation and Video Demo! Your job is to make sure our API is completely documented and clean so the frontend team and PMs have accurate request and response examples for slides and recorded demos. You don't need to write complex algorithms this week; your focus is auditing our routes, ensuring Swagger UI displays clear descriptions, and exporting clean sample JSON responses.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Audit Swagger UI interactive documentation:**
+       - Launch your server: `uvicorn backend.app.main:app --reload`.
+       - Open `http://localhost:8000/docs` in your browser.
+       - Review each endpoint (`/health`, `/api/classify`, `/api/rules/{location}`).
+       - Check: Does each endpoint have a summary? Are parameter descriptions clear?
+    2. **Add clear docstrings to any endpoints that are missing them:**
+       - In Python, writing a triple-quoted string (`"""..."""`) right below `def endpoint_name():` automatically becomes the endpoint description in Swagger UI!
+    3. **Export sample JSON payloads for team presentation slides:**
+       - In Swagger UI, execute `POST /api/classify` (or mock) and `GET /api/rules/berkeley`.
+       - Copy the JSON responses and save them into `docs/sample_responses.json` so teammates can copy them for slides.
+    4. **Write an API overview in `docs/api-specification.md`:**
+       - Copy from [starter_code/backend_code.md#janice-week-6](starter_code/backend_code.md#janice-week-6).
+       - Create a markdown table listing:
+         | Method | Endpoint | Description | Status Code |
+         |---|---|---|---|
+         | `GET` | `/health` | Server liveness check | `200` |
+         | `POST` | `/api/classify` | AI image classification & tips | `200` |
+         | `GET` | `/api/rules/{location}` | Municipal recycling rules | `200` |
+    5. **Save and commit:**
+       ```bash
+       git checkout -b docs/backend/janice/api-schema-review
+       git add docs/ backend/app/
+       git commit -m "docs(api): complete mid-semester api schema audit and sample payloads"
+       ```
+  * **Verification:**
+    1. All routes in Swagger UI render summary titles and field descriptions.
+    2. `docs/sample_responses.json` contains valid, prettified JSON samples for presentation.
+    3. `docs/api-specification.md` has an up-to-date endpoint reference table.
+  * **Deliverable & Branch:** `docs/backend/janice/api-schema-review`
 
-* **Carlos (Backend)
+* **Carlos (Backend)**
   * **Task:** Demo Environment Networking & Server Telemetry.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-6](starter_code/backend_code.md#carlos-week-6)
   * **Goal & Context:** Ensure stable local networking between mobile phone and FastAPI server during recording sessions.
   * **Action Steps:**
     1. Configure dedicated local Wi-Fi hotspot and static local IP routing for mobile phone connection during demo rehearsals.
@@ -1023,6 +1531,7 @@
 
 * **David (Backend)**
   * **Task:** Demo Environment Setup & Server Monitoring.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-6](starter_code/backend_code.md#david-week-6)
   * **Goal & Context:** Provide stable networking between Caden's mobile phone and the FastAPI backend server during recording and rehearsals.
   * **Action Steps:**
     1. Configure dedicated local Wi-Fi hotspot and static local IP routing for the backend server.
@@ -1033,6 +1542,7 @@
 
 * **Krish (Backend)**
   * **Task:** Firestore Data Integrity & Security Verification.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-6](starter_code/backend_code.md#krish-week-6)
   * **Goal & Context:** Verify database records created during classification are structured cleanly without orphan data.
   * **Action Steps:**
     1. Inspect all Firestore documents generated during test scans in Firebase Console.
@@ -1044,6 +1554,7 @@
 
 * **Edward (Backend)**
   * **Task:** Lead Team Retrospective & Document Action Items.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-6](starter_code/backend_code.md#edward-week-6)
   * **Goal & Context:** Guide team reflection on Phase 1 accomplishments, bottlenecks, and priorities for Phase 2.
   * **Action Steps:**
     1. Schedule and facilitate a 30-minute team retrospective using the Start-Stop-Continue framework.
@@ -1059,6 +1570,7 @@
 
 * **Aarav (AI/ML)**
   * **Task:** Mid-Sem Model Benchmark & Metrics Summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-6](starter_code/ml-ai_code.md#aarav-week-6)
   * **Goal & Context:** Document formal machine learning model performance for technical review.
   * **Action Steps:**
     1. Compile final training metrics table: ResNet-18 baseline vs Fine-tuned ResNet-18.
@@ -1069,6 +1581,7 @@
 
 * **Kathleen (AI/ML)**
   * **Task:** Physical Demo Items Benchmark & Preparation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-6](starter_code/ml-ai_code.md#kathleen-week-6)
   * **Goal & Context:** Ensure the items chosen for the video demo yield flawless classification results.
   * **Action Steps:**
     1. Benchmark 10 candidate physical waste items against the frozen MVP model.
@@ -1082,6 +1595,7 @@
 
 * **Max (AI/ML)**
   * **Task:** Catalog of Known Limitations & Failure Modes.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-6](starter_code/ml-ai_code.md#max-week-6)
   * **Goal & Context:** Formulate thoughtful responses for presentation Q&A regarding model limitations.
   * **Action Steps:**
     1. Document known failure modes identified during testing (e.g. crumpled black plastic, translucent glass, items with food residue).
@@ -1092,6 +1606,7 @@
 
 * **Doil (AI/ML)**
   * **Task:** Presentation Rehearsal Timing & Speaker Coordination.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-6](starter_code/ml-ai_code.md#doil-week-6)
   * **Goal & Context:** Keep presentation strictly within the allotted time limit and ensure seamless speaker handoffs.
   * **Action Steps:**
     1. Coordinate a 45-minute dry-run rehearsal with all 10 members.
@@ -1115,6 +1630,7 @@
 
 * **Mong**
   * **Task:** Build Login, Register & Forgot Password UI screens.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-7](starter_code/frontend_code.md#mong-week-7)
   * **Goal & Context:** Create clean, accessible entry screens for user onboarding and authentication.
   * **Action Steps:**
     1. Implement `src/screens/LoginScreen.js` and `src/screens/RegisterScreen.js`:
@@ -1126,8 +1642,9 @@
   * **Verification:** Test form inputs on physical phone; verify keyboard dismissing and input validation banners.
   * **Deliverable & Branch:** `feat/frontend/mong/auth-screens-ui`.
 
-* **Caden
+* **Caden**
   * **Task:** Integrate Firebase Auth client SDK & React AuthContext.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-7](starter_code/frontend_code.md#caden-week-7)
   * **Goal & Context:** Manage global login state, secure token storage, and authenticated API requests.
   * **Action Steps:**
     1. Set up Firebase client SDK in `src/services/firebase.js`.
@@ -1144,19 +1661,65 @@
 * [Firestore Security Rules & User-Level Access](https://firebase.google.com/docs/firestore/security/get-started)
 * [Mocking Auth Tokens in Pytest Suites](https://docs.pytest.org/en/stable/how-to/monkeypatch.html)
 
-* **Janice
+* **Janice**
   * **Task:** Implement protected user profile route (`GET /api/users/me`).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-7](starter_code/backend_code.md#janice-week-7)
   * **Goal & Context:** Allow authenticated mobile users to retrieve their profile details from Firestore.
-  * **Action Steps:**
-    1. Implement `GET /api/users/me` endpoint in `backend/app/routers/auth.py`.
-    2. Use auth dependency to extract user `uid`.
-    3. Fetch and return user profile details (`email`, `display_name`, `created_at`).
-    4. Handle user not found with clean HTTP 404 response.
-  * **Verification:** Query endpoint with valid bearer token; confirm accurate user profile JSON returned.
-  * **Deliverable & Branch:** `feat/backend/janice/user-profile-endpoint`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Now that the team has Firebase Authentication enabled, users log in on their phones with their Berkeley email. When the phone calls `GET /api/users/me`, our backend checks the user's login token (like a wristband at a concert), finds out who they are, looks up their user profile in Firestore, and returns their display name, email, and member stats.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Understand FastAPI Dependencies (`Depends`):**  
+       *Why:* In FastAPI, `Depends(get_current_user)` acts like a security guard. Before running your route, FastAPI calls `get_current_user` to inspect the `Authorization: Bearer <token>` header. If the token is valid, it passes the user's information directly into your route function!
+    2. **Implement the profile route in `backend/app/routers/auth.py`:**
+       - Open `backend/app/routers/auth.py` and implement `GET /me`:
+         ```python
+         from fastapi import APIRouter, Depends, HTTPException
 
-* **Carlos
+
+         # Mock auth dependency for development when Firebase tokens aren't active
+         async def get_current_user(token: str = "dev_token") -> dict:
+             # In production, Krish's Firebase Admin SDK verifies this token
+             return {
+                 "uid": "cal_bear_123",
+                 "email": "oski@berkeley.edu",
+                 "display_name": "Oski Bear",
+             }
+
+
+         router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+         @router.get("/me")
+         async def get_my_profile(current_user: dict = Depends(get_current_user)):
+             """Returns profile information for the authenticated user."""
+             if not current_user or "uid" not in current_user:
+                 raise HTTPException(status_code=401, detail="Authentication token required.")
+             return {
+                 "uid": current_user["uid"],
+                 "email": current_user["email"],
+                 "display_name": current_user.get("display_name", "Sortify User"),
+                 "streak": 3,
+                 "total_scans": 15,
+             }
+         ```
+    3. **Test in Swagger UI:**
+       - Go to `http://localhost:8000/docs`, find `GET /api/auth/me`, and click **Try it out** -> **Execute**.
+       - Verify HTTP status 200 returns with user profile fields (`uid`, `email`, `display_name`).
+    4. **Save and commit:**
+       ```bash
+       git checkout -b feat/backend/janice/user-profile-endpoint
+       git add backend/app/routers/auth.py
+       git commit -m "feat(auth): implement protected get current user profile endpoint"
+       ```
+  * **Verification:**
+    1. Requests without credentials return HTTP 401 Unauthorized when security is enabled.
+    2. Authenticated requests return HTTP 200 with user profile fields (`email`, `uid`, `streak`).
+    3. Swagger UI displays the `/api/auth/me` endpoint with lock icon / auth header.
+  * **Deliverable & Branch:** `feat/backend/janice/user-profile-endpoint`
+
+* **Carlos**
   * **Task:** Implement history data service & streak calculation logic.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-7](starter_code/backend_code.md#carlos-week-7)
   * **Goal & Context:** Encapsulate scan record writes and calculate daily active sorting streaks.
   * **Action Steps:**
     1. Create `backend/app/services/history_service.py`.
@@ -1168,6 +1731,7 @@
 
 * **David**
   * **Task:** Implement authenticated scan history logging (`POST /api/history`).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-7](starter_code/backend_code.md#david-week-7)
   * **Goal & Context:** Allow logged-in users to save scans to their personal cloud history.
   * **Action Steps:**
     1. Implement `POST /api/history` in `backend/app/routers/history.py`.
@@ -1180,6 +1744,7 @@
 
 * **Krish**
   * **Task:** Build User Profile endpoint & sync service.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-7](starter_code/backend_code.md#krish-week-7)
   * **Goal & Context:** Maintain user metadata (points, join date, display name) in Cloud Firestore.
   * **Action Steps:**
     1. Implement `GET /api/user/profile` and `PUT /api/user/profile` in `backend/app/routers/auth.py`.
@@ -1190,6 +1755,7 @@
 
 * **Edward**
   * **Task:** Automated auth security test suite in Pytest.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-7](starter_code/backend_code.md#edward-week-7)
   * **Goal & Context:** Ensure unauthorized clients cannot access protected user data.
   * **Action Steps:**
     1. Create `backend/tests/test_auth.py`.
@@ -1209,6 +1775,7 @@
 
 * **Aarav**
   * **Task:** Dynamic PyTorch model quantization experiment.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-7](starter_code/ml-ai_code.md#aarav-week-7)
   * **Goal & Context:** Reduce model memory footprint and speed up CPU inference using INT8 weights.
   * **Action Steps:**
     1. Implement dynamic quantization script `ml/scripts/quantize.py`.
@@ -1221,6 +1788,7 @@
 
 * **Kathleen**
   * **Task:** Targeted dataset expansion for weak classes.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-7](starter_code/ml-ai_code.md#kathleen-week-7)
   * **Goal & Context:** Boost accuracy on difficult waste items identified during Week 4 error analysis.
   * **Action Steps:**
     1. Collect 120 additional images focused on historically confused items:
@@ -1234,6 +1802,7 @@
 
 * **Max**
   * **Task:** Retrain model on expanded dataset v2.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-7](starter_code/ml-ai_code.md#max-week-7)
   * **Goal & Context:** Train new model weights leveraging the expanded dataset to improve edge case handling.
   * **Action Steps:**
     1. Run `train.py` on `data/processed_v2/` for 15 epochs.
@@ -1245,6 +1814,7 @@
 
 * **Doil**
   * **Task:** Comprehensive model evaluation report v2.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-7](starter_code/ml-ai_code.md#doil-week-7)
   * **Goal & Context:** Document performance gains achieved by dataset expansion and model retraining.
   * **Action Steps:**
     1. Compare v1 vs v2 model metrics side-by-side in a comparative table.
@@ -1267,6 +1837,7 @@
 
 * **Mong**
   * **Task:** Build Stats & Gamification Dashboard screen.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-8](starter_code/frontend_code.md#mong-week-8)
   * **Goal & Context:** Motivate students by visualizing their personal environmental impact and sorting streak.
   * **Action Steps:**
     1. Implement `src/screens/StatsScreen.js`:
@@ -1278,8 +1849,9 @@
   * **Verification:** Test chart rendering with varying sample data; verify chart fits seamlessly on both small and large phone screens.
   * **Deliverable & Branch:** `feat/frontend/mong/stats-screen-ui`.
 
-* **Caden
+* **Caden**
   * **Task:** Implement History Screen with FlatList & auto-logging.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-8](starter_code/frontend_code.md#caden-week-8)
   * **Goal & Context:** Provide responsive, paginated browsing of past scans with thumbnail previews.
   * **Action Steps:**
     1. Implement `src/screens/HistoryScreen.js` using `<FlatList>`:
@@ -1297,19 +1869,84 @@
 * [Cloud Firestore Distributed Counters](https://cloud.google.com/firestore/docs/solutions/counters)
 * [Designing Resilient Streak Tracking Algorithms](https://en.wikipedia.org/wiki/Gamification)
 
-* **Janice
+* **Janice**
   * **Task:** Implement paginated scan history endpoint (`GET /api/history`).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-8](starter_code/backend_code.md#janice-week-8)
   * **Goal & Context:** Provide fast, scalable history retrieval without loading unbounded documents into memory.
-  * **Action Steps:**
-    1. Implement `GET /api/history` in `backend/app/routers/history.py`.
-    2. Add query parameters: `limit: int = 10`, `cursor: Optional[str] = None`.
-    3. Query user's scan subcollection in Firestore ordered by `timestamp` descending with `limit()`.
-    4. Return list of `ScanRecord` models along with `next_cursor` for infinite scroll support.
-  * **Verification:** Query endpoint with `limit=2` and verify only 2 items return with a valid next cursor.
-  * **Deliverable & Branch:** `feat/backend/janice/paginated-history-endpoint`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    If an active student scans 200 items over a semester, loading all 200 items in one request would make the mobile app lag or consume lots of phone data! **Pagination** solves this: we send only 10 items at a time, along with a bookmark (called a `cursor` or `next_cursor`). When the user scrolls down on their phone, the app asks for the next 10 items starting from that cursor.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Define the history schema in `backend/app/schemas/history.py`:**
+       ```python
+       from typing import List, Optional
+       from pydantic import BaseModel
 
-* **Carlos
+
+       class ScanRecord(BaseModel):
+           scan_id: str
+           item_name: str
+           category: str
+           bin: str
+           timestamp: str
+
+
+       class HistoryResponse(BaseModel):
+           items: List[ScanRecord]
+           limit: int
+           next_cursor: Optional[str] = None  # None when there are no more items
+       ```
+    2. **Implement `GET /api/history` in `backend/app/routers/history.py`:**
+       ```python
+       from fastapi import APIRouter, Query
+       from typing import Optional
+       from backend.app.schemas.history import HistoryResponse, ScanRecord
+
+       router = APIRouter(prefix="/history", tags=["History"])
+
+       # Mock database list for testing pagination
+       MOCK_HISTORY = [
+           ScanRecord(
+               scan_id=f"scan_{i}",
+               item_name=f"Item {i}",
+               category="plastic",
+               bin="recycle",
+               timestamp=f"2026-10-0{i}T12:00:00Z",
+           )
+           for i in range(1, 15)
+       ]
+
+
+       @router.get("/", response_model=HistoryResponse)
+       def get_scan_history(
+           limit: int = Query(10, ge=1, le=50, description="Items per page (max 50)"),
+           cursor: Optional[str] = Query(None, description="Cursor offset for pagination"),
+       ):
+           """Returns paginated scan history for the user."""
+           start_idx = int(cursor) if cursor and cursor.isdigit() else 0
+           end_idx = start_idx + limit
+           items = MOCK_HISTORY[start_idx:end_idx]
+           next_cursor = str(end_idx) if end_idx < len(MOCK_HISTORY) else None
+           return HistoryResponse(items=items, limit=limit, next_cursor=next_cursor)
+       ```
+    3. **Test in Swagger UI:**
+       - Go to `/docs`, open `GET /api/history/`.
+       - Run with `limit=3` and no cursor -> confirms 3 items return with `next_cursor: "3"`.
+       - Run again with `limit=3` and `cursor="3"` -> confirms the next 3 items return!
+    4. **Save and commit:**
+       ```bash
+       git checkout -b feat/backend/janice/paginated-history-endpoint
+       git add backend/app/schemas/history.py backend/app/routers/history.py
+       git commit -m "feat(history): implement paginated scan history endpoint with cursor support"
+       ```
+  * **Verification:**
+    1. Querying `/api/history?limit=2` returns exactly 2 records with a valid `next_cursor`.
+    2. Querying with the returned `next_cursor` fetches the next page of items.
+    3. Setting `limit=100` triggers automatic Pydantic 422 error because `le=50`.
+  * **Deliverable & Branch:** `feat/backend/janice/paginated-history-endpoint`
+
+* **Carlos**
   * **Task:** Optimize history queries & pagination indexing.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-8](starter_code/backend_code.md#carlos-week-8)
   * **Goal & Context:** Optimize Firestore query ordering and compound indexes for scan history.
   * **Action Steps:**
     1. Define compound Firestore indexes for `user_id` ASC + `timestamp` DESC.
@@ -1320,6 +1957,7 @@
 
 * **David**
   * **Task:** Implement user stats aggregation endpoint (`GET /api/stats`).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-8](starter_code/backend_code.md#david-week-8)
   * **Goal & Context:** Calculate eco-metrics and category distributions to power the mobile dashboard.
   * **Action Steps:**
     1. Implement `GET /api/stats` in `backend/app/routers/history.py`.
@@ -1333,6 +1971,7 @@
 
 * **Krish**
   * **Task:** Implement daily streak calculation algorithm.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-8](starter_code/backend_code.md#krish-week-8)
   * **Goal & Context:** Accurately compute consecutive active sorting days while handling timezones.
   * **Action Steps:**
     1. Create `backend/app/services/streak_calculator.py`.
@@ -1347,6 +1986,7 @@
 
 * **Edward**
   * **Task:** Expand municipal rules to 5 cities with 404 validation.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-8](starter_code/backend_code.md#edward-week-8)
   * **Goal & Context:** Broaden Sortify's reach across the greater Bay Area and California.
   * **Action Steps:**
     1. Research official waste management rules for 5 municipalities:
@@ -1368,6 +2008,7 @@
 
 * **Aarav**
   * **Task:** Test-Time Augmentation (TTA) experimentation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-8](starter_code/ml-ai_code.md#aarav-week-8)
   * **Goal & Context:** Evaluate if averaging predictions across multiple augmented views improves accuracy on tricky images.
   * **Action Steps:**
     1. Implement `ml/scripts/tta_eval.py` applying 4 test-time transforms per test image:
@@ -1383,6 +2024,7 @@
 
 * **Kathleen**
   * **Task:** Model version logging & loading helper script.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-8](starter_code/ml-ai_code.md#kathleen-week-8)
   * **Goal & Context:** Establish clean model checkpoint tracking and seamless switching between model versions.
   * **Action Steps:**
     1. Create `ml/models/MODEL_LOG.md` recording all trained checkpoints:
@@ -1394,6 +2036,7 @@
 
 * **Max**
   * **Task:** PyTorch to ONNX export pipeline & validation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-8](starter_code/ml-ai_code.md#max-week-8)
   * **Goal & Context:** Export model to vendor-neutral ONNX format for accelerated inference runtimes.
   * **Action Steps:**
     1. Create `ml/scripts/export_onnx.py`.
@@ -1407,6 +2050,7 @@
 
 * **Doil**
   * **Task:** Prototype ONNX to TensorFlow Lite (`.tflite`) conversion.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-8](starter_code/ml-ai_code.md#doil-week-8)
   * **Goal & Context:** Investigate potential for future on-device mobile neural execution.
   * **Action Steps:**
     1. Test conversion of `sortify.onnx` into `.tflite` format using `onnx2tf` or Google AI Edge Torch.
@@ -1429,6 +2073,7 @@
 
 * **Mong**
   * **Task:** Implement loading skeletons, empty states & accessibility audit.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-9](starter_code/frontend_code.md#mong-week-9)
   * **Goal & Context:** Elevate mobile user experience from functional prototype to polished consumer app.
   * **Action Steps:**
     1. Replace generic activity spinners with animated skeleton cards on History and Stats screens.
@@ -1438,8 +2083,9 @@
   * **Verification:** Test app with iOS VoiceOver or Android TalkBack enabled; verify all buttons are clearly announced.
   * **Deliverable & Branch:** `feat/frontend/mong/accessibility-and-skeletons`.
 
-* **Caden
+* **Caden**
   * **Task:** Cross-device testing & memory leak cleanup.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-9](starter_code/frontend_code.md#caden-week-9)
   * **Goal & Context:** Ensure stable app performance on low-end and high-end devices without crashing or memory leaks.
   * **Action Steps:**
     1. Audit camera lifecycle in `ScanScreen.js`: ensure camera stream is actively unmounted when navigating to History or Profile tabs to release camera hardware memory.
@@ -1455,18 +2101,73 @@
 * [Firebase Local Emulator Suite Guide](https://firebase.google.com/docs/emulator-suite)
 * [OWASP API Security Top 10 Guidelines](https://owasp.org/www-project-api-security/)
 
-* **Janice
+* **Janice**
   * **Task:** API endpoint unit tests with pytest.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-9](starter_code/backend_code.md#janice-week-9)
   * **Goal & Context:** Build clear, straightforward unit test suites for FastAPI routes and schemas.
-  * **Action Steps:**
-    1. Create `backend/tests/test_routes.py`.
-    2. Write unit tests for `/health`, `/api/rules/{location}`, and Pydantic schema validation.
-    3. Test invalid query parameters and verify appropriate error response payloads.
-  * **Verification:** Run `pytest backend/tests/test_routes.py` and confirm all tests pass cleanly.
-  * **Deliverable & Branch:** `feat/backend/janice/api-unit-tests`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Instead of manually opening Swagger UI and clicking buttons every single day to see if our API works, we write **automated unit tests**. An automated test is a Python function that uses FastAPI's `TestClient` to send requests to our server in memory and asserts that the response code is 200. When we run `pytest`, Python runs all tests in 2 seconds and reports all green checks!
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Install pytest and httpx (if not already installed):**
+       ```bash
+       pip install pytest httpx
+       ```
+    2. **Create the test file (`backend/tests/test_routes.py`):**
+       - Create `backend/tests/` with `__init__.py`.
+       - Write your test cases:
+         ```python
+         from fastapi.testclient import TestClient
+         from backend.app.main import app
 
-* **Carlos
+         client = TestClient(app)
+
+
+         def test_health_check_returns_200():
+             """Verify /health returns HTTP 200 and ok status."""
+             response = client.get("/health")
+             assert response.status_code == 200
+             assert response.json() == {"status": "ok"}
+
+
+         def test_rules_berkeley_returns_rules():
+             """Verify rules endpoint returns Berkeley data."""
+             response = client.get("/api/rules/berkeley")
+             assert response.status_code == 200
+             data = response.json()
+             assert data["city"] == "berkeley"
+             assert data["is_fallback"] is False
+
+
+         def test_rules_fallback_for_unknown_city():
+             """Verify rules endpoint falls back cleanly for unknown cities."""
+             response = client.get("/api/rules/unknowncity123")
+             assert response.status_code == 200
+             data = response.json()
+             assert data["is_fallback"] is True
+         ```
+    3. **Run your tests in the terminal:**
+       ```bash
+       pytest backend/tests/test_routes.py -v
+       ```
+       *(The `-v` flag means verbose: you will see each test function name and a green `PASSED` next to it).*
+    4. **Intentionally break a test to see it work:**
+       - Change `{"status": "ok"}` to `{"status": "wrong"}`.
+       - Run `pytest` again and see it fail with a detailed red diff! Then change it back. This gives you confidence that the test is actually checking real code.
+    5. **Save and commit:**
+       ```bash
+       git checkout -b feat/backend/janice/api-unit-tests
+       git add backend/tests/
+       git commit -m "test(api): add automated pytest unit tests for health and rules endpoints"
+       ```
+  * **Verification:**
+    1. Running `pytest backend/tests/test_routes.py -v` passes with all tests showing green `PASSED`.
+    2. Total test execution completes in under 3 seconds.
+    3. `ruff check .` passes without errors.
+  * **Deliverable & Branch:** `feat/backend/janice/api-unit-tests`
+
+* **Carlos**
   * **Task:** Full-flow end-to-end integration test suite.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-9](starter_code/backend_code.md#carlos-week-9)
   * **Goal & Context:** Automatically verify the complete sequence from user registration through image classification and history retrieval.
   * **Action Steps:**
     1. Create `backend/tests/test_integration.py`.
@@ -1480,6 +2181,7 @@
 
 * **David**
   * **Task:** Latency benchmarking & performance profiling middleware.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-9](starter_code/backend_code.md#david-week-9)
   * **Goal & Context:** Profile request round-trip time and ensure total classification latency is strictly under 3 seconds.
   * **Action Steps:**
     1. Implement detailed profiling middleware in `backend/app/middleware/profiler.py`:
@@ -1493,6 +2195,7 @@
 
 * **Krish**
   * **Task:** API Rate Limiting Middleware.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-9](starter_code/backend_code.md#krish-week-9)
   * **Goal & Context:** Protect classification and auth endpoints from Denial of Service (DoS) and abuse.
   * **Action Steps:**
     1. Install and configure `slowapi`: `pip install slowapi`.
@@ -1505,6 +2208,7 @@
 
 * **Edward**
   * **Task:** Edge case testing suite & backend documentation.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-9](starter_code/backend_code.md#edward-week-9)
   * **Goal & Context:** Harden backend against unexpected inputs and author comprehensive onboarding documentation.
   * **Action Steps:**
     1. Create `backend/tests/test_edge_cases.py`:
@@ -1524,6 +2228,7 @@
 
 * **Aarav**
   * **Task:** Adversarial & out-of-distribution input stress testing.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-9](starter_code/ml-ai_code.md#aarav-week-9)
   * **Goal & Context:** Understand model behavior on non-trash objects and extreme photo conditions.
   * **Action Steps:**
     1. Collect 30 challenging out-of-distribution images:
@@ -1537,6 +2242,7 @@
 
 * **Kathleen**
   * **Task:** Empirical confidence threshold calibration.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-9](starter_code/ml-ai_code.md#kathleen-week-9)
   * **Goal & Context:** Determine the optimal confidence threshold to balance false positives vs false rejections.
   * **Action Steps:**
     1. Create `ml/scripts/calibrate_threshold.py`.
@@ -1550,6 +2256,7 @@
 
 * **Max**
   * **Task:** Comparative model evaluation & checkpoint recommendation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-9](starter_code/ml-ai_code.md#max-week-9)
   * **Goal & Context:** Objectively compare all trained model checkpoints to select the single best production candidate.
   * **Action Steps:**
     1. Create `ml/scripts/compare_models.py`.
@@ -1564,6 +2271,7 @@
 
 * **Doil**
   * **Task:** Author official Model Card documentation.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-9](starter_code/ml-ai_code.md#doil-week-9)
   * **Goal & Context:** Provide standard industry documentation for the computer vision model per Hugging Face / Google standards.
   * **Action Steps:**
     1. Author `ml/MODEL_CARD.md` following standard format:
@@ -1590,6 +2298,7 @@
 
 * **Mong**
   * **Task:** Implement onboarding walkthrough & Dark Mode theme.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-10](starter_code/frontend_code.md#mong-week-10)
   * **Goal & Context:** Welcome first-time users with an educational walkthrough and support system-wide dark mode.
   * **Action Steps:**
     1. Implement 3-step swipeable onboarding flow (`src/screens/OnboardingScreen.js`):
@@ -1601,8 +2310,9 @@
   * **Verification:** Test first-time app launch on physical phone; verify onboarding displays once, dismisses smoothly, and dark mode toggles seamlessly with system settings.
   * **Deliverable & Branch:** `feat/frontend/mong/onboarding-and-dark-mode`.
 
-* **Caden
+* **Caden**
   * **Task:** Integrate haptic feedback, safe areas & icon audit.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-10](starter_code/frontend_code.md#caden-week-10)
   * **Goal & Context:** Add tactile responsiveness to mobile interactions and fix notch/home-bar padding.
   * **Action Steps:**
     1. Install and configure `expo-haptics`: `npx expo install expo-haptics`.
@@ -1622,18 +2332,72 @@
 * [RFC 7807 Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc7807)
 * [pip-audit — Python Dependency Vulnerability Scanner](https://pypi.org/project/pip-audit/)
 
-* **Janice
+* **Janice**
   * **Task:** Error handling middleware, custom exception handlers & standardized error responses.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-10](starter_code/backend_code.md#janice-week-10)
   * **Goal & Context:** Ensure consistent error responses across all endpoints.
-  * **Action Steps:**
-    1. Implement standardized exception handlers in `backend/app/main.py`.
-    2. Format all errors as `{ "error": true, "code": str, "message": str }`.
-    3. Add request logging middleware capturing status codes and response times.
-  * **Verification:** Test sending malformed payloads; confirm consistent error responses returned.
-  * **Deliverable & Branch:** `feat/backend/janice/error-handling-logging`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    When an unexpected error happens (like a missing file or bad parameter), we never want Python to crash or return an ugly, confusing HTML error page. Instead, an **exception handler** catches errors and converts them into a clean, predictable JSON response: `{"error": true, "code": "RESOURCE_NOT_FOUND", "message": "City not found"}`. A **middleware** is a checkpoint that runs on every single request, recording how long it took in milliseconds so we can spot slow endpoints.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Create custom exception class (`backend/app/core/exceptions.py`):**
+       - Create `backend/app/core/` with `__init__.py`.
+       - In `exceptions.py`:
+         ```python
+         class SortifyException(Exception):
+             def __init__(self, message: str, code: str = "BAD_REQUEST", status_code: int = 400):
+                 self.message = message
+                 self.code = code
+                 self.status_code = status_code
+         ```
+    2. **Register global exception handlers in `backend/app/main.py`:**
+       - Open `backend/app/main.py` and add:
+         ```python
+         from fastapi.responses import JSONResponse
+         from backend.app.core.exceptions import SortifyException
 
-* **Carlos
+
+         @app.exception_handler(SortifyException)
+         async def sortify_exception_handler(request, exc: SortifyException):
+             return JSONResponse(
+                 status_code=exc.status_code,
+                 content={"error": True, "code": exc.code, "message": exc.message},
+             )
+         ```
+    3. **Add request logging middleware in `backend/app/main.py`:**
+       ```python
+       import time
+       from fastapi import Request
+
+
+       @app.middleware("http")
+       async def log_requests(request: Request, call_next):
+           start_time = time.time()
+           response = await call_next(request)
+           duration = round((time.time() - start_time) * 1000, 2)
+           print(
+               f"[{request.method}] {request.url.path} -> Status {response.status_code} ({duration}ms)"
+           )
+           return response
+       ```
+    4. **Test in your terminal:**
+       - Start server with `uvicorn backend.app.main:app --reload`.
+       - Execute any route in Swagger UI at `http://localhost:8000/docs`.
+       - Check your terminal: you will see real-time logs like `[GET] /health -> Status 200 (1.23ms)`!
+    5. **Save and commit:**
+       ```bash
+       git checkout -b feat/backend/janice/error-handling-logging
+       git add backend/app/core/exceptions.py backend/app/main.py
+       git commit -m "feat(middleware): add custom exception handlers and request logging middleware"
+       ```
+  * **Verification:**
+    1. Custom exceptions return clean JSON with `{ "error": true, "code": "...", "message": "..." }`.
+    2. Terminal logs duration in milliseconds and status code for each HTTP request in real time.
+    3. Standard HTTP status codes (400, 404, 500) are preserved.
+  * **Deliverable & Branch:** `feat/backend/janice/error-handling-logging`
+
+* **Carlos**
   * **Task:** Dockerize backend with multi-stage Dockerfile & Compose.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-10](starter_code/backend_code.md#carlos-week-10)
   * **Goal & Context:** Package backend into reproducible containers for zero-config deployment.
   * **Action Steps:**
     1. Create `backend/Dockerfile` using multi-stage build:
@@ -1649,6 +2413,7 @@
 
 * **David**
   * **Task:** Implement comprehensive Diagnostics endpoint (`GET /api/health`).
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-10](starter_code/backend_code.md#david-week-10)
   * **Goal & Context:** Provide real-time health telemetry for cloud load balancers and deployment monitoring.
   * **Action Steps:**
     1. Enhance `GET /api/health` in `backend/app/routers/health.py`.
@@ -1664,6 +2429,7 @@
 
 * **Krish**
   * **Task:** Standardize global exception handling middleware.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-10](starter_code/backend_code.md#krish-week-10)
   * **Goal & Context:** Eliminate unhandled stack traces and return consistent RFC-7807 compliant error payloads.
   * **Action Steps:**
     1. Create custom exception handlers in `backend/app/middleware/error_handlers.py`.
@@ -1683,6 +2449,7 @@
 
 * **Edward**
   * **Task:** Polish interactive OpenAPI Swagger documentation with examples.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-10](starter_code/backend_code.md#edward-week-10)
   * **Goal & Context:** Provide interactive, self-documenting API portal for team members and project portfolio.
   * **Action Steps:**
     1. Update route decorators in all FastAPI routers (`classify.py`, `rules.py`, `auth.py`, `history.py`):
@@ -1700,6 +2467,7 @@
 
 * **Aarav**
   * **Task:** Verify Dockerized model inference performance.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-10](starter_code/ml-ai_code.md#aarav-week-10)
   * **Goal & Context:** Ensure the PyTorch model performs reliably inside the Docker container under CPU memory constraints.
   * **Action Steps:**
     1. Pull Carlos's Docker container build locally.
@@ -1711,6 +2479,7 @@
 
 * **Kathleen**
   * **Task:** Build interactive model demo Jupyter notebook.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-10](starter_code/ml-ai_code.md#kathleen-week-10)
   * **Goal & Context:** Create an accessible interactive playground for non-technical team members and evaluators.
   * **Action Steps:**
     1. Create `ml/notebooks/demo.ipynb` using `ipywidgets`.
@@ -1722,6 +2491,7 @@
 
 * **Max**
   * **Task:** On-device mobile inference research & benchmarks.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-10](starter_code/ml-ai_code.md#max-week-10)
   * **Goal & Context:** Document the architectural path for running Sortify without an internet connection in future releases.
   * **Action Steps:**
     1. Research mobile deployment options: TensorFlow Lite for React Native vs ONNX Runtime Mobile vs PyTorch Mobile (ExecuTorch).
@@ -1732,6 +2502,7 @@
 
 * **Doil**
   * **Task:** Author verified step-by-step model retraining guide in `ml/README.md`.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-10](starter_code/ml-ai_code.md#doil-week-10)
   * **Goal & Context:** Provide clear documentation so any contributor can retrain the model from scratch.
   * **Action Steps:**
     1. Author comprehensive `ml/README.md` containing:
@@ -1757,6 +2528,7 @@
 
 * **Mong**
   * **Task:** Design App Store & portfolio visual marketing assets.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-11](starter_code/frontend_code.md#mong-week-11)
   * **Goal & Context:** Create visual assets showcasing Sortify on realistic mobile device frames for the portfolio release.
   * **Action Steps:**
     1. Design 4 high-resolution screenshot cards on iPhone mockups:
@@ -1768,8 +2540,9 @@
   * **Verification:** Export visual assets at 2x resolution and upload to `docs/portfolio_assets/`.
   * **Deliverable & Branch:** `docs/portfolio_assets/` in repository.
 
-* **Caden
+* **Caden**
   * **Task:** Generate standalone APK via EAS Build & preview distribution.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-11](starter_code/frontend_code.md#caden-week-11)
   * **Goal & Context:** Produce an installable Android `.apk` file for physical device validation.
   * **Action Steps:**
     1. Configure Expo Application Services (`eas.json`):
@@ -1786,18 +2559,55 @@
 * [Structured JSON Logging in Production Python](https://docs.python.org/3/library/logging.html)
 * [Cloud Firestore Automated Backups & Export](https://cloud.google.com/firestore/docs/manage-data/export-import-entities)
 
-* **Janice
+* **Janice**
   * **Task:** OpenAPI Swagger documentation polish & backend setup guide.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-11](starter_code/backend_code.md#janice-week-11)
   * **Goal & Context:** Provide comprehensive API documentation and local developer setup instructions.
-  * **Action Steps:**
-    1. Finalize interactive Swagger docs with example schemas and descriptions for all endpoints.
-    2. Author setup and execution guide in `backend/README.md`.
-    3. Document curl testing commands for local development.
-  * **Verification:** Visit `/docs` on local server; confirm clean descriptions and example payloads render.
-  * **Deliverable & Branch:** `docs/backend/janice/api-documentation-polish`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    Great documentation is what separates an amateur school project from a professional, industry-grade portfolio release. In Week 11, you will write a complete, welcoming setup guide in `backend/README.md` so that any teammate, recruiter, or grading instructor can clone the repository and get the backend running in under 3 minutes with zero confusion.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Polish Swagger metadata in `backend/app/main.py`:**
+       - Add professional title, description, and contact info:
+         ```python
+         app = FastAPI(
+             title="Sortify AI API",
+             description="High-performance backend for waste classification, municipal recycling guidance, and user streak tracking.",
+             version="1.0.0",
+             contact={"name": "Sortify Backend Team"},
+         )
+         ```
+    2. **Author `backend/README.md` with clear, beginner-friendly instructions:**
+       - Open `backend/README.md` and include:
+         - **Project Overview:** What Sortify Backend does.
+         - **Prerequisites:** Python 3.10+ required.
+         - **Step 1: Virtual Environment Setup:** Exact commands for Windows and Mac.
+         - **Step 2: Dependency Installation:** `pip install -r requirements.txt`.
+         - **Step 3: Running the Dev Server:** `uvicorn backend.app.main:app --reload`.
+         - **Step 4: Interactive API Testing:** Open `http://localhost:8000/docs` in browser.
+         - **Step 5: Running Tests:** `pytest backend/tests/`.
+         - **Endpoint Summary Table:** Quick reference of all endpoints.
+    3. **Add copy-paste curl commands:**
+       - Provide sample `curl` terminal commands so developers can test directly from their command line.
+    4. **Run code quality check:**
+       ```bash
+       ruff check .
+       ruff format .
+       ```
+    5. **Save and commit:**
+       ```bash
+       git checkout -b docs/backend/janice/api-documentation-polish
+       git add backend/README.md backend/app/main.py
+       git commit -m "docs(backend): author comprehensive backend readme and polish swagger metadata"
+       ```
+  * **Verification:**
+    1. Open a fresh terminal and follow the instructions in `backend/README.md` step-by-step to confirm they work without missing commands.
+    2. Visiting `http://localhost:8000/docs` displays rich project description, version, and tags.
+    3. `ruff check .` reports zero errors.
+  * **Deliverable & Branch:** `docs/backend/janice/api-documentation-polish`
 
-* **Carlos
+* **Carlos**
   * **Task:** Production Cloud Deployment to Render / Cloud Run.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-11](starter_code/backend_code.md#carlos-week-11)
   * **Goal & Context:** Host the Sortify backend on a publicly accessible, secure HTTPS server.
   * **Action Steps:**
     1. Set up hosting on Render, Railway, or Google Cloud Run.
@@ -1809,6 +2619,7 @@
 
 * **David**
   * **Task:** Prototype multi-object classification endpoint.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-11](starter_code/backend_code.md#david-week-11)
   * **Goal & Context:** Scaffold backend API contract for multi-item detection in a single frame.
   * **Action Steps:**
     1. In branch `feat/backend/david/classify-multi`:
@@ -1820,6 +2631,7 @@
 
 * **Krish**
   * **Task:** Build Admin Telemetry & Analytics endpoint.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-11](starter_code/backend_code.md#krish-week-11)
   * **Goal & Context:** Provide aggregate sorting metrics and campus impact analytics for the final presentation.
   * **Action Steps:**
     1. Implement `GET /api/admin/analytics` in `backend/app/routers/admin.py`.
@@ -1834,6 +2646,7 @@
 
 * **Edward**
   * **Task:** Implement Contamination Warning heuristic engine.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-11](starter_code/backend_code.md#edward-week-11)
   * **Goal & Context:** Prevent recycling stream contamination by detecting food residue warnings.
   * **Action Steps:**
     1. Enhance `backend/app/services/rules_engine.py` with contamination heuristic checks:
@@ -1853,6 +2666,7 @@
 
 * **Aarav**
   * **Task:** Prototype multi-object waste detection with YOLOv8.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-11](starter_code/ml-ai_code.md#aarav-week-11)
   * **Goal & Context:** Explore YOLO object detection as an architectural stretch goal for future development.
   * **Action Steps:**
     1. In branch `feat/ml/aarav/yolov8-multiobject`:
@@ -1865,6 +2679,7 @@
 
 * **Kathleen**
   * **Task:** Contamination classification heuristic prototype.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-11](starter_code/ml-ai_code.md#kathleen-week-11)
   * **Goal & Context:** Research secondary computer vision classifier to distinguish clean vs food-soiled recyclables.
   * **Action Steps:**
     1. Curate a small test set of 40 clean vs soiled recyclable items.
@@ -1875,6 +2690,7 @@
 
 * **Max**
   * **Task:** Final performance metrics & comparative presentation visuals.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-11](starter_code/ml-ai_code.md#max-week-11)
   * **Goal & Context:** Generate definitive comparative charts illustrating the model's evolution across the semester.
   * **Action Steps:**
     1. Generate publication-quality figures for the final presentation:
@@ -1887,6 +2703,7 @@
 
 * **Doil**
   * **Task:** Author Future Work & Edge Hardware Roadmap.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-11](starter_code/ml-ai_code.md#doil-week-11)
   * **Goal & Context:** Formulate the long-term technical vision for Sortify beyond the 12-week semester.
   * **Action Steps:**
     1. Author `docs/ml/future-work-roadmap.md`:
@@ -1921,6 +2738,7 @@
 
 * **Mong (Frontend)**
   * **Task:** Mobile UI Final Polish & Architecture Documentation.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#mong-week-12](starter_code/frontend_code.md#mong-week-12)
   * **Goal & Context:** Polish final visual details and document mobile component architecture for open-source portfolio.
   * **Action Steps:**
     1. Perform final visual audit across all screens: verify color contrast, typography consistency, and safe areas.
@@ -1929,8 +2747,9 @@
   * **Verification:** Run linter across mobile codebase; ensure zero lint errors or warnings.
   * **Deliverable & Branch:** `mobile/README.md`.
 
-* **Caden (Frontend)
+* **Caden (Frontend)**
   * **Task:** Final Comprehensive Demo Video & Mobile Presentation.
+  * **Starter Code Scaffold:** [starter_code/frontend_code.md#caden-week-12](starter_code/frontend_code.md#caden-week-12)
   * **Goal & Context:** Produce the definitive, high-impact video demonstration of the Sortify app to showcase in the final presentation.
   * **Action Steps:**
     1. Record a comprehensive 2-minute walkthrough on a physical device:
@@ -1952,17 +2771,47 @@
 
 * **Janice (Backend)**
   * **Task:** Final API Documentation Audit & OpenAPI / Swagger Export.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#janice-week-12](starter_code/backend_code.md#janice-week-12)
   * **Goal & Context:** Finalize API documentation and OpenAPI schemas for the portfolio release.
-  * **Action Steps:**
-    1. Finalize API documentation and verify complete Swagger UI (`/docs`) and ReDoc (`/redoc`) coverage with detailed schemas and examples.
-    2. Export the verified OpenAPI 3.0 specification file (`openapi.json`).
-    3. Compile backend release notes and API usage guide in `backend/README.md`.
-    4. Verify all endpoints have accurate docstrings and schemas.
-  * **Verification:** Review backend documentation and verify OpenAPI schema and Swagger UI render cleanly without errors.
-  * **Deliverable & Branch:** `docs/backend/janice/final-api-docs`.
+  * **Beginner Primer (What is this and why are we doing it?):**  
+    This is the final week! You will freeze the backend specification by exporting the official OpenAPI 3.0 specification (`openapi.json`). This JSON file contains the complete mathematical blueprint of our entire API, which can be imported into tools like Postman or used to generate mobile API clients. You will also compile the backend release summary for our final team presentation and portfolio.
+  * **Action Steps (Step-by-Step Hand-Holding):**
+    1. **Export the OpenAPI JSON schema:**
+       - Make sure your server is running: `uvicorn backend.app.main:app --reload`.
+       - Run this one-line Python command to download the live schema file:
+         ```bash
+         python -c "import urllib.request; urllib.request.urlretrieve('http://localhost:8000/openapi.json', 'backend/openapi.json')"
+         ```
+       - Open `backend/openapi.json` and confirm it contains the full schema definition.
+    2. **Perform the final endpoint audit:**
+       - Confirm that all endpoints across all 12 weeks (`/health`, `/api/classify`, `/api/rules`, `/api/auth`, `/api/history`) are documented without missing descriptions or errors.
+    3. **Update Release Notes in `backend/README.md`:**
+       - Add a "v1.0.0 Release Notes" section highlighting:
+         - 5 modular route controllers
+         - Municipal rules engine with fallback
+         - Pydantic v2 validation contracts
+         - Automated pytest test coverage
+    4. **Run final code checks:**
+       ```bash
+       ruff check .
+       ruff format --check .
+       pytest backend/tests/
+       ```
+    5. **Save and commit:**
+       ```bash
+       git checkout -b docs/backend/janice/final-api-docs
+       git add backend/openapi.json backend/README.md
+       git commit -m "docs(release): export final openapi schema and compile v1.0.0 release notes"
+       ```
+  * **Verification:**
+    1. `backend/openapi.json` exists, is valid JSON, and defines all endpoints.
+    2. All pytest tests pass cleanly.
+    3. `ruff check .` reports zero errors.
+  * **Deliverable & Branch:** `docs/backend/janice/final-api-docs`
 
-* **Carlos (Backend)
+* **Carlos (Backend)**
   * **Task:** Production Cloud Deployment Health Audit & Monitoring.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#carlos-week-12](starter_code/backend_code.md#carlos-week-12)
   * **Goal & Context:** Ensure the deployed cloud backend is operating with high availability and SSL encryption.
   * **Action Steps:**
     1. Verify live cloud container deployment on Render / Cloud Run.
@@ -1974,6 +2823,7 @@
 
 * **David (Backend)**
   * **Task:** Backend Latency & Performance Profiling Report.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#david-week-12](starter_code/backend_code.md#david-week-12)
   * **Goal & Context:** Provide rigorous benchmarking data demonstrating backend performance under concurrent loads.
   * **Action Steps:**
     1. Run automated load test against the deployed cloud backend (50 concurrent requests).
@@ -1984,6 +2834,7 @@
 
 * **Krish (Backend)**
   * **Task:** Repository Cleanup & Security Audit Lead.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#krish-week-12](starter_code/backend_code.md#krish-week-12)
   * **Goal & Context:** Ensure the repository is clean, secure, and ready for public portfolio showcase.
   * **Action Steps:**
     1. Coordinate code reviews and merge all approved feature branches into `main`.
@@ -1995,6 +2846,7 @@
 
 * **Edward (Backend)**
   * **Task:** Rules Engine Audit & API Usage Guide.
+  * **Starter Code Scaffold:** [starter_code/backend_code.md#edward-week-12](starter_code/backend_code.md#edward-week-12)
   * **Goal & Context:** Validate all municipal rule mappings and provide complete API documentation for external developers.
   * **Action Steps:**
     1. Audit all 5 municipal rule sets in `rules.json`; ensure all source links and rules are accurate.
@@ -2010,6 +2862,7 @@
 
 * **Aarav (AI/ML)**
   * **Task:** Model Optimization & Quantization Final Report.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#aarav-week-12](starter_code/ml-ai_code.md#aarav-week-12)
   * **Goal & Context:** Document machine learning optimization techniques applied throughout the semester.
   * **Action Steps:**
     1. Benchmark final quantized INT8 model vs unquantized FP32 model on CPU inference speed and RAM usage.
@@ -2020,6 +2873,7 @@
 
 * **Kathleen (AI/ML)**
   * **Task:** Campus Real-World Testing Final Report.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#kathleen-week-12](starter_code/ml-ai_code.md#kathleen-week-12)
   * **Goal & Context:** Summarize empirical performance across UC Berkeley campus waste bins.
   * **Action Steps:**
     1. Compile full test results from campus waste photo evaluations across the semester into `data/campus_test/CAMPUS_BENCHMARKS.md`.
@@ -2030,6 +2884,7 @@
 
 * **Max (AI/ML)**
   * **Task:** Semester Model Evolution Technical Summary.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#max-week-12](starter_code/ml-ai_code.md#max-week-12)
   * **Goal & Context:** Detail the mathematical and experimental journey from initial baseline to final production model.
   * **Action Steps:**
     1. Author `ml/docs/MODEL_EVOLUTION.md` detailing:
@@ -2043,6 +2898,7 @@
 
 * **Doil (AI/ML)**
   * **Task:** Project Wrap-Up Summary & Individual Contribution Log.
+  * **Starter Code Scaffold:** [starter_code/ml-ai_code.md#doil-week-12](starter_code/ml-ai_code.md#doil-week-12)
   * **Goal & Context:** Celebrate the team's achievements and formally document individual contributions.
   * **Action Steps:**
     1. Author `docs/CONTRIBUTIONS.md` celebrating individual contributions across all 10 members (Frontend, Backend, ML).
