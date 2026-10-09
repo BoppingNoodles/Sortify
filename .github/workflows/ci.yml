@@ -52,6 +52,16 @@ jobs:
             echo "backend/main.py not created yet — skipping backend smoke test for now."
           fi
 
+      - name: ML contract tests
+        run: |
+          if find ml -name 'test_*.py' | grep -q .; then
+            echo "Installing dependencies for ML contract tests..."
+            pip install -r requirements.txt
+            pytest ml/tests -q
+          else
+            echo "No ML tests yet."
+          fi
+
   frontend-check:
     name: Frontend Sanity Check
     runs-on: ubuntu-latest
