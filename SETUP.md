@@ -71,7 +71,7 @@ Once Caden adds your account to the repository:
    - **Ruff** (`charliermarsh.ruff`) — Mandatory linter/formatter used in our repository CI.
    - **Prettier - Code formatter** (`esbenp.prettier-vscode`) — Clean formatting for JS/React/JSON/Markdown.
    - **ESLint** (`dbaeumer.vscode-eslint`) — JavaScript/React linting.
-   - **Thunder Client** (`rangav.thunder-client`) or **Postman** — In-editor REST API testing for FastAPI.
+   - **FastAPI Swagger UI & ReDoc** — No extra extensions required! FastAPI provides built-in interactive browser API docs & testing at `http://localhost:8000/docs` (Swagger UI) and `http://localhost:8000/redoc` (ReDoc).
    - **GitLens** (`eamodio.gitlens`) — Git line history and commit navigation.
 
 ---

@@ -54,9 +54,7 @@ Follow Conventional Commits formatted in lowercase imperative mood without trail
   * `test`: Adding or updating test suites
 * **Examples:**
   * `feat(camera): add viewfinder preview`
-  * `fix(coderabbit): trim tone_instructions length`
   * `chore: initialize universal project directories with ignore.md placeholders`
-  * `docs: add coderabbit review trigger and reviewer to pr template checklist`
 
 ---
 

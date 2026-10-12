@@ -43,7 +43,6 @@ With a team of 12+ developers, keeping our repository stable and conflict-free i
 4. Commit your changes       ──▶  git commit -m "feat(camera): add viewfinder"
 5. Push to GitHub            ──▶  git push -u origin feat/frontend/alex/camera-ui
 6. Open PR & Assign Caden    ──▶  On GitHub: open PR and set Caden as reviewer
-7. Trigger AI Code Review    ──▶  On GitHub: post comment "@coderabbitai review"
 ```
 
 ---
@@ -80,15 +79,7 @@ Every branch must include your **type of work**, **sub-team**, **your name**, an
 
 1. **Keep PRs small:** Target under 300 lines of code. Small PRs get reviewed and merged quickly.
 2. **Assign Reviewer:** On your PR page (right sidebar), click **Reviewers** and select **Caden** (`@BoppingNoodles`).
-3. **Trigger CodeRabbit AI Review:**
-   * CodeRabbit is our AI review bot that scans your PR for bugs, logic flaws, and security issues to give you instant feedback.
-   * **How to run it:** Once your PR is open, scroll down to the comment box at the bottom of the PR conversation page on GitHub, type:
-     ```text
-     @coderabbitai review
-     ```
-     and click the green **Comment** button.
-   * CodeRabbit will analyze your diff and reply in the conversation with mentor-style feedback in 1–2 minutes.
-4. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
+3. **Delete branch after merge:** Keep the remote repository clean by deleting merged branches.
 
 ---
 
