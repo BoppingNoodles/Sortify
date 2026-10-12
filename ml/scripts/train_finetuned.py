@@ -153,13 +153,10 @@ def report_test(model, loader, device, num_examples: int = 5) -> float:
                     break
 
                 bins = "  ".join(
-                    f"{name}={p:.1%}"
-                    for name, p in zip(CLASS_NAMES, prob.tolist())
+                    f"{name}={p:.1%}" for name, p in zip(CLASS_NAMES, prob.tolist())
                 )
 
-                print(
-                    f"  true={CLASS_NAMES[label]:<8} {bins}"
-                )
+                print(f"  true={CLASS_NAMES[label]:<8} {bins}")
 
                 shown += 1
 
@@ -167,9 +164,7 @@ def report_test(model, loader, device, num_examples: int = 5) -> float:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description=__doc__.splitlines()[0]
-    )
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 
     parser.add_argument(
         "--data-dir",
@@ -216,11 +211,7 @@ def main() -> None:
     val_set = load_split(args.data_dir, "val")
 
     test_dir = args.data_dir / "test"
-    test_set = (
-        load_split(args.data_dir, "test")
-        if test_dir.is_dir()
-        else None
-    )
+    test_set = load_split(args.data_dir, "test") if test_dir.is_dir() else None
 
     device = get_device()
 
@@ -229,10 +220,7 @@ def main() -> None:
         f"Images: train={len(train_set)} val={len(val_set)}",
         end=" ",
     )
-    print(
-        f"test={len(test_set) if test_set else 0}  "
-        f"classes={CLASS_NAMES}"
-    )
+    print(f"test={len(test_set) if test_set else 0}  classes={CLASS_NAMES}")
 
     train_loader = DataLoader(
         train_set,
@@ -272,12 +260,7 @@ def main() -> None:
 
     best_val_acc, best_epoch, best_state = -1.0, 0, None
 
-    print(
-        f"{'epoch':>5} "
-        f"{'train_loss':>11} "
-        f"{'val_loss':>9} "
-        f"{'val_acc':>8}"
-    )
+    print(f"{'epoch':>5} {'train_loss':>11} {'val_loss':>9} {'val_acc':>8}")
 
     for epoch in range(1, args.epochs + 1):
         train_loss, _ = run_epoch(
@@ -295,12 +278,7 @@ def main() -> None:
             device,
         )
 
-        print(
-            f"{epoch:>5} "
-            f"{train_loss:>11.4f} "
-            f"{val_loss:>9.4f} "
-            f"{val_acc:>8.2%}"
-        )
+        print(f"{epoch:>5} {train_loss:>11.4f} {val_loss:>9.4f} {val_acc:>8.2%}")
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -309,10 +287,7 @@ def main() -> None:
 
     model.load_state_dict(best_state)
 
-    print(
-        f"Best val accuracy {best_val_acc:.2%} "
-        f"at epoch {best_epoch}"
-    )
+    print(f"Best val accuracy {best_val_acc:.2%} at epoch {best_epoch}")
 
     if test_set:
         print("Test examples (softmax over all 5 bins):")
@@ -323,10 +298,7 @@ def main() -> None:
             device,
         )
 
-        print(
-            f"Test accuracy: {test_acc:.2%} "
-            f"on {len(test_set)} images"
-        )
+        print(f"Test accuracy: {test_acc:.2%} on {len(test_set)} images")
 
     args.output.parent.mkdir(
         parents=True,
@@ -335,10 +307,7 @@ def main() -> None:
 
     torch.save(
         {
-            "model_state_dict": {
-                k: v.cpu()
-                for k, v in best_state.items()
-            },
+            "model_state_dict": {k: v.cpu() for k, v in best_state.items()},
             "class_names": CLASS_NAMES,
             "best_epoch": best_epoch,
             "val_accuracy": best_val_acc,
