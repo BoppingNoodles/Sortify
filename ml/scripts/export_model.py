@@ -1,8 +1,7 @@
 """Package the fine-tuned Sortify ResNet-18 for backend integration.
 
 Writes resnet18_sortify.pth (state_dict), classes.json and metadata.json to
-ml/models/mvp_package/. The fc rows are reordered at export so classes.json
-follows the spec order (paper, plastic, glass, compost, landfill).
+ml/models/mvp_package/.
 
 Run from the repository root:
     python ml/scripts/export_model.py
@@ -25,8 +24,6 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "ml" / "models" / "mvp_package"
 DEFAULT_FILENAME = "resnet18_sortify.pth"
 
 EXPECTED_CLASSES = {"paper", "plastic", "glass", "compost", "landfill"}
-# Order required by the task spec; fc output rows are permuted to match it.
-TARGET_CLASS_ORDER = ["paper", "plastic", "glass", "compost", "landfill"]
 INPUT_RESOLUTION = [224, 224]
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
@@ -37,27 +34,6 @@ def build_model(num_classes: int) -> nn.Module:
     model = models.resnet18(weights=None)
     model.fc = nn.Linear(model.fc.in_features, num_classes)
     return model
-
-
-def reorder_classes(
-    model: nn.Module, trained_order: list[str], target_order: list[str]
-) -> nn.Module:
-    """Permute fc output rows so index i predicts target_order[i]."""
-    perm = [trained_order.index(name) for name in target_order]
-    reordered = build_model(len(target_order))
-    reordered.load_state_dict(model.state_dict())
-    with torch.no_grad():
-        reordered.fc.weight.copy_(model.fc.weight[perm])
-        reordered.fc.bias.copy_(model.fc.bias[perm])
-
-    # Same prediction per class, just at a different index.
-    x = torch.randn(2, 3, *INPUT_RESOLUTION)
-    model.eval()
-    reordered.eval()
-    with torch.no_grad():
-        old, new = model(x), reordered(x)
-    assert torch.allclose(old[:, perm], new, atol=1e-5), "Class reorder mismatch."
-    return reordered
 
 
 def load_checkpoint(path: Path) -> dict:
@@ -146,9 +122,6 @@ def main() -> None:
     model.eval()
 
     print(f"Trained class order: {classes}")
-    model = reorder_classes(model, classes, TARGET_CLASS_ORDER)
-    classes = list(TARGET_CLASS_ORDER)
-    print(f"Exported class order: {classes}")
     package_checkpoint(model, classes, args.output_dir, args.filename)
     write_metadata(checkpoint, args.checkpoint, classes, args.output_dir, args.filename)
 
