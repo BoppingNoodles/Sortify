@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import torch
@@ -99,9 +99,7 @@ def write_metadata(
     filename: str = DEFAULT_FILENAME,
 ) -> None:
     # fine_tune.py does not store a date, so use when the checkpoint was written.
-    trained_at = datetime.fromtimestamp(
-        checkpoint_path.stat().st_mtime, tz=timezone.utc
-    )
+    trained_at = datetime.fromtimestamp(checkpoint_path.stat().st_mtime, tz=UTC)
 
     metadata = {
         "base_architecture": "resnet18",
@@ -111,7 +109,7 @@ def write_metadata(
         "class_names": classes,
         "weights_file": filename,
         "training_date": trained_at.date().isoformat(),
-        "exported_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "exported_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "final_validation_accuracy": checkpoint.get("val_accuracy"),
         "best_epoch": checkpoint.get("best_epoch"),
         "test_accuracy": checkpoint.get("test_accuracy"),
