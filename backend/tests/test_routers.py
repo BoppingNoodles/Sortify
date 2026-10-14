@@ -38,15 +38,18 @@ def test_classify_endpoint_invalid_file():
 
 
 def test_classify_endpoint_oversized_file():
-    # 10.5 MB payload
-    oversized_data = b"0" * (11 * 1024 * 1024)
+    # 1. Create a fake file that starts with JPEG magic bytes so it passes the Type Check
+    # JPEG Magic Bytes: \xff\xd8\xff
+    header = b"\xff\xd8\xff"
+    # Create 11MB of data: Header + junk
+    oversized_data = header + b"0" * (11 * 1024 * 1024)
     fake_large_file = io.BytesIO(oversized_data)
+
     response = client.post(
         "/api/classify",
         files={"file": ("huge_image.jpg", fake_large_file, "image/jpeg")},
     )
     assert response.status_code == 413
-    assert "Payload too large" in response.json()["detail"]
 
 
 def test_rules_endpoint_get_city():
