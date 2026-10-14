@@ -1,13 +1,11 @@
 """Classification API router."""
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 
 from backend.app.core.config import settings
-from backend.app.schemas import (
-    ClassificationAlternative,
-    ClassifyResponse,
-    DisposalTip,
-)
+
+from ..schemas import ClassificationAlternative, ClassifyResponse, DisposalTip
+from ..utils.validators import validate_image_upload
 
 router = APIRouter()
 
@@ -20,9 +18,9 @@ ALLOWED_IMAGE_TYPES = {
 
 
 @router.post("/classify", response_model=ClassifyResponse)
-def classify_item(
-    file: UploadFile = File(...),  # noqa: B008
-    location: str = Query("berkeley", description="Municipality name"),
+async def classify_item(
+    file: UploadFile = Depends(validate_image_upload),  # noqa: B008
+    location: str = Query("berkeley"),
 ):
     """Ingest image upload and return waste classification result."""
     # 1. Enforce media type validation (HTTP 415)
