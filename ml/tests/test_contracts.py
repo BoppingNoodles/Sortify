@@ -30,6 +30,7 @@ from ml.scripts.train_baseline import (
 )
 from ml.scripts.train_mobilenet import (
     bin_confidences,
+    compare_with_resnet,
     load_mobilenet_checkpoint,
     same_class_order,
     write_comparison,
@@ -215,3 +216,21 @@ def test_comparison_reports_both_models_and_class_order(tmp_path: Path) -> None:
     assert not same_class_order(
         CLASS_NAMES, ["paper", "plastic", "glass", "compost", "landfill"]
     )
+
+
+def test_compare_with_resnet_skips_when_missing(tmp_path: Path) -> None:
+    non_existent = tmp_path / "does_not_exist.pth"
+    doc_path = tmp_path / "comparison.md"
+    result = compare_with_resnet(
+        mobilenet_output=tmp_path / "mobile.pth",
+        resnet_checkpoint=non_existent,
+        doc_path=doc_path,
+        classes=CLASS_NAMES,
+        val_loader=None,
+        test_loader=None,
+        best_epoch=1,
+        val_acc=0.8,
+        test_acc=0.8,
+    )
+    assert result is False
+    assert not doc_path.exists()
