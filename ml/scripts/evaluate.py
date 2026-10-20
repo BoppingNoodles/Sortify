@@ -3,8 +3,11 @@
 Computes overall accuracy, per-class Precision, Recall, and F1-Score via Scikit-learn,
 and saves a normalized confusion matrix heatmap via Seaborn/Matplotlib.
 
+Supports both ResNet-18 and MobileNetV2 with automatic architecture inference.
+
 Run from repository root:
     python ml/scripts/evaluate.py --model_path ml/models/resnet18_baseline.pth --test_dir data/processed/test
+    python ml/scripts/evaluate.py --model_path ml/models/mobilenet_v2.pth --test_dir data/campus_test
 """
 
 from __future__ import annotations
@@ -79,6 +82,40 @@ def build_model(
         )
 
 
+def detect_architecture(checkpoint: dict, path: Path | None = None) -> str:
+    """Infer model architecture from checkpoint metadata, state dict keys, or filename."""
+    if isinstance(checkpoint, dict):
+        if "architecture" in checkpoint:
+            arch_val = str(checkpoint["architecture"]).lower()
+            if "mobilenet" in arch_val:
+                return "mobilenet_v2"
+            if "resnet" in arch_val:
+                return "resnet18"
+        if "base_architecture" in checkpoint:
+            arch_val = str(checkpoint["base_architecture"]).lower()
+            if "mobilenet" in arch_val:
+                return "mobilenet_v2"
+            if "resnet" in arch_val:
+                return "resnet18"
+
+    state_dict = (
+        checkpoint["model_state_dict"]
+        if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint
+        else checkpoint
+    )
+    if isinstance(state_dict, dict):
+        keys = list(state_dict.keys())
+        if any(k.startswith(("classifier.1", "features.")) for k in keys):
+            return "mobilenet_v2"
+        if any(k.startswith(("fc.", "layer", "conv1")) for k in keys):
+            return "resnet18"
+
+    if path and "mobilenet" in path.name.lower():
+        return "mobilenet_v2"
+
+    return "resnet18"
+
+
 def load_classes_from_package(checkpoint_path: Path) -> list[str] | None:
     """Check if classes.json exists alongside the model checkpoint."""
     classes_json_path = checkpoint_path.parent / "classes.json"
@@ -101,14 +138,14 @@ def load_classes_from_package(checkpoint_path: Path) -> list[str] | None:
 
 def load_checkpoint(
     model_path: Path | str,
-    arch: str = "resnet18",
+    arch: str = "auto",
     device: torch.device | None = None,
     expected_classes: list[str] | None = None,
 ) -> tuple[nn.Module, list[str], dict]:
     """Load model weights and metadata from checkpoint.
 
     Supports both full checkpoint dicts (with 'model_state_dict' and 'class_names')
-    and raw state_dict bundles.
+    and raw state_dict bundles. Injects automatic architecture resolution when arch='auto'.
     """
     path = Path(model_path).resolve()
     if not path.is_file():
@@ -144,7 +181,10 @@ def load_checkpoint(
     if not classes:
         classes = expected_classes or list(DEFAULT_CLASSES)
 
-    model = build_model(arch=arch, num_classes=len(classes))
+    resolved_arch = (
+        detect_architecture(checkpoint, path) if arch.lower() == "auto" else arch
+    )
+    model = build_model(arch=resolved_arch, num_classes=len(classes))
     model.load_state_dict(state_dict)
     model.to(device)
     model.eval()
@@ -337,7 +377,7 @@ def run_evaluation(
     output_plot: Path | str = DEFAULT_OUTPUT_PLOT,
     batch_size: int = 32,
     num_workers: int = DEFAULT_NUM_WORKERS,
-    arch: str = "resnet18",
+    arch: str = "auto",
     device: torch.device | None = None,
 ) -> dict:
     """High-level evaluation pipeline taking model and test directory and producing plot and metrics."""
@@ -432,9 +472,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--arch",
         type=str,
-        default="resnet18",
-        choices=["resnet18", "mobilenet_v2"],
-        help="Model architecture ('resnet18' or 'mobilenet_v2'). Default: resnet18",
+        default="auto",
+        choices=["auto", "resnet18", "mobilenet_v2"],
+        help="Model architecture ('auto', 'resnet18', or 'mobilenet_v2'). Default: auto (inferred from checkpoint)",
     )
     parser.add_argument(
         "--device",
