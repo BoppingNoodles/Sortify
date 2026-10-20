@@ -21,6 +21,7 @@ from ml.scripts.evaluate import (
     RemappedDataset,
     build_model,
     create_test_loader,
+    detect_architecture,
     evaluate_model_performance,
     get_device,
     load_checkpoint,
@@ -60,6 +61,25 @@ def test_build_model():
 
     with pytest.raises(ValueError, match="Unsupported architecture"):
         build_model("unsupported_model_arch")
+
+
+def test_detect_architecture():
+    # Explicit metadata
+    assert detect_architecture({"architecture": "mobilenet_v2"}) == "mobilenet_v2"
+    assert detect_architecture({"base_architecture": "resnet18"}) == "resnet18"
+
+    # State dict key inspection
+    mobile_sd = {"classifier.1.weight": torch.zeros(5, 1280)}
+    assert detect_architecture(mobile_sd) == "mobilenet_v2"
+    resnet_sd = {"fc.weight": torch.zeros(5, 512)}
+    assert detect_architecture(resnet_sd) == "resnet18"
+
+    # Path fallback
+    assert (
+        detect_architecture({}, Path("models/mobilenet_v2_frozen.pth"))
+        == "mobilenet_v2"
+    )
+    assert detect_architecture({}, Path("models/model.pth")) == "resnet18"
 
 
 def test_load_checkpoint_dict(tmp_path: Path):
@@ -202,6 +222,39 @@ def test_run_evaluation_pipeline(tmp_path: Path):
         batch_size=2,
         num_workers=0,
         arch="resnet18",
+        device=get_device("cpu"),
+    )
+
+    assert results["accuracy"] >= 0.0
+    assert plot_file.is_file()
+    assert plot_file.stat().st_size > 0
+
+
+def test_run_evaluation_mobilenet_v2_auto_detect(tmp_path: Path):
+    classes = DEFAULT_CLASSES
+    model = build_model("mobilenet_v2", num_classes=len(classes))
+    checkpoint_file = tmp_path / "mobilenet_test.pth"
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "class_names": classes,
+            "architecture": "mobilenet_v2",
+        },
+        checkpoint_file,
+    )
+
+    test_dir = _create_dummy_test_dataset(
+        tmp_path / "test_split_mobile", classes, per_class=1
+    )
+    plot_file = tmp_path / "eval_plot_mobile.png"
+
+    results = run_evaluation(
+        model_path=checkpoint_file,
+        test_dir=test_dir,
+        output_plot=plot_file,
+        batch_size=2,
+        num_workers=0,
+        arch="auto",
         device=get_device("cpu"),
     )
 

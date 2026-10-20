@@ -23,6 +23,7 @@ from ml.scripts.evaluate import (  # noqa: F401
     RemappedDataset,
     build_model,
     create_test_loader,
+    detect_architecture,
     evaluate_model_performance,
     get_device,
     load_checkpoint,
