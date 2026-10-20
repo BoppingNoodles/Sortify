@@ -13,6 +13,7 @@
 
 import argparse
 import json
+import pickle
 from pathlib import Path
 
 import matplotlib
@@ -32,7 +33,7 @@ try:
 except ImportError:
     IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
-# Must match the class order used in training (alphabetical here).
+
 CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
 
 
@@ -51,14 +52,14 @@ def build_transform():
 def load_model(checkpoint_path, device):
     """Build model (MobileNetV2 or ResNet-18) and load saved weights."""
     from torchvision import models
+
     try:
         ckpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
-    except Exception:
+    except (pickle.UnpicklingError, RuntimeError):
         ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
     if isinstance(ckpt, torch.nn.Module):
         return ckpt.eval().to(device)
-
     state = ckpt
     if isinstance(ckpt, dict):
         for meta_key in ("class_names", "classes"):
@@ -98,7 +99,7 @@ def load_model(checkpoint_path, device):
 
 def load_image(path):
     img = Image.open(path)
-    img = ImageOps.exif_transpose(img) 
+    img = ImageOps.exif_transpose(img)
     return img.convert("RGB")
 
 
@@ -236,6 +237,7 @@ def write_report(metrics, wrong, cm, out_dir):
         lines.append(f"| {cls} | {c} | {c / n:.0%} |")
     lines.append("")
 
+    # Auto-generated observations
     obs = []
     top_cls, top_n = max(metrics["prediction_counts"].items(), key=lambda kv: kv[1])
     if top_n / n > 0.4:
@@ -332,6 +334,7 @@ def main():
     clean = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results]
     (out_dir / "predictions.json").write_text(json.dumps(clean, indent=2))
 
+    # Misclassified, most confident first (the most informative failures)
     wrong = sorted(
         [r for r in clean if not r["correct"]],
         key=lambda r: r["confidence"],

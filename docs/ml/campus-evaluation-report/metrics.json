@@ -1,8 +1,8 @@
 {
   "n_images": 25,
   "campus_accuracy": 0.08,
-  "lab_accuracy": 0.85,
-  "gap": 0.77,
+  "lab_accuracy": 0.8899,
+  "gap": 0.8099000000000001,
   "per_class": {
     "compost": {
       "n": 5,

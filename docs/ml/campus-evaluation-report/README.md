@@ -8,8 +8,8 @@ Frozen MVP model (MobileNetV2) evaluated on real waste photos taken around the U
 |---|---|
 | Images evaluated | 25 |
 | Campus accuracy | 8.0% |
-| Lab test split accuracy | 85.0% |
-| Gap (lab - campus) | 77.0% |
+| Lab test split accuracy | 89.0% |
+| Gap (lab - campus) | 81.0% |
 
 ![Confusion matrix](confusion_matrix.png)
 
@@ -23,7 +23,7 @@ Frozen MVP model (MobileNetV2) evaluated on real waste photos taken around the U
 | paper | 5 | 0% |
 | plastic | 5 | 0% |
 
-Most reliably recognized: **landfill**. Least reliably recognized: **plastic**.
+Most reliably recognized: **landfill**. Least reliably recognized: **compost, glass, paper, plastic** (tied).
 
 ## Prediction distribution
 
@@ -39,7 +39,7 @@ Most reliably recognized: **landfill**. Least reliably recognized: **plastic**.
 
 - The model over-predicts **landfill** (68% of all predictions), which suggests it falls back to one class on unfamiliar real-world images.
 - The model never predicted: glass.
-- Campus accuracy is 77% lower than lab accuracy, indicating a domain gap between lab images and real photos.
+- Campus accuracy is 81% lower than lab accuracy, indicating a domain gap between lab images and real photos.
 
 ## Most confident misclassifications
 
@@ -55,4 +55,3 @@ Most reliably recognized: **landfill**. Least reliably recognized: **plastic**.
 | 0.31 | plastic | landfill | `plastic02.jpg` |
 | 0.31 | plastic | landfill | `plastic04.jpg` |
 | 0.30 | landfill | compost | `landfill05.jpg` |
-
