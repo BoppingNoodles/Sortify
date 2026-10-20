@@ -19,13 +19,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import torch
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models
 from torchvision.datasets import ImageFolder
+
+try:
+    import seaborn as sns
+except ImportError:
+    sns = None
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -269,24 +273,53 @@ def plot_confusion_matrix(
         else:
             title = "Normalized Confusion Matrix"
 
-    plt.figure(figsize=(8, 6.5))
-    ax = sns.heatmap(
-        cm_normalized,
-        annot=True,
-        fmt=".2%",
-        cmap="Blues",
-        xticklabels=classes,
-        yticklabels=classes,
-        cbar=True,
-        vmin=0.0,
-        vmax=1.0,
-    )
+    fig, ax = plt.subplots(figsize=(8, 6.5))
+    if sns is not None:
+        sns.heatmap(
+            cm_normalized,
+            annot=True,
+            fmt=".2%",
+            cmap="Blues",
+            xticklabels=classes,
+            yticklabels=classes,
+            cbar=True,
+            vmin=0.0,
+            vmax=1.0,
+            ax=ax,
+        )
+    else:
+        im = ax.imshow(
+            cm_normalized,
+            interpolation="nearest",
+            cmap="Blues",
+            vmin=0.0,
+            vmax=1.0,
+        )
+        ax.set_xticks(range(len(classes)))
+        ax.set_yticks(range(len(classes)))
+        ax.set_xticklabels(classes)
+        ax.set_yticklabels(classes)
+        for i in range(len(classes)):
+            for j in range(len(classes)):
+                val = cm_normalized[i, j]
+                text_color = "white" if val > 0.5 else "black"
+                ax.text(
+                    j,
+                    i,
+                    f"{val:.2%}",
+                    ha="center",
+                    va="center",
+                    color=text_color,
+                    fontsize=9,
+                )
+        fig.colorbar(im, ax=ax)
+
     ax.set_title(title, fontsize=13, fontweight="bold", pad=12)
     ax.set_xlabel("Predicted Label", fontsize=11, fontweight="bold", labelpad=10)
     ax.set_ylabel("True Label", fontsize=11, fontweight="bold", labelpad=10)
-    plt.tight_layout()
-    plt.savefig(out_file, dpi=300)
-    plt.close()
+    fig.tight_layout()
+    fig.savefig(out_file, dpi=300)
+    plt.close(fig)
 
     return out_file
 
