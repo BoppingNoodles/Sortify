@@ -158,7 +158,7 @@ deactivate
 1. Ensure your `venv` is activated from the root or backend directory.
 2. Start the FastAPI development server with auto-reload:
    ```bash
-   uvicorn backend.main:app --reload
+   uvicorn backend.app.main:app --reload
    ```
 3. Interactive API documentation is available at `http://localhost:8000/docs`.
 
@@ -184,7 +184,7 @@ Our repository runs automated checks via GitHub Actions on every Pull Request to
 
 1. **Ruff Syntax & Lint Check:** Detects syntax errors, undefined variables, and broken imports in seconds.
 2. **Ruff Formatting Check:** Ensures consistent Python formatting across the team.
-3. **Smart Backend Smoke Test:** Automatically verifies that the FastAPI server can boot up without errors (runs once `backend/main.py` is present).
+3. **Smart Backend Smoke Test:** Automatically verifies that the FastAPI server can boot up without errors (runs once `backend/app/main.py` is present).
 4. **Smart Frontend Sanity Check:** Verifies frontend package dependencies and linting (runs once `mobile/package.json` is present).
 
 ### Running Checks Locally (Before Submitting a PR)
