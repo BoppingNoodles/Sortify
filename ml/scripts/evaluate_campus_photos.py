@@ -24,9 +24,16 @@ import torch
 from PIL import Image, ImageOps
 from torchvision import transforms
 
+try:
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+    IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+except ImportError:
+    IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+
 # Must match the class order used in training (alphabetical here).
 CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
-IMG_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
 
 
 def build_transform():
@@ -42,40 +49,56 @@ def build_transform():
 
 
 def load_model(checkpoint_path, device):
-    """Build torchvision MobileNetV2 and load the saved weights."""
+    """Build model (MobileNetV2 or ResNet-18) and load saved weights."""
     from torchvision import models
+    try:
+        ckpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
+    except Exception:
+        ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
-    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
-
-    # Full pickled model (rare): use as-is
     if isinstance(ckpt, torch.nn.Module):
         return ckpt.eval().to(device)
 
-    # Unwrap common checkpoint formats
     state = ckpt
     if isinstance(ckpt, dict):
+        for meta_key in ("class_names", "classes"):
+            if meta_key in ckpt:
+                ckpt_classes = list(ckpt[meta_key])
+                if ckpt_classes != CLASSES:
+                    raise SystemExit(
+                        f"Class order mismatch: checkpoint '{meta_key}' is "
+                        f"{ckpt_classes} but CLASSES is {CLASSES}."
+                    )
+                break
         for key in ("model_state_dict", "state_dict", "model"):
             if key in ckpt:
                 state = ckpt[key]
                 break
     state = {k.replace("module.", "", 1): v for k, v in state.items()}
 
-    # Infer number of classes from the final layer so it can't silently mismatch
-    num_classes = state["classifier.1.weight"].shape[0]
+    if "classifier.1.weight" in state:
+        num_classes = state["classifier.1.weight"].shape[0]
+        model = models.mobilenet_v2(weights=None)
+        model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
+    elif "fc.weight" in state:
+        num_classes = state["fc.weight"].shape[0]
+        model = models.resnet18(weights=None)
+        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
+    else:
+        raise ValueError("Unrecognized model architecture in state dict.")
+
     if num_classes != len(CLASSES):
         raise SystemExit(
             f"Checkpoint has {num_classes} outputs but CLASSES has {len(CLASSES)}."
         )
 
-    model = models.mobilenet_v2(weights=None)
-    model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
     model.load_state_dict(state, strict=True)
     return model.eval().to(device)
 
 
 def load_image(path):
     img = Image.open(path)
-    img = ImageOps.exif_transpose(img)  # phone photos are often rotated via EXIF
+    img = ImageOps.exif_transpose(img) 
     return img.convert("RGB")
 
 
@@ -191,11 +214,14 @@ def write_report(metrics, wrong, cm, out_dir):
         m = metrics["per_class"][cls]
         lines.append(f"| {cls} | {m['n']} | {m['accuracy']:.0%} |")
     if ranked:
+        worst = metrics["per_class"][ranked[-1]]["accuracy"]
+        bottom = [c for c in ranked if metrics["per_class"][c]["accuracy"] == worst]
         lines += [
             "",
             (
                 f"Most reliably recognized: **{ranked[0]}**. "
-                f"Least reliably recognized: **{ranked[-1]}**."
+                f"Least reliably recognized: **{', '.join(bottom)}**"
+                f"{' (tied)' if len(bottom) > 1 else ''}."
             ),
             "",
         ]
@@ -210,7 +236,6 @@ def write_report(metrics, wrong, cm, out_dir):
         lines.append(f"| {cls} | {c} | {c / n:.0%} |")
     lines.append("")
 
-    # Auto-generated observations
     obs = []
     top_cls, top_n = max(metrics["prediction_counts"].items(), key=lambda kv: kv[1])
     if top_n / n > 0.4:
@@ -243,17 +268,6 @@ def write_report(metrics, wrong, cm, out_dir):
                 f"`{Path(r['path']).name}` |"
             )
         lines.append("")
-
-    lines += [
-        "## Collection conditions",
-        "",
-        "<!-- TODO: locations, lighting, angles, backgrounds, device used -->",
-        "",
-        "## Takeaways and next steps",
-        "",
-        "<!-- TODO: your interpretation and proposed improvements -->",
-        "",
-    ]
 
     (out_dir / "README.md").write_text("\n".join(lines))
 
@@ -304,7 +318,7 @@ def main():
         if args.lab_accuracy is not None
         else None,
         "per_class": per_class,
-        "prediction_counts": pred_counts,  # reveals collapse onto one class
+        "prediction_counts": pred_counts,
         "most_reliable_classes": sorted(
             [c for c in per_class if per_class[c]["accuracy"] is not None],
             key=lambda c: per_class[c]["accuracy"],
@@ -318,7 +332,6 @@ def main():
     clean = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results]
     (out_dir / "predictions.json").write_text(json.dumps(clean, indent=2))
 
-    # Misclassified, most confident first (the most informative failures)
     wrong = sorted(
         [r for r in clean if not r["correct"]],
         key=lambda r: r["confidence"],
