@@ -56,4 +56,3 @@ Most reliably recognized: **landfill**. Least reliably recognized: **plastic**.
 | 0.31 | plastic | landfill | `plastic04.jpg` |
 | 0.30 | landfill | compost | `landfill05.jpg` |
 
-
