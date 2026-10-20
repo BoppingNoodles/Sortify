@@ -16,6 +16,7 @@ import json
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,13 +31,14 @@ IMG_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
 
 def build_transform():
     """Must be IDENTICAL to the eval transform used for the lab test split."""
-    return transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
-    ])
+    return transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
 
 def load_model(checkpoint_path, device):
@@ -61,7 +63,9 @@ def load_model(checkpoint_path, device):
     # Infer number of classes from the final layer so it can't silently mismatch
     num_classes = state["classifier.1.weight"].shape[0]
     if num_classes != len(CLASSES):
-        raise SystemExit(f"Checkpoint has {num_classes} outputs but CLASSES has {len(CLASSES)}.")
+        raise SystemExit(
+            f"Checkpoint has {num_classes} outputs but CLASSES has {len(CLASSES)}."
+        )
 
     model = models.mobilenet_v2(weights=None)
     model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
@@ -95,15 +99,17 @@ def predict(model, samples, transform, device):
         x = transform(load_image(path)).unsqueeze(0).to(device)
         probs = torch.softmax(model(x), dim=1)[0].cpu().numpy()
         pred_idx = int(probs.argmax())
-        results.append({
-            "path": str(path),
-            "true": CLASSES[true_idx],
-            "pred": CLASSES[pred_idx],
-            "confidence": float(probs[pred_idx]),
-            "correct": pred_idx == true_idx,
-            "_true_idx": true_idx,
-            "_pred_idx": pred_idx,
-        })
+        results.append(
+            {
+                "path": str(path),
+                "true": CLASSES[true_idx],
+                "pred": CLASSES[pred_idx],
+                "confidence": float(probs[pred_idx]),
+                "correct": pred_idx == true_idx,
+                "_true_idx": true_idx,
+                "_pred_idx": pred_idx,
+            }
+        )
     return results
 
 
@@ -117,7 +123,9 @@ def confusion(results):
 
 def plot_confusion(cm, accuracy, out_path):
     row_sums = cm.sum(axis=1, keepdims=True)
-    norm = np.divide(cm, row_sums, out=np.zeros_like(cm, dtype=float), where=row_sums != 0)
+    norm = np.divide(
+        cm, row_sums, out=np.zeros_like(cm, dtype=float), where=row_sums != 0
+    )
 
     fig, ax = plt.subplots(figsize=(8, 7))
     im = ax.imshow(norm, cmap="Blues", vmin=0, vmax=1)
@@ -125,12 +133,20 @@ def plot_confusion(cm, accuracy, out_path):
     ax.set_yticks(range(len(CLASSES)), CLASSES)
     ax.set_xlabel("Predicted Label", fontweight="bold")
     ax.set_ylabel("True Label", fontweight="bold")
-    ax.set_title(f"Normalized Confusion Matrix (Overall Accuracy: {accuracy:.2%})",
-                 fontweight="bold")
+    ax.set_title(
+        f"Normalized Confusion Matrix (Overall Accuracy: {accuracy:.2%})",
+        fontweight="bold",
+    )
     for i in range(len(CLASSES)):
         for j in range(len(CLASSES)):
-            ax.text(j, i, f"{norm[i, j]:.2%}", ha="center", va="center",
-                    color="white" if norm[i, j] > 0.5 else "black")
+            ax.text(
+                j,
+                i,
+                f"{norm[i, j]:.2%}",
+                ha="center",
+                va="center",
+                color="white" if norm[i, j] > 0.5 else "black",
+            )
     fig.colorbar(im, ax=ax)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
@@ -145,8 +161,10 @@ def write_report(metrics, wrong, cm, out_dir):
 
     lines = ["# Campus Evaluation Report", ""]
     lines += [
-        "Frozen MVP model (MobileNetV2) evaluated on real waste photos taken "
-        "around the UC Berkeley campus.",
+        (
+            "Frozen MVP model (MobileNetV2) evaluated on real waste photos taken "
+            "around the UC Berkeley campus."
+        ),
         "",
         "## Summary",
         "",
@@ -156,22 +174,38 @@ def write_report(metrics, wrong, cm, out_dir):
         f"| Campus accuracy | {acc:.1%} |",
     ]
     if lab is not None:
-        lines += [f"| Lab test split accuracy | {lab:.1%} |",
-                  f"| Gap (lab - campus) | {metrics['gap']:.1%} |"]
+        lines += [
+            f"| Lab test split accuracy | {lab:.1%} |",
+            f"| Gap (lab - campus) | {metrics['gap']:.1%} |",
+        ]
     lines += ["", "![Confusion matrix](confusion_matrix.png)", ""]
 
-    lines += ["## Per-class accuracy", "",
-              "| Class | Images | Accuracy |", "|---|---|---|"]
+    lines += [
+        "## Per-class accuracy",
+        "",
+        "| Class | Images | Accuracy |",
+        "|---|---|---|",
+    ]
     ranked = metrics["most_reliable_classes"]
     for cls in ranked:
         m = metrics["per_class"][cls]
         lines.append(f"| {cls} | {m['n']} | {m['accuracy']:.0%} |")
     if ranked:
-        lines += ["", f"Most reliably recognized: **{ranked[0]}**. "
-                      f"Least reliably recognized: **{ranked[-1]}**.", ""]
+        lines += [
+            "",
+            (
+                f"Most reliably recognized: **{ranked[0]}**. "
+                f"Least reliably recognized: **{ranked[-1]}**."
+            ),
+            "",
+        ]
 
-    lines += ["## Prediction distribution", "",
-              "| Predicted class | Count | Share |", "|---|---|---|"]
+    lines += [
+        "## Prediction distribution",
+        "",
+        "| Predicted class | Count | Share |",
+        "|---|---|---|",
+    ]
     for cls, c in metrics["prediction_counts"].items():
         lines.append(f"| {cls} | {c} | {c / n:.0%} |")
     lines.append("")
@@ -180,30 +214,46 @@ def write_report(metrics, wrong, cm, out_dir):
     obs = []
     top_cls, top_n = max(metrics["prediction_counts"].items(), key=lambda kv: kv[1])
     if top_n / n > 0.4:
-        obs.append(f"The model over-predicts **{top_cls}** ({top_n / n:.0%} of all "
-                   f"predictions), which suggests it falls back to one class on "
-                   f"unfamiliar real-world images.")
+        obs.append(
+            f"The model over-predicts **{top_cls}** ({top_n / n:.0%} of all "
+            f"predictions), which suggests it falls back to one class on "
+            f"unfamiliar real-world images."
+        )
     never = [c for c, k in metrics["prediction_counts"].items() if k == 0]
     if never:
         obs.append(f"The model never predicted: {', '.join(never)}.")
     if lab is not None and metrics["gap"] > 0.1:
-        obs.append(f"Campus accuracy is {metrics['gap']:.0%} lower than lab accuracy, "
-                   f"indicating a domain gap between lab images and real photos.")
+        obs.append(
+            f"Campus accuracy is {metrics['gap']:.0%} lower than lab accuracy, "
+            f"indicating a domain gap between lab images and real photos."
+        )
     if obs:
         lines += ["## Observations", ""] + [f"- {o}" for o in obs] + [""]
 
     if wrong:
-        lines += ["## Most confident misclassifications", "",
-                  "| Confidence | True | Predicted | File |", "|---|---|---|---|"]
+        lines += [
+            "## Most confident misclassifications",
+            "",
+            "| Confidence | True | Predicted | File |",
+            "|---|---|---|---|",
+        ]
         for r in wrong[:10]:
-            lines.append(f"| {r['confidence']:.2f} | {r['true']} | {r['pred']} | "
-                         f"`{Path(r['path']).name}` |")
+            lines.append(
+                f"| {r['confidence']:.2f} | {r['true']} | {r['pred']} | "
+                f"`{Path(r['path']).name}` |"
+            )
         lines.append("")
 
-    lines += ["## Collection conditions", "",
-              "<!-- TODO: locations, lighting, angles, backgrounds, device used -->", "",
-              "## Takeaways and next steps", "",
-              "<!-- TODO: your interpretation and proposed improvements -->", ""]
+    lines += [
+        "## Collection conditions",
+        "",
+        "<!-- TODO: locations, lighting, angles, backgrounds, device used -->",
+        "",
+        "## Takeaways and next steps",
+        "",
+        "<!-- TODO: your interpretation and proposed improvements -->",
+        "",
+    ]
 
     (out_dir / "README.md").write_text("\n".join(lines))
 
@@ -212,8 +262,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--data-dir", default="data/campus_test")
-    ap.add_argument("--lab-accuracy", type=float, default=None,
-                    help="Accuracy on the lab test split (0-1) for comparison")
+    ap.add_argument(
+        "--lab-accuracy",
+        type=float,
+        default=None,
+        help="Accuracy on the lab test split (0-1) for comparison",
+    )
     ap.add_argument("--out-dir", default="docs/ml/campus-evaluation-report")
     args = ap.parse_args()
 
@@ -246,12 +300,16 @@ def main():
         "n_images": len(results),
         "campus_accuracy": accuracy,
         "lab_accuracy": args.lab_accuracy,
-        "gap": (args.lab_accuracy - accuracy) if args.lab_accuracy is not None else None,
+        "gap": (args.lab_accuracy - accuracy)
+        if args.lab_accuracy is not None
+        else None,
         "per_class": per_class,
         "prediction_counts": pred_counts,  # reveals collapse onto one class
         "most_reliable_classes": sorted(
             [c for c in per_class if per_class[c]["accuracy"] is not None],
-            key=lambda c: per_class[c]["accuracy"], reverse=True),
+            key=lambda c: per_class[c]["accuracy"],
+            reverse=True,
+        ),
     }
 
     plot_confusion(cm, accuracy, out_dir / "confusion_matrix.png")
@@ -261,11 +319,16 @@ def main():
     (out_dir / "predictions.json").write_text(json.dumps(clean, indent=2))
 
     # Misclassified, most confident first (the most informative failures)
-    wrong = sorted([r for r in clean if not r["correct"]],
-                   key=lambda r: r["confidence"], reverse=True)
+    wrong = sorted(
+        [r for r in clean if not r["correct"]],
+        key=lambda r: r["confidence"],
+        reverse=True,
+    )
     with open(out_dir / "misclassified.txt", "w") as f:
-        for r in wrong:
-            f.write(f"{r['confidence']:.2f}  true={r['true']:<9} pred={r['pred']:<9} {r['path']}\n")
+        f.writelines(
+            f"{r['confidence']:.2f}  true={r['true']:<9} pred={r['pred']:<9} {r['path']}\n"
+            for r in wrong
+        )
 
     write_report(metrics, wrong, cm, out_dir)
 

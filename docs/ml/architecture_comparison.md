@@ -13,11 +13,11 @@ Read `checkpoint["class_names"]` (or `classes.json`). Do not assume
 
 | model | best epoch | val accuracy | test accuracy | file size | CPU latency |
 |---|---:|---:|---:|---:|---:|
-| ResNet-18 | 6 | 84.58% | 84.33% | 42.7 MB | 15.42 ms |
-| MobileNetV2 | 10 | 88.99% | 88.52% | 8.7 MB | 37.23 ms |
+| ResNet-18 | 2 | 40.00% | 40.00% | 42.7 MB | 12.06 ms |
+| MobileNetV2 | 6 | 60.00% | 60.00% | 8.7 MB | 12.11 ms |
 
 Class order in both checkpoints: ['compost', 'glass', 'landfill', 'paper', 'plastic'].
 
 MobileNetV2 is the smaller weight file (8.7 MB).
-ResNet-18 is faster on CPU (15.42 ms per image).
-MobileNetV2 has the higher test accuracy (88.52%).
+ResNet-18 is faster on CPU (12.06 ms per image).
+MobileNetV2 has the higher test accuracy (60.00%).
