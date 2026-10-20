@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import warnings
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
+# Configure headless matplotlib backend before importing pyplot
+os.environ.setdefault("MPLBACKEND", "Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -91,7 +92,7 @@ def load_classes_from_package(checkpoint_path: Path) -> list[str] | None:
                 return [name for _, name in sorted_items]
             elif isinstance(data, list):
                 return data
-        except (json.JSONDecodeError, OSError) as err:
+        except (json.JSONDecodeError, OSError, ValueError) as err:
             print(
                 f"Warning: Failed to parse {classes_json_path}: {err}", file=sys.stderr
             )
@@ -120,7 +121,13 @@ def load_checkpoint(
     # Load checkpoint safely
     try:
         checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    except (RuntimeError, ValueError):
+    except (RuntimeError, ValueError) as err:
+        warnings.warn(
+            f"Loading '{path}' with weights_only=True failed ({err}); "
+            "falling back to weights_only=False. Ensure the checkpoint is from a trusted source.",
+            UserWarning,
+            stacklevel=2,
+        )
         checkpoint = torch.load(path, map_location="cpu", weights_only=False)
 
     metadata: dict = {}
@@ -215,7 +222,7 @@ def evaluate_model_performance(
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
             all_preds.extend(preds.cpu().numpy().tolist())
-            all_labels.extend(labels.numpy().tolist())
+            all_labels.extend(labels.cpu().numpy().tolist())
 
     acc = float(accuracy_score(all_labels, all_preds)) if all_labels else 0.0
 

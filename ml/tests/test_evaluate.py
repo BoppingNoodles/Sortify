@@ -24,6 +24,7 @@ from ml.scripts.evaluate import (
     evaluate_model_performance,
     get_device,
     load_checkpoint,
+    load_classes_from_package,
     plot_confusion_matrix,
     run_evaluation,
 )
@@ -207,3 +208,45 @@ def test_run_evaluation_pipeline(tmp_path: Path):
     assert results["accuracy"] >= 0.0
     assert plot_file.is_file()
     assert plot_file.stat().st_size > 0
+
+
+def test_load_classes_from_package_invalid_keys(tmp_path: Path):
+    classes_json = tmp_path / "classes.json"
+    with open(classes_json, "w", encoding="utf-8") as f:
+        json.dump({"non_integer_key": "compost"}, f)
+
+    checkpoint_file = tmp_path / "dummy.pth"
+    # Should catch ValueError and return None without throwing an exception
+    assert load_classes_from_package(checkpoint_file) is None
+
+
+def test_load_checkpoint_fallback_warning(tmp_path: Path, monkeypatch):
+    checkpoint_file = tmp_path / "checkpoint.pth"
+    classes = ["compost", "glass", "landfill", "paper", "plastic"]
+    model = build_model("resnet18", num_classes=len(classes))
+
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "class_names": classes,
+        },
+        checkpoint_file,
+    )
+
+    orig_torch_load = torch.load
+
+    def mock_torch_load(*args, **kwargs):
+        if kwargs.get("weights_only", True):
+            raise RuntimeError("Simulated weights_only failure")
+        return orig_torch_load(*args, **kwargs)
+
+    monkeypatch.setattr(torch, "load", mock_torch_load)
+
+    with pytest.warns(UserWarning, match="weights_only=True failed"):
+        loaded_model, loaded_classes, _ = load_checkpoint(
+            checkpoint_file,
+            arch="resnet18",
+            device=torch.device("cpu"),
+        )
+    assert loaded_classes == classes
+    assert isinstance(loaded_model, nn.Module)
