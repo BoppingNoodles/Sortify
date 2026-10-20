@@ -81,7 +81,7 @@ Once code is written, do NOT immediately commit or declare completion. Perform a
 ## 7. Planning Protocol (`/plan`) & Plan Auditor Subagent
 Whenever the user invokes `/plan` or requests an implementation plan:
 1. **Draft Implementation Plan:** Formulate the initial step-by-step implementation plan addressing the user's requirements.
-2. **Spawn Plan Auditor Subagent:** Before presenting the final plan or beginning execution, automatically spawn the project-level `plan-auditor` subagent (`invoke_subagent` with `TypeName: "plan-auditor"`, `Model: "flash"`, and `Workspace: "inherit"`).
+2. **Spawn Plan Auditor Subagent:** Before presenting the final plan or beginning execution, automatically spawn the project-level `plan-auditor` subagent (`invoke_subagent` with `TypeName: "plan-auditor"`, `Model: "inherit"`, and `Workspace: "inherit"`).
 3. **Audit & Verification:** Provide the draft plan and context to the `plan-auditor` to audit and verify file paths, schema contracts, edge cases, failure modes, and compliance with Sortify guidelines.
 4. **Synthesis:** Incorporate the auditor subagent's findings, verifications, and adjustments into the finalized plan delivered to the user.
 
