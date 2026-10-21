@@ -1,7 +1,6 @@
 # Sortify — Backend Subteam Starter Code & Technical Guidance (Weeks 6–12)
 
 > **Subteam:** Backend (FastAPI / Cloud Infrastructure)  
-> **Members:** Janice, Carlos, David, Edward  
 > **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, PyTorch CPU Inference, Pillow, Google Cloud Firestore, Pytest, Docker, Render / Cloud Run  
 > **Purpose:** Concrete code scaffolds, service classes, schema definitions, and automated test templates for the 2-week sprint cycle.
 
@@ -9,22 +8,22 @@
 
 # Sprints Navigation
 - [Sprint 1: Weeks 6–7 — Live Inference, History & Tips Services](#sprint-1-weeks-67--live-inference-history--tips-services)
-  - [David — Live Model Inference Service (`backend/app/services/model_service.py`)](#david-weeks-67---live-model-inference-service)
-  - [Carlos — Scan History Service with Guest Device UUID (`backend/app/services/history_service.py`)](#carlos-weeks-67---scan-history-service)
-  - [Janice — Item-Specific Disposal Tips Engine (`backend/app/services/tips_service.py`)](#janice-weeks-67---item-specific-disposal-tips-engine)
-  - [Edward — Bay Area Municipal Rules & Parameterized Tests (`backend/tests/test_rules.py`)](#edward-weeks-67---municipal-rules-and-tests)
+  - [Ticket: Live Model Inference Service (`backend/app/services/model_service.py`)](#ticket-live-model-inference-service)
+  - [Ticket: Scan History Service with Guest Device UUID (`backend/app/services/history_service.py`)](#ticket-scan-history-service)
+  - [Ticket: Item-Specific Disposal Tips Engine (`backend/app/services/tips_service.py`)](#ticket-item-specific-disposal-tips-engine)
+  - [Ticket: Bay Area Municipal Rules & Parameterized Tests (`backend/tests/test_rules.py`)](#ticket-municipal-rules-and-tests)
 - [Sprint 2: Weeks 8–9 — Cloud Deployment, Streaks, Stats & Error Handling](#sprint-2-weeks-89--cloud-deployment-streaks-stats--error-handling)
-  - [Carlos — Production Multi-Stage Dockerfile (`backend/Dockerfile`)](#carlos-weeks-89---production-dockerfile)
-  - [David — User Eco-Stats Aggregation Endpoint (`backend/app/routers/history.py`)](#david-weeks-89---eco-stats-aggregation-endpoint)
-  - [Janice — Timezone-Aware Daily Streak Calculator (`backend/app/services/streak_calculator.py`)](#janice-weeks-89---daily-streak-calculator)
-  - [Edward — Centralized Exception Handlers (`backend/app/core/exceptions.py`)](#edward-weeks-89---centralized-exception-handlers)
+  - [Ticket: Production Multi-Stage Dockerfile (`backend/Dockerfile`)](#ticket-production-dockerfile)
+  - [Ticket: User Eco-Stats Aggregation Endpoint (`backend/app/routers/history.py`)](#ticket-eco-stats-aggregation-endpoint)
+  - [Ticket: Timezone-Aware Daily Streak Calculator (`backend/app/services/streak_calculator.py`)](#ticket-daily-streak-calculator)
+  - [Ticket: Centralized Exception Handlers (`backend/app/core/exceptions.py`)](#ticket-centralized-exception-handlers)
 - [Sprint 3: Weeks 10–11 — End-to-End Tests, Profiling & Release Docs](#sprint-3-weeks-1011--end-to-end-tests-profiling--release-docs)
-  - [Edward — Full Pipeline Automated Integration Test (`backend/tests/test_integration.py`)](#edward-weeks-1011---integration-test-suite)
-  - [David — End-to-End Latency Benchmarking Script (`backend/scripts/profile_latency.py`)](#david-weeks-1011---latency-profiling-script)
-  - [Janice — OpenAPI 3.0 Exporter & Backend Setup Guide](#janice-weeks-1011---openapi-exporter-and-docs)
-  - [Carlos — Cloud Health Monitoring Script (`backend/scripts/monitor_health.py`)](#carlos-weeks-1011---cloud-health-monitoring)
+  - [Ticket: Full Pipeline Automated Integration Test (`backend/tests/test_integration.py`)](#ticket-integration-test-suite)
+  - [Ticket: End-to-End Latency Benchmarking Script (`backend/scripts/profile_latency.py`)](#ticket-latency-profiling-script)
+  - [Ticket: OpenAPI 3.0 Exporter & Backend Setup Guide](#ticket-openapi-exporter-and-docs)
+  - [Ticket: Cloud Health Monitoring Script (`backend/scripts/monitor_health.py`)](#ticket-cloud-health-monitoring)
 - [Week 12 — Final Milestone & Portfolio Release](#week-12--final-milestone--portfolio-release)
-  - [All Backend Members — Production Audit & Smoke Verification](#all-backend-week-12---production-audit)
+  - [Ticket: Production Audit & Smoke Verification](#ticket-production-audit)
 
 ---
 
@@ -32,7 +31,7 @@
 
 ---
 
-### David (Weeks 6–7) — Live Model Inference Service
+### Ticket: Live Model Inference Service
 * **Target File:** `backend/app/services/model_service.py`
 * **Goal:** Replace temporary dummy stand-in with a real PyTorch model loader singleton that loads weights once at startup, executes forward pass with ImageNet normalization, and offloads CPU calculations.
 * **Starter Scaffold:**
@@ -139,7 +138,7 @@ model_service = ModelService()
 
 ---
 
-### Carlos (Weeks 6–7) — Scan History Service
+### Ticket: Scan History Service
 * **Target File:** `backend/app/services/history_service.py`
 * **Goal:** Store user scan records under a client device UUID with cursor-based pagination and Firestore read/write helpers.
 * **Starter Scaffold:**
@@ -224,7 +223,7 @@ history_service = HistoryService()
 
 ---
 
-### Janice (Weeks 6–7) — Item-Specific Disposal Tips Engine
+### Ticket: Item-Specific Disposal Tips Engine
 * **Target File:** `backend/app/services/tips_service.py`
 * **Goal:** Match classified waste items with specific preparation tips and embed into classification responses.
 * **Starter Scaffold:**
@@ -285,7 +284,7 @@ tips_service = TipsService()
 
 ---
 
-### Edward (Weeks 6–7) — Municipal Rules & Parameterized Tests
+### Ticket: Municipal Rules & Parameterized Tests
 * **Target File:** `backend/tests/test_rules.py`
 * **Goal:** Add automated tests covering 5 Bay Area cities and fallback behavior.
 * **Starter Scaffold:**
@@ -327,7 +326,7 @@ def test_unknown_city_returns_404():
 
 ---
 
-### Carlos (Weeks 8–9) — Production Multi-Stage Dockerfile
+### Ticket: Production Multi-Stage Dockerfile
 * **Target File:** `backend/Dockerfile`
 * **Goal:** Multi-stage build producing a lightweight container for deployment to Render or Google Cloud Run.
 * **Starter Scaffold:**
@@ -363,7 +362,7 @@ CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT}"]
 
 ---
 
-### David (Weeks 8–9) — User Eco-Stats Aggregation Endpoint
+### Ticket: User Eco-Stats Aggregation Endpoint
 * **Target File:** `backend/app/routers/history.py`
 * **Goal:** Compute lifetime scans, eco-points, and category counts.
 * **Starter Scaffold:**
@@ -411,7 +410,7 @@ def get_user_stats(user_id: str):
 
 ---
 
-### Janice (Weeks 8–9) — Timezone-Aware Daily Streak Calculator
+### Ticket: Timezone-Aware Daily Streak Calculator
 * **Target File:** `backend/app/services/streak_calculator.py`
 * **Goal:** Normalize timestamps to Pacific Time (`America/Los_Angeles`) and calculate consecutive sorting days.
 * **Starter Scaffold:**
@@ -467,7 +466,7 @@ def calculate_streak(
 
 ---
 
-### Edward (Weeks 8–9) — Centralized Exception Handlers
+### Ticket: Centralized Exception Handlers
 * **Target File:** `backend/app/core/exceptions.py`
 * **Goal:** Catch uncaught errors and convert them to uniform JSON schemas.
 * **Starter Scaffold:**
@@ -512,7 +511,7 @@ def register_exception_handlers(app: FastAPI):
 
 ---
 
-### Edward (Weeks 10–11) — Full Pipeline Integration Test
+### Ticket: Full Pipeline Integration Test
 * **Target File:** `backend/tests/test_integration.py`
 * **Goal:** Simulate the complete user journey in an automated pytest script.
 * **Starter Scaffold:**
@@ -556,13 +555,13 @@ def test_full_user_journey():
 
 ---
 
-### David (Weeks 10–11) — Latency Benchmarking Script
+### Ticket: Latency Benchmarking Script
 * **Target File:** `backend/scripts/profile_latency.py`
 * **Goal:** Measure p50 and p95 inference latency over 20 runs.
 
 ---
 
-### Janice (Weeks 10–11) — OpenAPI Exporter & Setup Guide
+### Ticket: OpenAPI Exporter & Setup Guide
 * **Target Output:** `backend/openapi.json` and `backend/README.md`
 * **Command:**
 ```bash
@@ -571,7 +570,7 @@ python -c "import urllib.request; urllib.request.urlretrieve('http://localhost:8
 
 ---
 
-### Carlos (Weeks 10–11) — Cloud Health Monitoring
+### Ticket: Cloud Health Monitoring
 * **Target File:** `backend/scripts/monitor_health.py`
 * **Goal:** Send automated ping to `GET /health` on the public cloud URL every 5 minutes.
 
@@ -581,7 +580,7 @@ python -c "import urllib.request; urllib.request.urlretrieve('http://localhost:8
 
 ---
 
-### All Backend Members (Week 12) — Production Audit & Smoke Verification
+### Ticket: Production Audit & Smoke Verification
 * Verify 100% test pass rate: `pytest backend/tests/`.
 * Confirm zero lint errors: `ruff check backend/`.
 * Verify cloud server availability during the live final presentation.

@@ -8,13 +8,15 @@
 
 ---
 
-## 👥 AI / ML Team Roster & Roles
+## 👥 AI / ML Team Directory
 
-| Member | Primary Focus Area |
-|---|---|
-| **Kathleen** | Dataset Acquisition & Curation, Real-World Campus Test Collection, Empirical Confidence Threshold Calibration, Empirical Benchmark Reporting |
-| **Max** | Domain Gap Analysis, Golden Demo Items Identification, Model Retraining Pipeline (v2), ONNX Export & Validation, Presentation Evolution Visuals |
-| **Aarav** | Model Checkpoint Freeze (v1), Dynamic INT8 Model Quantization, Out-of-Distribution Stress Testing, Production Weights Release Packaging |
+| Member | Role | Focus Areas |
+|---|---|---|
+| **Kathleen** | ML Engineer | Dataset Acquisition & Curation, Real-World Campus Test Collection, Empirical Confidence Threshold Calibration, Empirical Benchmark Reporting |
+| **Max** | ML Engineer | Domain Gap Analysis, Golden Demo Items Identification, Model Retraining Pipeline (v2), ONNX Export & Validation, Presentation Evolution Visuals |
+| **Aarav** | ML Engineer | Model Checkpoint Freeze (v1), Dynamic INT8 Model Quantization, Out-of-Distribution Stress Testing, Production Weights Release Packaging |
+
+*(Note: Tasks are managed via a pull-based GitHub Issue ticket system. Below is the sprint backlog of tickets available to claim).*
 
 ---
 
@@ -25,7 +27,7 @@
 - [Sprint 2: Weeks 8–9 — Threshold Calibration, ONNX Export & OOD Testing](#sprint-2-weeks-89--threshold-calibration-onnx-export--ood-testing)
 - [Sprint 3: Weeks 10–11 — Presentation Figures, Benchmarks & Release Packaging](#sprint-3-weeks-1011--presentation-figures-benchmarks--release-packaging)
 - [Week 12 — 🎤 Final Presentation & Model Showcase](#week-12--final-presentation--model-showcase)
-- [AI / ML Trajectory Matrix](#ai--ml-trajectory-matrix)
+- [AI / ML Sprint Ticket Catalog](#ai--ml-sprint-ticket-catalog)
 
 ---
 
@@ -35,9 +37,9 @@
 > * **Weeks 1–3:** PyTorch transfer learning setup, dataset aggregation and stratified train/val/test splitting (`split_data.py`), baseline ResNet-18 training, and MobileNetV2 architecture benchmarking.
 > * **Week 4 (Mid-Semester Presentation):** Team delivered the mid-semester presentation highlighting baseline model performance (74% baseline ResNet-18 vs. 83% fine-tuned) and training curves.
 > * **Week 5 (Current Baseline / In Progress):**
->   - Aarav: Hyperparameter tuning and freezing initial checkpoint `sortify_mvp_v1.pth` with `classes.json`.
->   - Kathleen: Initial campus benchmark photo collection across Moffitt Library and MLK Union.
->   - Max: Domain gap analysis and identification of 5 "golden demo items" (clean cup, soda can, paper napkin) for live demos.
+>   - Hyperparameter tuning and freezing initial checkpoint `sortify_mvp_v1.pth` with `classes.json`.
+>   - Initial campus benchmark photo collection across Moffitt Library and MLK Union.
+>   - Domain gap analysis and identification of 5 "golden demo items" (clean cup, soda can, paper napkin) for live demos.
 
 ---
 
@@ -52,9 +54,8 @@
 
 ---
 
-### Kathleen
-* **Task:** Dataset v2 Expansion (Challenging Campus Trash) & Curation.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#kathleen-weeks-67---dataset-v2-curation](starter_code/updated_ml-ai_code.md#kathleen-weeks-67---dataset-v2-curation)
+### Ticket: Dataset v2 Expansion (Challenging Campus Trash) & Curation
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-dataset-v2-curation](starter_code/updated_ml-ai_code.md#ticket-dataset-v2-curation)
 * **Goal & Context:** Gather real campus waste images focused on items that confused the v1 model (crushed aluminum cans, clear plastic iced cups vs. glassware, soiled food wrappers).
 * **Action Steps:**
   1. Author `ml/scripts/curate_dataset_v2.py`.
@@ -62,13 +63,12 @@
   3. Inspect class distributions to ensure no single category dominates the dataset.
   4. Generate stratified train (70%), validation (15%), and test (15%) splits into `data/processed_v2/`.
 * **Verification:** Run script; verify images are correctly placed into category folders and image counts match expected splits.
-* **Deliverable & Branch:** `feat/ml/kathleen/dataset-expansion-v2`
+* **Deliverable & Branch:** `feat/ml/<claimant>/dataset-expansion-v2`
 
 ---
 
-### Max
-* **Task:** Model Retraining Pipeline (v2) & Performance Evaluation.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#max-weeks-67---model-retraining-v2](starter_code/updated_ml-ai_code.md#max-weeks-67---model-retraining-v2)
+### Ticket: Model Retraining Pipeline (v2) & Performance Evaluation
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-model-retraining-v2](starter_code/updated_ml-ai_code.md#ticket-model-retraining-v2)
 * **Goal & Context:** Fine-tune the backbone on the augmented dataset v2 to improve real-world sorting accuracy.
 * **Action Steps:**
   1. Author `ml/scripts/train_v2.py` with data augmentations: random resized crops, horizontal flips, slight rotations, and color jitter.
@@ -76,13 +76,12 @@
   3. Track validation loss progression and automatically save best checkpoint to `ml/models/sortify_v2.pth`.
   4. Run `evaluate.py` to compare per-class accuracy between v1 and v2 checkpoints.
 * **Verification:** Confirm that classification accuracy on weak classes (e.g. soiled paper, clear plastics) improves by at least 7%.
-* **Deliverable & Branch:** `feat/ml/max/model-retraining-v2`
+* **Deliverable & Branch:** `feat/ml/<claimant>/model-retraining-v2`
 
 ---
 
-### Aarav
-* **Task:** Dynamic INT8 Model Quantization & Latency Benchmark.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#aarav-weeks-67---dynamic-int8-quantization](starter_code/updated_ml-ai_code.md#aarav-weeks-67---dynamic-int8-quantization)
+### Ticket: Dynamic INT8 Model Quantization & Latency Benchmark
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-dynamic-int8-quantization](starter_code/updated_ml-ai_code.md#ticket-dynamic-int8-quantization)
 * **Goal & Context:** Reduce model memory footprint and accelerate CPU inference latency for web serving.
 * **Action Steps:**
   1. Author `ml/scripts/quantize_model.py`.
@@ -91,7 +90,7 @@
   4. Measure mean inference latency across 50 simulated forward passes on CPU.
   5. Confirm that validation accuracy loss is strictly under 1.0%.
 * **Verification:** Save quantized weights to `ml/models/sortify_quantized.pth` and log latency improvements.
-* **Deliverable & Branch:** `feat/ml/aarav/int8-quantization`
+* **Deliverable & Branch:** `feat/ml/<claimant>/int8-quantization`
 
 ---
 
@@ -106,9 +105,8 @@
 
 ---
 
-### Kathleen
-* **Task:** Empirical Confidence Threshold Calibration.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#kathleen-weeks-89---confidence-threshold-calibration](starter_code/updated_ml-ai_code.md#kathleen-weeks-89---confidence-threshold-calibration)
+### Ticket: Empirical Confidence Threshold Calibration
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-confidence-threshold-calibration](starter_code/updated_ml-ai_code.md#ticket-confidence-threshold-calibration)
 * **Goal & Context:** Balance precision vs. rejection rate so ambiguous images safely trigger an "Uncertain" notice.
 * **Action Steps:**
   1. Author `ml/scripts/calibrate_threshold.py`.
@@ -117,13 +115,12 @@
   4. Select the optimal threshold (e.g. 0.50) where items with < 50% confidence return `"uncertain": true` with guidance to check physical bin signs.
   5. Hand off threshold parameters to backend team.
 * **Verification:** Verify that clear items pass with high confidence while highly ambiguous photos return uncertain flag.
-* **Deliverable & Branch:** `feat/ml/kathleen/threshold-calibration`
+* **Deliverable & Branch:** `feat/ml/<claimant>/threshold-calibration`
 
 ---
 
-### Max
-* **Task:** PyTorch to ONNX Export & Numerical Parity Verification.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#max-weeks-89---onnx-export--parity-check](starter_code/updated_ml-ai_code.md#max-weeks-89---onnx-export--parity-check)
+### Ticket: PyTorch to ONNX Export & Numerical Parity Verification
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-onnx-export--parity-check](starter_code/updated_ml-ai_code.md#ticket-onnx-export--parity-check)
 * **Goal & Context:** Export model to vendor-neutral ONNX format for accelerated inference across different deployment environments.
 * **Action Steps:**
   1. Author `ml/scripts/export_onnx.py`.
@@ -131,13 +128,12 @@
   3. Validate exported model structure using `onnx.checker.check_model()`.
   4. Run numerical parity check: compare PyTorch tensor output against ONNX Runtime session output; assert difference < `1e-4`.
 * **Verification:** Script executes cleanly and reports parity test passed.
-* **Deliverable & Branch:** `feat/ml/max/onnx-export`
+* **Deliverable & Branch:** `feat/ml/<claimant>/onnx-export`
 
 ---
 
-### Aarav
-* **Task:** Out-of-Distribution & Non-Waste Robustness Testing.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#aarav-weeks-89---out-of-distribution-stress-test](starter_code/updated_ml-ai_code.md#aarav-weeks-89---out-of-distribution-stress-test)
+### Ticket: Out-of-Distribution & Non-Waste Robustness Testing
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-out-of-distribution-stress-test](starter_code/updated_ml-ai_code.md#ticket-out-of-distribution-stress-test)
 * **Goal & Context:** Confirm model safety against non-trash objects (hands, faces, laptops, furniture) and extreme lighting.
 * **Action Steps:**
   1. Curate a test set of 30 challenging non-waste photos (selfies, keyboards, pets, extreme dark).
@@ -145,7 +141,7 @@
   3. Verify that the calibrated confidence threshold correctly flags these images as uncertain rather than falsely identifying them as trash.
   4. Author `docs/ml/robustness_stress_test.md` summarizing findings.
 * **Verification:** Ensure 90%+ of non-trash items fall below the confidence cutoff.
-* **Deliverable & Branch:** `docs/ml/aarav/robustness-stress-test`
+* **Deliverable & Branch:** `docs/ml/<claimant>/robustness-stress-test`
 
 ---
 
@@ -159,9 +155,8 @@
 
 ---
 
-### Max
-* **Task:** High-Resolution Presentation Visualizer & Model Evolution Charts.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#max-weeks-1011---presentation-visualizer](starter_code/updated_ml-ai_code.md#max-weeks-1011---presentation-visualizer)
+### Ticket: High-Resolution Presentation Visualizer & Model Evolution Charts
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-presentation-visualizer](starter_code/updated_ml-ai_code.md#ticket-presentation-visualizer)
 * **Goal & Context:** Deliver visual charts illustrating the model's evolution for Google Slides.
 * **Action Steps:**
   1. Author `ml/scripts/generate_presentation_charts.py`.
@@ -171,13 +166,12 @@
      - Per-class accuracy comparison bar chart.
   3. Save figures in `docs/final_presentation_assets/`.
 * **Verification:** Review exported PNG charts; verify all text labels and numbers are crisp and readable.
-* **Deliverable & Branch:** `docs/ml/max/presentation-charts`
+* **Deliverable & Branch:** `docs/ml/<claimant>/presentation-charts`
 
 ---
 
-### Kathleen
-* **Task:** Campus Real-World Evaluation Benchmark Report.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#kathleen-weeks-1011---campus-benchmark-report](starter_code/updated_ml-ai_code.md#kathleen-weeks-1011---campus-benchmark-report)
+### Ticket: Campus Real-World Evaluation Benchmark Report
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-campus-benchmark-report](starter_code/updated_ml-ai_code.md#ticket-campus-benchmark-report)
 * **Goal & Context:** Compile real-world sorting performance statistics across UC Berkeley campus locations.
 * **Action Steps:**
   1. Run inference over the complete campus test photo collection using the final model checkpoint.
@@ -191,9 +185,8 @@
 
 ---
 
-### Aarav
-* **Task:** Production Checkpoint Packaging & ML Reproduction Guide.
-* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#aarav-weeks-1011---release-packaging-script](starter_code/updated_ml-ai_code.md#aarav-weeks-1011---release-packaging-script)
+### Ticket: Production Checkpoint Packaging & ML Reproduction Guide
+* **Starter Code Scaffold:** [starter_code/updated_ml-ai_code.md#ticket-release-packaging-script](starter_code/updated_ml-ai_code.md#ticket-release-packaging-script)
 * **Goal & Context:** Package release weights and author reproduction instructions for open-source showcase.
 * **Action Steps:**
   1. Author `ml/scripts/package_release.py`.
@@ -204,7 +197,7 @@
      - Evaluation command: `python ml/scripts/evaluate.py`.
      - Quantization command: `python ml/scripts/quantize_model.py`.
 * **Verification:** Clone repository in a fresh directory; verify `ml/README.md` instructions execute cleanly.
-* **Deliverable & Branch:** `docs/ml/aarav/release-packaging`
+* **Deliverable & Branch:** `docs/ml/<claimant>/release-packaging`
 
 ---
 
@@ -212,20 +205,26 @@
 
 > **All-Hands Effort:** Support final presentation with computer vision metrics and demonstrate live physical scanning.
 
-### All ML Members (Kathleen, Max, Aarav)
+### Ticket: Final Model Showcase & Metrics Presentation
 * **Tasks:**
   1. **Presentation Slides:** Co-author the AI / Computer Vision architecture slides, displaying the confusion matrix, accuracy progression, and campus testing results.
-  2. **Golden Demo Items:** Provide physical sample items (clean coffee cup, crumpled napkin, aluminum can) for Caden's demo video and the live presentation.
+  2. **Golden Demo Items:** Provide physical sample items (clean coffee cup, crumpled napkin, aluminum can) for demo recording and the live presentation.
   3. **Repository Release Review:** Ensure all model weights and docs are properly tracked and merged to `main`.
 * **Deliverable:** Final presentation slides, campus benchmark statistics, and clean ML repository release.
 
 ---
 
-## 📊 AI / ML Trajectory Matrix
+## 📊 AI / ML Sprint Ticket Catalog
 
-| Sprint | Weeks | Kathleen | Max | Aarav |
-|---|---|---|---|---|
-| **Sprint 1** | Weeks 6–7 | Dataset v2 Expansion (Challenging Trash) | Model Retraining Pipeline v2 (`sortify_v2.pth`) | Dynamic INT8 Model Quantization Experiment |
-| **Sprint 2** | Weeks 8–9 | Empirical Confidence Threshold Calibration | PyTorch to ONNX Export & Parity Verification | Out-of-Distribution Non-Waste Stress Testing |
-| **Sprint 3** | Weeks 10–11 | Campus Benchmark Report (`CAMPUS_BENCHMARKS.md`) | Presentation Figures & Loss Curves Visualizer | Production Weights Packaging & ML README |
-| **Week 12** | Week 12 | Campus Testing Statistics for Slide Deck | Model Evolution Presentation Slides | Final Model Archive & Checksum Verification |
+| Sprint | Weeks | Ticket / Task | Focus & Primary Deliverable |
+|---|---|---|---|
+| **Sprint 1** | Weeks 6–7 | Dataset v2 Expansion (Challenging Trash) | Curated dataset split v2 with balanced weak classes |
+| **Sprint 1** | Weeks 6–7 | Model Retraining Pipeline v2 | Fine-tuned `sortify_v2.pth` with error reduction |
+| **Sprint 1** | Weeks 6–7 | Dynamic INT8 Model Quantization Experiment | Quantized `sortify_quantized.pth` & benchmark log |
+| **Sprint 2** | Weeks 8–9 | Empirical Confidence Threshold Calibration | Calibrated threshold parameter & trade-off analysis |
+| **Sprint 2** | Weeks 8–9 | PyTorch to ONNX Export & Parity Verification | Verified `sortify_v2.onnx` artifact & export script |
+| **Sprint 2** | Weeks 8–9 | Out-of-Distribution Non-Waste Stress Testing | Robustness test report on non-trash images |
+| **Sprint 3** | Weeks 10–11 | Presentation Figures & Loss Curves Visualizer | High-res 300 DPI loss curves & confusion matrices |
+| **Sprint 3** | Weeks 10–11 | Campus Real-World Evaluation Benchmark | Empirical campus testing report (`CAMPUS_BENCHMARKS.md`) |
+| **Sprint 3** | Weeks 10–11 | Production Weights Packaging & ML README | Frozen weights archive, checksums & reproduction docs |
+| **Week 12** | Week 12 | Final Model Showcase & Metrics Presentation | Slides visuals, demo support & final model archive |

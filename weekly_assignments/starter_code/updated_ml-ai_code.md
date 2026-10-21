@@ -1,7 +1,6 @@
 # Sortify — AI / ML Subteam Starter Code & Technical Guidance (Weeks 6–12)
 
 > **Subteam:** AI / Machine Learning (Computer Vision)  
-> **Members:** Kathleen, Max, Aarav  
 > **Tech Stack:** Python 3.11+, PyTorch 2.X, Torchvision, Scikit-Learn, ONNX Runtime, Matplotlib / Seaborn, Pillow  
 > **Purpose:** Concrete code scaffolds, training templates, quantization scripts, and threshold calibration tools for the 2-week sprint cycle.
 
@@ -9,19 +8,19 @@
 
 # Sprints Navigation
 - [Sprint 1: Weeks 6–7 — Dataset Expansion, Model v2 & INT8 Quantization](#sprint-1-weeks-67--dataset-expansion-model-v2--int8-quantization)
-  - [Kathleen — Dataset v2 Curation & Balance Verification (`ml/scripts/curate_dataset_v2.py`)](#kathleen-weeks-67---dataset-v2-curation)
-  - [Max — Model Retraining Pipeline v2 (`ml/scripts/train_v2.py`)](#max-weeks-67---model-retraining-v2)
-  - [Aarav — Dynamic INT8 Quantization Experiment (`ml/scripts/quantize_model.py`)](#aarav-weeks-67---dynamic-int8-quantization)
+  - [Ticket: Dataset v2 Curation & Balance Verification (`ml/scripts/curate_dataset_v2.py`)](#ticket-dataset-v2-curation)
+  - [Ticket: Model Retraining Pipeline v2 (`ml/scripts/train_v2.py`)](#ticket-model-retraining-v2)
+  - [Ticket: Dynamic INT8 Quantization Experiment (`ml/scripts/quantize_model.py`)](#ticket-dynamic-int8-quantization)
 - [Sprint 2: Weeks 8–9 — Threshold Calibration, ONNX Export & OOD Stress Testing](#sprint-2-weeks-89--threshold-calibration-onnx-export--ood-stress-testing)
-  - [Kathleen — Empirical Confidence Threshold Calibration (`ml/scripts/calibrate_threshold.py`)](#kathleen-weeks-89---confidence-threshold-calibration)
-  - [Max — PyTorch to ONNX Export & Parity Test (`ml/scripts/export_onnx.py`)](#max-weeks-89---onnx-export--parity-check)
-  - [Aarav — Out-of-Distribution & Non-Waste Stress Test (`ml/scripts/stress_test_ood.py`)](#aarav-weeks-89---out-of-distribution-stress-test)
+  - [Ticket: Empirical Confidence Threshold Calibration (`ml/scripts/calibrate_threshold.py`)](#ticket-confidence-threshold-calibration)
+  - [Ticket: PyTorch to ONNX Export & Parity Test (`ml/scripts/export_onnx.py`)](#ticket-onnx-export--parity-check)
+  - [Ticket: Out-of-Distribution & Non-Waste Stress Test (`ml/scripts/stress_test_ood.py`)](#ticket-out-of-distribution-stress-test)
 - [Sprint 3: Weeks 10–11 — Presentation Figures, Benchmarks & Release Packaging](#sprint-3-weeks-1011--presentation-figures-benchmarks--release-packaging)
-  - [Max — High-Resolution Presentation Visualizer (`ml/scripts/generate_presentation_charts.py`)](#max-weeks-1011---presentation-visualizer)
-  - [Kathleen — Campus Real-World Evaluation Benchmark (`CAMPUS_BENCHMARKS.md`)](#kathleen-weeks-1011---campus-benchmark-report)
-  - [Aarav — Production Checkpoint Release Packaging (`ml/scripts/package_release.py`)](#aarav-weeks-1011---release-packaging-script)
+  - [Ticket: High-Resolution Presentation Visualizer (`ml/scripts/generate_presentation_charts.py`)](#ticket-presentation-visualizer)
+  - [Ticket: Campus Real-World Evaluation Benchmark (`CAMPUS_BENCHMARKS.md`)](#ticket-campus-benchmark-report)
+  - [Ticket: Production Checkpoint Release Packaging (`ml/scripts/package_release.py`)](#ticket-release-packaging-script)
 - [Week 12 — Final Milestone & Portfolio Showcase](#week-12--final-milestone--portfolio-showcase)
-  - [All ML Members — Final Technical Slides & Metrics Summary](#all-ml-week-12---presentation-metrics)
+  - [Ticket: Final Technical Slides & Metrics Summary](#ticket-presentation-metrics)
 
 ---
 
@@ -29,7 +28,7 @@
 
 ---
 
-### Kathleen (Weeks 6–7) — Dataset v2 Curation & Balance Verification
+### Ticket: Dataset v2 Curation & Balance Verification
 * **Target File:** `ml/scripts/curate_dataset_v2.py`
 * **Goal:** Ingest 100–150 challenging campus waste photos, verify category distribution, and generate an updated train/val/test split.
 * **Starter Scaffold:**
@@ -116,7 +115,7 @@ if __name__ == "__main__":
 
 ---
 
-### Max (Weeks 6–7) — Model Retraining Pipeline v2
+### Ticket: Model Retraining Pipeline v2
 * **Target File:** `ml/scripts/train_v2.py`
 * **Goal:** Fine-tune the computer vision backbone on dataset v2 using cosine decay scheduling and checkpoint saving.
 * **Starter Scaffold:**
@@ -220,7 +219,7 @@ if __name__ == "__main__":
 
 ---
 
-### Aarav (Weeks 6–7) — Dynamic INT8 Quantization Experiment
+### Ticket: Dynamic INT8 Quantization Experiment
 * **Target File:** `ml/scripts/quantize_model.py`
 * **Goal:** Quantize model weights to INT8 and benchmark size reduction and CPU inference speed.
 * **Starter Scaffold:**
@@ -288,7 +287,7 @@ if __name__ == "__main__":
 
 ---
 
-### Kathleen (Weeks 8–9) — Empirical Confidence Threshold Calibration
+### Ticket: Empirical Confidence Threshold Calibration
 * **Target File:** `ml/scripts/calibrate_threshold.py`
 * **Goal:** Measure accuracy vs rejection trade-offs at 0.40, 0.50, and 0.60 confidence cutoffs.
 * **Starter Scaffold:**
@@ -359,7 +358,7 @@ if __name__ == "__main__":
 
 ---
 
-### Max (Weeks 8–9) — PyTorch to ONNX Export & Parity Test
+### Ticket: PyTorch to ONNX Export & Parity Test
 * **Target File:** `ml/scripts/export_onnx.py`
 * **Goal:** Export model to vendor-neutral `.onnx` and verify inference parity within `1e-4`.
 * **Starter Scaffold:**
@@ -426,7 +425,7 @@ if __name__ == "__main__":
 
 ---
 
-### Aarav (Weeks 8–9) — Out-of-Distribution & Non-Waste Stress Test
+### Ticket: Out-of-Distribution & Non-Waste Stress Test
 * **Target File:** `ml/scripts/stress_test_ood.py`
 * **Goal:** Verify that non-trash images return confidence < 0.50 so the backend flags them as uncertain.
 
@@ -436,19 +435,19 @@ if __name__ == "__main__":
 
 ---
 
-### Max (Weeks 10–11) — High-Resolution Presentation Visualizer
+### Ticket: High-Resolution Presentation Visualizer
 * **Target File:** `ml/scripts/generate_presentation_charts.py`
 * **Goal:** Generate 300 DPI loss curves, side-by-side confusion matrices, and accuracy bar charts for Google Slides.
 
 ---
 
-### Kathleen (Weeks 10–11) — Campus Benchmark Report
+### Ticket: Campus Benchmark Report
 * **Target File:** `data/campus_test/CAMPUS_BENCHMARKS.md`
 * **Goal:** Document empirical accuracy (85%+) across UC Berkeley locations (Moffitt, MLK Union, Glade).
 
 ---
 
-### Aarav (Weeks 10–11) — Release Packaging Script
+### Ticket: Release Packaging Script
 * **Target File:** `ml/scripts/package_release.py`
 * **Goal:** Generate MD5 checksums, copy weights to `ml/models/release_v1/`, and author `ml/README.md`.
 
@@ -458,6 +457,6 @@ if __name__ == "__main__":
 
 ---
 
-### All ML Members (Week 12) — Presentation Metrics & Slide Deck
+### Ticket: Final Technical Slides & Metrics Summary
 * Embed visual figures in final team Google Slides deck.
 * Co-present computer vision architecture, transfer learning results, and empirical campus sorting benchmarks.

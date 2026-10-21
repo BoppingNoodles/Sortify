@@ -1,7 +1,6 @@
 # Sortify — Frontend Subteam Starter Code & Technical Guidance (Weeks 6–12)
 
 > **Subteam:** Frontend (React Native / Expo)  
-> **Members:** Mong (Core Screens, UI/UX, Local Caching, Haptics), Caden (Project Lead & Frontend Co-Owner: Architecture, Hardware Testing, Demo Production)  
 > **Tech Stack:** React Native, Expo SDK 52+, Expo Camera, Expo Haptics, AsyncStorage, React Navigation, React Native Safe Area Context  
 > **Purpose:** Concrete code scaffolds, component templates, navigation helpers, and step-by-step implementation guidance for the 2-week sprint cycle.
 
@@ -9,19 +8,19 @@
 
 # Sprints Navigation
 - [Sprint 1: Weeks 6–7 — End-to-End Mobile Integration & Result Modal](#sprint-1-weeks-67--end-to-end-mobile-integration--result-modal)
-  - [Mong — Live Camera-to-API Scan Integration (`ScanScreen.js`)](#mong-weeks-67---live-camera-to-api-scan-integration)
-  - [Mong — Result Modal Component (`ResultModal.js` / `ResultScreen.js`)](#mong-weeks-67---result-modal-component)
-  - [Caden — API Client & Retry Helper (`src/services/api.js`)](#caden-weeks-67---api-client--retry-helper)
+  - [Ticket: Live Camera-to-API Scan Integration (`ScanScreen.js`)](#ticket-live-camera-to-api-scan-integration)
+  - [Ticket: Result Modal Component (`ResultModal.js` / `ResultScreen.js`)](#ticket-result-modal-component)
+  - [Ticket: API Client & Retry Helper (`src/services/api.js`)](#ticket-api-client--retry-helper)
 - [Sprint 2: Weeks 8–9 — History Feed, Stats Dashboard & Local Storage](#sprint-2-weeks-89--history-feed-stats-dashboard--local-storage)
-  - [Mong — History Feed Screen (`HistoryScreen.js`)](#mong-weeks-89---history-feed-screen)
-  - [Mong — Stats & Streak Dashboard (`StatsScreen.js`)](#mong-weeks-89---stats--streak-dashboard)
-  - [Caden — Local Storage Abstraction Helper (`src/services/storage.js`)](#caden-weeks-89---local-storage-abstraction-helper)
+  - [Ticket: History Feed Screen (`HistoryScreen.js`)](#ticket-history-feed-screen)
+  - [Ticket: Stats & Streak Dashboard (`StatsScreen.js`)](#ticket-stats--streak-dashboard)
+  - [Ticket: Local Storage Abstraction Helper (`src/services/storage.js`)](#ticket-local-storage-abstraction-helper)
 - [Sprint 3: Weeks 10–11 — UX Polish, Haptics & Onboarding](#sprint-3-weeks-1011--ux-polish-haptics--onboarding)
-  - [Mong — Swipeable Onboarding Walkthrough (`OnboardingScreen.js`)](#mong-weeks-1011---swipeable-onboarding-walkthrough)
-  - [Mong — Tactile Haptics Integration (`expo-haptics`)](#mong-weeks-1011---tactile-haptics-integration)
-  - [Caden — Cross-Device Safe Area Audit & Performance Helper](#caden-weeks-1011---cross-device-safe-area-audit)
+  - [Ticket: Swipeable Onboarding Walkthrough (`OnboardingScreen.js`)](#ticket-swipeable-onboarding-walkthrough)
+  - [Ticket: Tactile Haptics Integration (`expo-haptics`)](#ticket-tactile-haptics-integration)
+  - [Ticket: Cross-Device Safe Area Audit & Performance Helper](#ticket-cross-device-safe-area-audit)
 - [Week 12 — Final Milestone & Portfolio Showcase](#week-12--final-milestone--portfolio-showcase)
-  - [Mong & Caden — App Showcase Assets & Demo Walkthrough Script](#mong--caden-week-12---showcase-assets--demo-walkthrough)
+  - [Ticket: App Showcase Assets & Demo Walkthrough Script](#ticket-showcase-assets--demo-walkthrough)
 
 ---
 
@@ -29,7 +28,7 @@
 
 ---
 
-### Mong (Weeks 6–7) — Live Camera-to-API Scan Integration
+### Ticket: Live Camera-to-API Scan Integration
 * **Target File:** `src/screens/ScanScreen.js`
 * **Goal:** Replace simulated `setTimeout` mock with a real HTTP `multipart/form-data` upload to `POST /api/classify`.
 * **Starter Scaffold:**
@@ -262,7 +261,7 @@ const styles = StyleSheet.create({
 
 ---
 
-### Mong (Weeks 6–7) — Result Modal Component
+### Ticket: Result Modal Component
 * **Target File:** `src/screens/ResultScreen.js`
 * **Goal:** Render detected waste item with category badge, official bin colors, confidence meter, and municipal notes.
 * **Starter Scaffold:**
@@ -384,7 +383,7 @@ const styles = StyleSheet.create({
 
 ---
 
-### Caden (Weeks 6–7) — API Client & Retry Helper
+### Ticket: API Client & Retry Helper
 * **Target File:** `src/services/api.js`
 * **Goal:** Implement robust multipart image dispatch with retry backoff and environment resolution.
 * **Starter Scaffold:**
@@ -455,7 +454,7 @@ export async function classifyImage(imageUri, location = 'berkeley', maxRetries 
 
 ---
 
-### Mong (Weeks 8–9) — History Feed Screen
+### Ticket: History Feed Screen
 * **Target File:** `src/screens/HistoryScreen.js`
 * **Goal:** Render responsive scan feed with thumbnails, category badges, pull-to-refresh, and empty state.
 * **Starter Scaffold:**
@@ -568,7 +567,7 @@ const styles = StyleSheet.create({
 
 ---
 
-### Mong (Weeks 8–9) — Stats & Streak Dashboard
+### Ticket: Stats & Streak Dashboard
 * **Target File:** `src/screens/StatsScreen.js`
 * **Goal:** Motivate student habit formation with streak count, total scans, and category breakdown.
 * **Starter Scaffold:**
@@ -674,7 +673,7 @@ const styles = StyleSheet.create({
 
 ---
 
-### Caden (Weeks 8–9) — Local Storage Abstraction Helper
+### Ticket: Local Storage Abstraction Helper
 * **Target File:** `src/services/storage.js`
 * **Goal:** Encapsulate `AsyncStorage` methods for saving, retrieving, and clearing scan history and stats.
 * **Starter Scaffold:**
@@ -720,7 +719,7 @@ export async function loadSavedScans() {
 
 ---
 
-### Mong (Weeks 10–11) — Swipeable Onboarding Walkthrough
+### Ticket: Swipeable Onboarding Walkthrough
 * **Target File:** `src/screens/OnboardingScreen.js`
 * **Goal:** Present 3 swipeable onboarding slides explaining how Sortify works before entering camera.
 * **Starter Scaffold:**
@@ -793,7 +792,7 @@ const styles = StyleSheet.create({
 
 ---
 
-### Mong (Weeks 10–11) — Tactile Haptics Integration
+### Ticket: Tactile Haptics Integration
 * **Target Files:** `ScanScreen.js` and `ResultScreen.js`
 * **Goal:** Trigger responsive haptic vibrations on shutter tap and result reveal.
 * **Implementation Pattern:**
@@ -815,7 +814,7 @@ const onResultReceived = async () => {
 
 ---
 
-### Caden (Weeks 10–11) — Cross-Device Safe Area Audit
+### Ticket: Cross-Device Safe Area Audit
 * **Target File:** `src/styles/theme.js` & `AppNavigator.js`
 * **Goal:** Verify that bottom gesture bar and top notch do not overlap camera buttons or modal sheets across physical iOS and Android phones.
 
@@ -825,6 +824,6 @@ const onResultReceived = async () => {
 
 ---
 
-### Mong & Caden (Week 12) — Showcase Assets & Demo Walkthrough
+### Ticket: Showcase Assets & Demo Walkthrough
 * **Goal:** Capture high-resolution iPhone frames running Sortify and record the 2-minute demo walkthrough for the presentation slide deck.
 * **Deliverable:** 4 device screenshot cards placed in `docs/portfolio_assets/` and high-res video `.mp4`.
