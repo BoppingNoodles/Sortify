@@ -1,157 +1,92 @@
 """Classification API router."""
 
-from backend.app.services.model_service import ModelService, model_service
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from PIL import UnidentifiedImageError
 
-from backend.app.core.config import settings
-from backend.app.schemas import ClassifyResponse, DisposalTip
-from backend.app.schemas.schemas import ALLOWED_CATEGORIES, ClassificationAlternative
+from backend.app.schemas import (
+    ClassificationAlternative,
+    ClassifyResponse,
+    DisposalTip,
+)
+from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
+from backend.app.services.model_service import ModelService, model_service
+from backend.app.services.tips_service import get_disposal_guidance
+from backend.app.utils.validators import validate_image_upload
 
 router = APIRouter()
 
-ALLOWED_IMAGE_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-}
-
-# Translates the model's labels into the app's categories.
-LABEL_TO_CATEGORY = {
+# Translates raw model prediction labels to canonical app categories.
+LABEL_TO_CATEGORY: dict[str, str] = {
     "cardboard": "paper",
     "paper": "paper",
     "glass": "glass",
     "plastic": "plastic",
-    # Removed "metals" category - TEAM DECISION NEEDED: see notes below
+    "metal": "plastic",  # Commingled recyclables in Berkeley/SF
     "trash": "landfill",
-    "compost": "compost",  # added "compost"
-    "organic": "organic",  # added "organic"
-}
-
-# Bin information for each app category.
-BIN_INFO = {
-    "plastic": {
-        "bin": "Blue Recycling Bin",
-        "color": "blue",
-        "action": "Recycle",
-        "tip": "Empty liquids and rinse before recycling. Keep caps on.",
-    },
-    "paper": {
-        "bin": "Blue Recycling Bin (Paper)",
-        "color": "blue",
-        "action": "Recycle",
-        "tip": "Keep clean and dry. Flatten cardboard boxes.",
-    },
-    "glass": {
-        "bin": "Blue Recycling Bin (Glass)",
-        "color": "blue",
-        "action": "Recycle",
-        "tip": "Rinse jar clean. Metal lids should be separated.",
-    },
-    "compost": {
-        "bin": "Green Compost Bin",
-        "color": "green",
-        "action": "Compost",
-        "tip": "Food scraps, soiled napkins, and BPI-certified compostable packaging.",
-    },
-    "organic": {
-        "bin": "Green Compost Bin",
-        "color": "green",
-        "action": "Compost",
-        "tip": "Keep organic waste in a sealed container. Do not include meat or dairy.",
-    },
-    "landfill": {
-        "bin": "Grey Landfill Bin",
-        "color": "grey",
-        "action": "Landfill",
-        "tip": "Wrappers, chip bags, and styrofoam cannot be recycled.",
-    },
+    "compost": "compost",
+    "organic": "compost",
 }
 
 
 def get_model_service() -> ModelService:
-    """Dependency: hands the shared, already-loaded model to the endpoint."""
+    """Dependency provider returning the singleton ModelService."""
     return model_service
 
 
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
-    file: UploadFile = File(...),  # noqa: B008
     location: str = Query("berkeley", description="Municipality name"),
+    file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
-):
-    """Ingest image upload and return waste classification result."""
-    # 1. Enforce media type validation (HTTP 415)
-    if not file.content_type or not (
-        file.content_type.startswith("image/")
-        or file.content_type in ALLOWED_IMAGE_TYPES
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Unsupported media type. Image required (JPEG, PNG, WEBP, GIF).",
-        )
-
-    # 2. Enforce file size limit (HTTP 413)
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if file.size is not None and file.size > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Payload too large. File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
-        )
-
-    file.file.seek(0, 2)
-    actual_size = file.file.tell()
-    file.file.seek(0)
-    if actual_size > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Payload too large. File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
-        )
-
-    # 3. Read the image bytes (async: doesn't block other requests)
+) -> ClassifyResponse:
+    """Ingest image upload, run model inference, and return waste classification."""
+    # 1. Read uploaded image bytes asynchronously
     image_bytes = await file.read()
 
-    # 4. Run the model on a worker thread so the server stays responsive
+    # 2. Run model inference in worker threadpool to avoid blocking event loop
     try:
         prediction = await run_in_threadpool(service.predict, image_bytes)
     except (UnidentifiedImageError, OSError) as exc:
-        # The file said it was an image, but PIL can't open it: corrupted.
         raise HTTPException(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Could not read the image. The file may be corrupted.",
         ) from exc
 
-    # 5. Translate the model's label into an app category and bin
+    # 3. Translate model label to canonical category and fetch disposal guidance
     label = prediction["category"]
-    category = LABEL_TO_CATEGORY.get(label, "landfill")  # unknown label -> landfill
-    info = BIN_INFO[category]
+    item_name = prediction.get("item_name") or label.title()
+    category = LABEL_TO_CATEGORY.get(label, "landfill")
+    guidance = get_disposal_guidance(category, item_name, location)
+    bin_color = BIN_COLORS.get(category, "Green")
 
-    # 6. Build the response
-
+    # 4. Map alternative candidates through taxonomy normalization
     raw_alternatives = prediction.get("alternatives", [])
-    alternatives = [
-        ClassificationAlternative(
-            category=alt["category"],
-            confidence=alt["confidence"],
-        )
-        for alt in raw_alternatives
-        if alt.get("category") in ALLOWED_CATEGORIES
-    ]
+    alternatives: list[ClassificationAlternative] = []
+    for alt in raw_alternatives:
+        raw_cat = alt.get("category", "")
+        mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
+        if mapped_cat in ALLOWED_CATEGORIES:
+            alternatives.append(
+                ClassificationAlternative(
+                    category=mapped_cat,
+                    confidence=alt["confidence"],
+                )
+            )
 
+    # 5. Build validated response payload
     return ClassifyResponse(
-        item_name=label.title(),
+        item_name=item_name,
         category=category,
         confidence=prediction["confidence"],
         location=location.lower(),
-        disposal_tip=info["tip"],
-        bin_color=info["color"].capitalize(),
-        bin=info["bin"],
+        disposal_tip=guidance["tip"],
+        bin_color=bin_color,
+        bin=f"{bin_color} {category.capitalize()} Bin",
         disposal_tips=DisposalTip(
-            action=info["action"],
-            bin_type=info["color"],
-            notes=info["tip"],
+            action=guidance["action"],
+            bin_type=guidance["bin_type"],
+            notes=guidance["notes"],
         ),
         alternatives=alternatives,
     )
