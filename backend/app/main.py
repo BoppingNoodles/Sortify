@@ -1,67 +1,42 @@
-# TODO: Refactor into modular routers (backend/app/routers/)
-# as per Week 3 task assignment.
+"""FastAPI Main Application for Sortify."""
 
-from typing import Annotated
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi import FastAPI, File, Query, UploadFile
-from pydantic import BaseModel, Field
-
-
-# 1. Define Schemas (The "Contract")
-class ClassifyResponse(BaseModel):
-    item_name: str = Field(..., example="Plastic Bottle")
-    category: str = Field(..., example="Recyclable")
-    confidence: float = Field(..., ge=0.0, le=1.0, example=0.95)
-    disposal_tip: str = Field(..., example="Rinse before recycling.")
-    bin_color: str = Field(..., example="Blue")
-
+from backend.app.core.config import settings
+from backend.app.middleware.telemetry import TelemetryMiddleware
+from backend.app.routers import auth, classify, history, rules, uploads
 
 app = FastAPI(
-    title="Sortify API",
-    description="API for Sortify waste classification and disposal rules.",
-    version="1.0.0",
+    title=settings.PROJECT_NAME,
+    description="Sortify Waste Sorting & Classification Backend API",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
+# Configure CORS for Expo dev servers, mobile test devices, and local clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# Added last so this timer wraps CORS and the routers.
+app.add_middleware(TelemetryMiddleware)
 
-# 2. Endpoints with Tags, Descriptions, and Examples
-@app.get("/health", tags=["System"], description="Verify the server is running.")
-async def health_check():
+# Week 1 learning route stays at /upload-image, outside the /api prefix.
+app.include_router(uploads.router, tags=["Uploads"])
+
+# Mount domain-specific API routers under /api
+app.include_router(classify.router, prefix="/api", tags=["Classification"])
+app.include_router(rules.router, prefix="/api", tags=["Rules"])
+app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(history.router, prefix="/api", tags=["History"])
+
+
+@app.get("/health")
+def health_check():
+    """Service health check endpoint confirming server availability."""
     return {"status": "ok"}
-
-
-@app.post(
-    "/api/classify",
-    tags=["AI"],
-    response_model=ClassifyResponse,
-    description="Upload an image to classify waste.",
-)
-async def classify_waste(
-    file: UploadFile = File(..., description="The image to classify"),  # noqa: B008
-    simulate_category: Annotated[
-        str | None, Query(description="Optional: simulate a specific bin")
-    ] = None,
-):
-    return {
-        "item_name": "Plastic Bottle",
-        "category": "Recyclable",
-        "confidence": 0.95,
-        "disposal_tip": "Rinse before recycling.",
-        "bin_color": "Blue",
-    }
-
-
-@app.get(
-    "/api/rules/berkeley",
-    tags=["Rules"],
-    description="Get disposal rules for Berkeley.",
-)
-async def get_berkeley_rules():
-    return {
-        "city": "Berkeley",
-        "rules": {"plastic": "Blue bin", "compost": "Green bin"},
-    }
-
-
-@app.post("/api/history", tags=["History"], description="Retrieve user scan history.")
-async def get_history():
-    return {"history": []}

@@ -38,8 +38,8 @@ serviceAccountKey.json
 firebase-adminsdk*.json
 backend/serviceAccountKey.json
 
-# Machine Learning & Datasets
-data/
+# Machine Learning & Datasets (repo-root only; backend/app/data is source)
+/data/
 *.pth
 *.pt
 *.onnx
@@ -61,4 +61,7 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# Uploads and temporary files
+temp_uploads/
 
