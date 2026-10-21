@@ -212,4 +212,4 @@ ruff format .
 * **Weeks 11–12:** Stretch goals & final deployment
 * **Week 12:** **Final Presentation**
 
-For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) and [Weekly Assignments](weekly_assignments/TEAM_WEEKLY_ASSIGNMENTS.md).
+For detailed week-by-week tasks and team assignments, refer to [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) and [Weekly Assignments](weekly_assignments/updated_team_weekly_assignments.md).

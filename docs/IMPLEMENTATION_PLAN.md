@@ -4,7 +4,7 @@
 > **Sub-teams:** Frontend (2: Mong, Caden), Backend (5: Janice, Carlos, David, Krish, Edward), AI/ML (4: Aarav, Kathleen, Max, Doil)  
 > **Key Dates:** Mid-semester presentation & video demo → **Week 6** | Final presentation & portfolio release → **Week 12**  
 > **Scope:** MVP-first — robust core classification, location rules, and gamification before stretch goals  
-> **Companion Documents:** [TEAM_WEEKLY_ASSIGNMENTS.md](../weekly_assignments/TEAM_WEEKLY_ASSIGNMENTS.md) | **Subteam Plans:** [Frontend](../weekly_assignments/frontend.md) · [Backend](../weekly_assignments/backend.md) · [AI / ML](../weekly_assignments/ml-ai.md)
+> **Companion Documents:** [updated_team_weekly_assignments.md](../weekly_assignments/updated_team_weekly_assignments.md) | **Subteam Plans:** [Frontend](../weekly_assignments/updated_frontend.md) · [Backend](../weekly_assignments/updated_backend.md) · [AI / ML](../weekly_assignments/updated_ml-ai.md)
 
 ---
 
