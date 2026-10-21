@@ -188,17 +188,95 @@ def write_comparison(path: Path, rows: list[dict], class_names: list[str]) -> No
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def main() -> None:
+def compare_with_resnet(
+    mobilenet_output: Path,
+    resnet_checkpoint: Path | None,
+    doc_path: Path,
+    classes: list[str] | tuple[str, ...],
+    val_loader,
+    test_loader,
+    best_epoch: int,
+    val_acc: float,
+    test_acc: float,
+) -> bool:
+    """Compare MobileNetV2 with ResNet baseline and write architecture comparison report.
+
+    Returns True if comparison was performed, False if skipped.
+    """
+    if not resnet_checkpoint or not resnet_checkpoint.is_file():
+        print(
+            f"Notice: ResNet baseline checkpoint not found at: '{resnet_checkpoint}'. "
+            "Skipping side-by-side comparison."
+        )
+        return False
+
+    resnet, resnet_ckpt = load_baseline_checkpoint(resnet_checkpoint, build_resnet())
+    resnet_names = list(resnet_ckpt.get("class_names", []))
+    if not same_class_order(resnet_names, classes):
+        sys.exit(
+            f"Error: class order mismatch. MobileNet {list(classes)}, "
+            f"ResNet checkpoint {resnet_names}."
+        )
+
+    resnet_device = get_device()
+    resnet = resnet.to(resnet_device)
+    resnet_val = softmax_accuracy(resnet, val_loader, resnet_device)
+    resnet_test = softmax_accuracy(resnet, test_loader, resnet_device)
+    mobilenet_cpu = load_mobilenet_checkpoint(mobilenet_output, build_model())[0]
+    resnet_cpu = load_baseline_checkpoint(resnet_checkpoint, build_resnet())[0]
+
+    rows = [
+        {
+            "name": "ResNet-18",
+            "epoch": resnet_ckpt.get("best_epoch", ""),
+            "val_acc": resnet_val,
+            "test_acc": resnet_test,
+            "size_mb": file_size_mb(resnet_checkpoint),
+            "latency_ms": cpu_latency_ms(resnet_cpu, test_loader),
+        },
+        {
+            "name": "MobileNetV2",
+            "epoch": best_epoch,
+            "val_acc": val_acc,
+            "test_acc": test_acc,
+            "size_mb": file_size_mb(mobilenet_output),
+            "latency_ms": cpu_latency_ms(mobilenet_cpu, test_loader),
+        },
+    ]
+    print(
+        f"{'model':<14} {'epoch':>5} {'val_acc':>8} {'test_acc':>9} {'size':>10} {'cpu_ms':>8}"
+    )
+    for row in rows:
+        print(
+            f"{row['name']:<14} {row['epoch']:>5} {row['val_acc']:>8.2%} "
+            f"{row['test_acc']:>9.2%} {row['size_mb']:>8.1f} MB {row['latency_ms']:>7.2f}"
+        )
+    write_comparison(doc_path, rows, list(classes))
+    print(f"Saved comparison to {doc_path}")
+    return True
+
+
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data/processed")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--resnet-checkpoint", type=Path, default=DEFAULT_RESNET)
+    parser.add_argument(
+        "--resnet-checkpoint",
+        type=Path,
+        default=DEFAULT_RESNET,
+        help="Path to ResNet baseline checkpoint for comparison table. Optional.",
+    )
+    parser.add_argument(
+        "--skip-comparison",
+        action="store_true",
+        help="Skip comparison with ResNet baseline and architecture doc generation.",
+    )
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -264,62 +342,28 @@ def main() -> None:
         },
         args.output,
     )
+    print(f"Saved weights to {args.output}")
     _, mobilenet_ckpt = load_mobilenet_checkpoint(args.output, build_model())
     print(
         "Reloaded MobileNet checkpoint: "
         f"class_names={mobilenet_ckpt['class_names']} epoch={mobilenet_ckpt['best_epoch']}"
     )
 
-    if not args.resnet_checkpoint.is_file():
-        sys.exit(
-            f"Error: ResNet baseline checkpoint not found: {args.resnet_checkpoint}"
-        )
-    resnet, resnet_ckpt = load_baseline_checkpoint(
-        args.resnet_checkpoint, build_resnet()
-    )
-    resnet_names = list(resnet_ckpt.get("class_names", []))
-    if not same_class_order(resnet_names, classes):
-        sys.exit(
-            f"Error: class order mismatch. MobileNet {list(classes)}, "
-            f"ResNet checkpoint {resnet_names}."
-        )
+    if args.skip_comparison:
+        print("Skipping ResNet-18 comparison (--skip-comparison enabled).")
+        return
 
-    resnet_device = get_device()
-    resnet = resnet.to(resnet_device)
-    resnet_val = softmax_accuracy(resnet, val_loader, resnet_device)
-    resnet_test = softmax_accuracy(resnet, test_loader, resnet_device)
-    mobilenet_cpu = load_mobilenet_checkpoint(args.output, build_model())[0]
-    resnet_cpu = load_baseline_checkpoint(args.resnet_checkpoint, build_resnet())[0]
-
-    rows = [
-        {
-            "name": "ResNet-18",
-            "epoch": resnet_ckpt.get("best_epoch", ""),
-            "val_acc": resnet_val,
-            "test_acc": resnet_test,
-            "size_mb": file_size_mb(args.resnet_checkpoint),
-            "latency_ms": cpu_latency_ms(resnet_cpu, test_loader),
-        },
-        {
-            "name": "MobileNetV2",
-            "epoch": best_epoch,
-            "val_acc": val_acc,
-            "test_acc": test_acc,
-            "size_mb": file_size_mb(args.output),
-            "latency_ms": cpu_latency_ms(mobilenet_cpu, test_loader),
-        },
-    ]
-    print(
-        f"{'model':<14} {'epoch':>5} {'val_acc':>8} {'test_acc':>9} {'size':>10} {'cpu_ms':>8}"
+    compare_with_resnet(
+        mobilenet_output=args.output,
+        resnet_checkpoint=args.resnet_checkpoint,
+        doc_path=args.doc,
+        classes=classes,
+        val_loader=val_loader,
+        test_loader=test_loader,
+        best_epoch=best_epoch,
+        val_acc=val_acc,
+        test_acc=test_acc,
     )
-    for row in rows:
-        print(
-            f"{row['name']:<14} {row['epoch']:>5} {row['val_acc']:>8.2%} "
-            f"{row['test_acc']:>9.2%} {row['size_mb']:>8.1f} MB {row['latency_ms']:>7.2f}"
-        )
-    write_comparison(args.doc, rows, list(classes))
-    print(f"Saved weights to {args.output}")
-    print(f"Saved comparison to {args.doc}")
 
 
 if __name__ == "__main__":
