@@ -75,3 +75,13 @@ Once code is written, do NOT immediately commit or declare completion. Perform a
   1. Verify the branch is up-to-date with remote (`git pull origin main`).
   2. Push the atomic commits to `main` (`git push origin main`).
   3. Confirm clean working tree with `git status`.
+
+---
+
+## 7. Planning Protocol (`/plan`) & Plan Auditor Subagent
+Whenever the user invokes `/plan` or requests an implementation plan:
+1. **Draft Implementation Plan:** Formulate the initial step-by-step implementation plan addressing the user's requirements.
+2. **Spawn Plan Auditor Subagent:** Before presenting the final plan or beginning execution, automatically spawn the project-level `plan-auditor` subagent (`invoke_subagent` with `TypeName: "plan-auditor"`, `Model: "inherit"`, and `Workspace: "inherit"`).
+3. **Audit & Verification:** Provide the draft plan and context to the `plan-auditor` to audit and verify file paths, schema contracts, edge cases, failure modes, and compliance with Sortify guidelines.
+4. **Synthesis:** Incorporate the auditor subagent's findings, verifications, and adjustments into the finalized plan delivered to the user.
+
