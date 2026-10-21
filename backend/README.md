@@ -16,9 +16,9 @@ We use `pytest` to ensure API stability.
   ```
 
 - **Run specific test file:**
-  Use this while developing to get fast feedback on a specific module (e.g., `test_api.py`).
+  Use this while developing to get fast feedback on a specific module (e.g., `test_routers.py`).
   ```bash
-  python -m pytest backend/tests/test_api.py -v
+  python -m pytest backend/tests/test_routers.py -v
   ```
 
 *Note: If you encounter import errors, ensure you have initialized `pytest.ini` in the project root with `pythonpath = .`*
