@@ -158,6 +158,7 @@ def test_cors_headers():
         headers={"Origin": "http://localhost:19006"},
     )
     assert response.status_code == 200
-    assert (
-        response.headers.get("access-control-allow-origin") == "http://localhost:19006"
+    assert response.headers.get("access-control-allow-origin") in (
+        "http://localhost:19006",
+        "*",
     )

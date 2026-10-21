@@ -38,7 +38,7 @@ jobs:
 
       - name: Smart Backend Smoke Test
         run: |
-          if [ -f "backend/app/main.py" ]; then
+          if [ -f "backend/app/main.py" ] || [ -f "backend/main.py" ]; then
             echo "backend/app/main.py found! Installing dependencies..."
             pip install -r requirements.txt
             if find backend/ -name "test_*.py" -o -name "*_test.py" | grep -q .; then
