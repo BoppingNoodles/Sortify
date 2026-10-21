@@ -20,17 +20,21 @@ Batch size: 16
 
 ## Golden demo items
 
-These stayed at or above 90% on the same bin for every condition.
+These stayed at or above 90% on the same bin for every condition. The strongest qualifying photo from each bin is taken first, then any open slots are filled by confidence.
 
-| file | bin | clean | shadow | dim | clutter |
-|---|---|---:|---:|---:|---:|
-| compost/compost_0150.jpg | compost | 100.0% | 100.0% | 99.9% | 99.9% |
-| paper/cardboard37.jpg | paper | 100.0% | 99.9% | 99.9% | 99.7% |
-| compost/compost_0132.jpg | compost | 99.9% | 100.0% | 99.8% | 99.9% |
-| compost/compost_0256.jpg | compost | 99.9% | 100.0% | 99.9% | 99.6% |
-| compost/compost_0312.jpg | compost | 99.9% | 100.0% | 99.9% | 99.9% |
+“Bring this” is the object in that photo, so a presenter can hold up the same thing.
 
-Class mix: 4 compost, 1 paper.
+| bring this | file | bin | clean | shadow | dim | clutter |
+|---|---|---|---:|---:|---:|---:|
+| basket of fresh vegetables | compost/compost_0150.jpg | compost | 100.0% | 100.0% | 99.9% | 99.9% |
+| cardboard shipping box | paper/cardboard37.jpg | paper | 100.0% | 99.9% | 99.9% | 99.7% |
+| green glass bottle | glass/glass83.jpg | glass | 99.6% | 99.9% | 99.8% | 99.8% |
+| plastic milk jug | plastic/plastic220.jpg | plastic | 99.6% | 99.5% | 99.3% | 98.1% |
+| aluminum beverage can | landfill/metal32.jpg | landfill | 99.5% | 99.5% | 99.4% | 99.5% |
+
+Class mix: 1 compost, 1 glass, 1 landfill, 1 paper, 1 plastic.
+
+Every bin has at least one photo at or above 90% under every condition. The threshold was not lowered.
 
 ## How to hold the phone
 

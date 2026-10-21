@@ -194,6 +194,45 @@ def test_conditions_change_the_photo_and_golden_bar() -> None:
     assert [item["path"].name for item in chosen] == ["cup.jpg"]
 
 
+def _qualifying(cls: str, confidence: float, filename: str) -> dict:
+    return {
+        "path": Path(cls) / filename,
+        "label": cls,
+        "top_name": cls,
+        "clean_confidence": confidence,
+        "condition_confidence": {
+            "clean": confidence,
+            "shadow": confidence,
+            "dim": confidence,
+            "clutter": confidence,
+        },
+    }
+
+
+def test_one_class_cannot_fill_the_list_when_others_qualify() -> None:
+    records = [
+        _qualifying("compost", 0.99, "a.jpg"),
+        _qualifying("compost", 0.98, "b.jpg"),
+        _qualifying("compost", 0.97, "c.jpg"),
+        _qualifying("compost", 0.96, "d.jpg"),
+        _qualifying("compost", 0.95, "e.jpg"),
+        _qualifying("glass", 0.91, "g.jpg"),
+        _qualifying("landfill", 0.94, "l.jpg"),
+        _qualifying("paper", 0.92, "p.jpg"),
+        _qualifying("plastic", 0.93, "pl.jpg"),
+    ]
+    chosen = golden_items(records)
+    assert len(chosen) == 5
+    assert [item["top_name"] for item in chosen].count("compost") == 1
+    assert {item["top_name"] for item in chosen} == {
+        "compost",
+        "glass",
+        "landfill",
+        "paper",
+        "plastic",
+    }
+
+
 def test_guide_reports_drops_and_does_not_invent_items(tmp_path: Path) -> None:
     model = ConstantModel()
     image = Image.new("RGB", (28, 28), (10, 160, 10))
@@ -223,6 +262,7 @@ def test_guide_reports_drops_and_does_not_invent_items(tmp_path: Path) -> None:
             "path": Path("plastic") / "cup.jpg",
             "top_name": "plastic",
             "clean_confidence": 0.97,
+            "object_name": "plastic milk jug",
             "condition_confidence": {
                 "clean": 0.97,
                 "shadow": 0.95,
@@ -231,8 +271,12 @@ def test_guide_reports_drops_and_does_not_invent_items(tmp_path: Path) -> None:
             },
         }
     ]
+    report["missing_bins"] = ["glass"]
     write_scanning_guide(destination, report)
     listed = destination.read_text(encoding="utf-8")
     assert "plastic/cup.jpg" in listed
+    assert "plastic milk jug" in listed
     assert "Only 1 of the 5" in listed
     assert "Class mix: 1 plastic." in listed
+    assert "No qualifying photo in: glass" in listed
+    assert "not lowered" in listed

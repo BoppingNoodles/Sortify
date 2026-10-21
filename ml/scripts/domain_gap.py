@@ -37,6 +37,14 @@ CONDITIONS = ("clean", "shadow", "dim", "clutter")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 GOLDEN_CONFIDENCE = 0.90
 INPUT_SHAPE = (3, 224, 224)
+# Names read off the lab photos that cleared the bar. Not inferred from the filename.
+PRESENTER_OBJECTS: dict[str, str] = {
+    "compost/compost_0150.jpg": "basket of fresh vegetables",
+    "glass/glass83.jpg": "green glass bottle",
+    "landfill/metal32.jpg": "aluminum beverage can",
+    "paper/cardboard37.jpg": "cardboard shipping box",
+    "plastic/plastic220.jpg": "plastic milk jug",
+}
 
 
 def build_bare_model(architecture: str, num_classes: int) -> nn.Module:
@@ -182,11 +190,11 @@ def predict_probs(
 
 def golden_items(
     records: list[dict], threshold: float = GOLDEN_CONFIDENCE, limit: int = 5
-):
+) -> list[dict]:
     """Items that stay on the labeled bin at >= threshold under every condition.
 
-    A folder label that disagrees with the predicted bin is not a demo item,
-    even when the confidence is high.
+    Prioritizes class diversity across the 5 bins so the live demo covers
+    distinct waste categories.
     """
     winners = []
     for record in records:
@@ -198,8 +206,39 @@ def golden_items(
         if any(score < threshold for score in record["condition_confidence"].values()):
             continue
         winners.append(record)
-    winners.sort(key=lambda record: record["clean_confidence"], reverse=True)
-    return winners[:limit]
+
+    by_class: dict[str, list[dict]] = {}
+    for item in winners:
+        by_class.setdefault(item["top_name"], []).append(item)
+
+    for group in by_class.values():
+        group.sort(key=lambda r: r["clean_confidence"], reverse=True)
+
+    selected: list[dict] = []
+    for cls_name in sorted(by_class.keys()):
+        if by_class[cls_name] and len(selected) < limit:
+            selected.append(by_class[cls_name].pop(0))
+
+    remaining = [item for items in by_class.values() for item in items]
+    remaining.sort(key=lambda r: r["clean_confidence"], reverse=True)
+    selected.extend(remaining[: max(0, limit - len(selected))])
+    selected.sort(key=lambda r: r["clean_confidence"], reverse=True)
+    return selected
+
+
+def bins_without_qualifier(
+    records: list[dict], class_names, threshold: float = GOLDEN_CONFIDENCE
+) -> list[str]:
+    """Bins with no photo that clears the golden bar. The bar is not lowered."""
+    return [
+        name
+        for name in class_names
+        if not golden_items(
+            [record for record in records if record["top_name"] == name],
+            threshold=threshold,
+            limit=1,
+        )
+    ]
 
 
 def class_mix(golden: list[dict]) -> str:
@@ -291,20 +330,56 @@ def write_scanning_guide(path: Path, report: dict) -> None:
     else:
         lines.append(
             f"These stayed at or above {GOLDEN_CONFIDENCE:.0%} on the same bin "
-            "for every condition."
+            "for every condition. The strongest qualifying photo from each bin "
+            "is taken first, then any open slots are filled by confidence."
         )
         lines.append("")
-        lines.append("| file | bin | clean | shadow | dim | clutter |")
-        lines.append("|---|---|---:|---:|---:|---:|")
+        named = any(item.get("object_name") for item in golden)
+        if named:
+            lines.append(
+                "“Bring this” is the object in that photo, so a presenter can "
+                "hold up the same thing."
+            )
+            lines.append("")
+            lines.append("| bring this | file | bin | clean | shadow | dim | clutter |")
+            lines.append("|---|---|---|---:|---:|---:|---:|")
+        else:
+            lines.append("| file | bin | clean | shadow | dim | clutter |")
+            lines.append("|---|---|---:|---:|---:|---:|")
         for item in golden:
             scores = item["condition_confidence"]
-            lines.append(
-                f"| {photo_label(item['path'])} | {item['top_name']} | "
+            metrics = (
                 f"{item['clean_confidence']:.1%} | {scores['shadow']:.1%} | "
                 f"{scores['dim']:.1%} | {scores['clutter']:.1%} |"
             )
+            if named:
+                bring = item.get("object_name") or "unnamed photo"
+                lines.append(
+                    f"| {bring} | {photo_label(item['path'])} | "
+                    f"{item['top_name']} | {metrics}"
+                )
+            else:
+                lines.append(
+                    f"| {photo_label(item['path'])} | {item['top_name']} | {metrics}"
+                )
         lines.append("")
         lines.append(class_mix(golden))
+        missing = report.get("missing_bins")
+        if missing:
+            lines.append("")
+            lines.append(
+                "No qualifying photo in: "
+                + ", ".join(missing)
+                + f". The {GOLDEN_CONFIDENCE:.0%} bar was not lowered to fill "
+                "those bins."
+            )
+        elif missing is not None:
+            lines.append("")
+            lines.append(
+                "Every bin has at least one photo at or above "
+                f"{GOLDEN_CONFIDENCE:.0%} under every condition. "
+                "The threshold was not lowered."
+            )
         if len(golden) < 5:
             lines.append("")
             lines.append(
@@ -365,6 +440,8 @@ def main() -> None:
     records = evaluate_images(model, class_names, items, device, args.batch_size)
     drops = condition_drops(records)
     golden = golden_items(records)
+    for item in golden:
+        item["object_name"] = PRESENTER_OBJECTS.get(photo_label(item["path"]))
     report = {
         "checkpoint": args.checkpoint,
         "n_images": len(records),
@@ -372,6 +449,7 @@ def main() -> None:
         "batch_size": args.batch_size,
         "drops": drops,
         "golden": golden,
+        "missing_bins": bins_without_qualifier(records, class_names),
     }
     write_scanning_guide(args.output, report)
     print(f"{'condition':<10} {'mean_drop':>10}")
@@ -382,7 +460,8 @@ def main() -> None:
     )
     for item in golden:
         print(
-            f"  {item['path'].name} {item['top_name']} {item['clean_confidence']:.1%}"
+            f"  {photo_label(item['path'])} {item['top_name']} "
+            f"{item['clean_confidence']:.1%} {item.get('object_name') or ''}"
         )
     print("Example softmax (first photo, clean):")
     example = predict_probs(model, [items[0][0]], device, args.batch_size)[0]
