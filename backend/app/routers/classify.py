@@ -1,58 +1,24 @@
 """Classification API router."""
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, Query, UploadFile
 
-from backend.app.core.config import settings
 from backend.app.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
     DisposalTip,
 )
 from backend.app.services.tips_service import get_disposal_guidance
+from backend.app.utils.validators import validate_image_upload
 
 router = APIRouter()
 
-ALLOWED_IMAGE_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-}
-
 
 @router.post("/classify", response_model=ClassifyResponse)
-def classify_item(
-    file: UploadFile = File(...),  # noqa: B008
-    location: str = Query("berkeley", description="Municipality name"),
+async def classify_item(
+    location: str = Query("berkeley"),
+    file: UploadFile = Depends(validate_image_upload),  # noqa: B008
 ):
     """Ingest image upload and return waste classification result."""
-    # 1. Enforce media type validation (HTTP 415)
-    if not file.content_type or not (
-        file.content_type.startswith("image/")
-        or file.content_type in ALLOWED_IMAGE_TYPES
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Unsupported media type. Image required (JPEG, PNG, WEBP, GIF).",
-        )
-
-    # 2. Enforce file size limit (HTTP 413)
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if file.size is not None and file.size > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Payload too large. File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
-        )
-
-    file.file.seek(0, 2)
-    actual_size = file.file.tell()
-    file.file.seek(0)
-    if actual_size > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Payload too large. File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
-        )
-
     # Category is still the Week 3 mock. Disposal copy comes from the tips engine.
     item_name = "Almond Milk Carton (Scaffold)"
     category = "compost"
