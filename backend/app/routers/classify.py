@@ -1,12 +1,13 @@
 """Classification API router."""
 
+from backend.app.services.model_service import ModelService, model_service
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from PIL import UnidentifiedImageError
 
 from backend.app.core.config import settings
 from backend.app.schemas import ClassifyResponse, DisposalTip
-from backend.app.services.model_service import ModelService, model_service
+from backend.app.schemas.schemas import ALLOWED_CATEGORIES, ClassificationAlternative
 
 router = APIRouter()
 
@@ -23,8 +24,10 @@ LABEL_TO_CATEGORY = {
     "paper": "paper",
     "glass": "glass",
     "plastic": "plastic",
-    "metal": "metal",  # TEAM DECISION NEEDED: see notes below
+    # Removed "metals" category - TEAM DECISION NEEDED: see notes below
     "trash": "landfill",
+    "compost": "compost",  # added "compost"
+    "organic": "organic",  # added "organic"
 }
 
 # Bin information for each app category.
@@ -36,26 +39,32 @@ BIN_INFO = {
         "tip": "Empty liquids and rinse before recycling. Keep caps on.",
     },
     "paper": {
-        "bin": "Blue Recycling Bin",
+        "bin": "Blue Recycling Bin (Paper)",
         "color": "blue",
         "action": "Recycle",
         "tip": "Keep clean and dry. Flatten cardboard boxes.",
     },
     "glass": {
-        "bin": "Blue Recycling Bin",
+        "bin": "Blue Recycling Bin (Glass)",
         "color": "blue",
         "action": "Recycle",
         "tip": "Rinse jar clean. Metal lids should be separated.",
     },
-    "metal": {
-        "bin": "Blue Recycling Bin",
-        "color": "blue",
-        "action": "Recycle",
-        "tip": "Rinse cans and containers. Keep them clean and dry.",
+    "compost": {
+        "bin": "Green Compost Bin",
+        "color": "green",
+        "action": "Compost",
+        "tip": "Food scraps, soiled napkins, and BPI-certified compostable packaging.",
+    },
+    "organic": {
+        "bin": "Green Compost Bin",
+        "color": "green",
+        "action": "Compost",
+        "tip": "Keep organic waste in a sealed container. Do not include meat or dairy.",
     },
     "landfill": {
-        "bin": "Black Landfill Bin",
-        "color": "black",
+        "bin": "Grey Landfill Bin",
+        "color": "grey",
         "action": "Landfill",
         "tip": "Wrappers, chip bags, and styrofoam cannot be recycled.",
     },
@@ -120,6 +129,17 @@ async def classify_item(
     info = BIN_INFO[category]
 
     # 6. Build the response
+
+    raw_alternatives = prediction.get("alternatives", [])
+    alternatives = [
+        ClassificationAlternative(
+            category=alt["category"],
+            confidence=alt["confidence"],
+        )
+        for alt in raw_alternatives
+        if alt.get("category") in ALLOWED_CATEGORIES
+    ]
+
     return ClassifyResponse(
         item_name=label.title(),
         category=category,
@@ -133,4 +153,5 @@ async def classify_item(
             bin_type=info["color"],
             notes=info["tip"],
         ),
+        alternatives=alternatives,
     )
