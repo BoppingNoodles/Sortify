@@ -1,45 +1,92 @@
 """Classification API router."""
 
-from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
+from PIL import UnidentifiedImageError
 
 from backend.app.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
     DisposalTip,
 )
+from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
+from backend.app.services.model_service import ModelService, model_service
 from backend.app.services.tips_service import get_disposal_guidance
 from backend.app.utils.validators import validate_image_upload
 
 router = APIRouter()
 
+# Translates raw model prediction labels to canonical app categories.
+LABEL_TO_CATEGORY: dict[str, str] = {
+    "cardboard": "paper",
+    "paper": "paper",
+    "glass": "glass",
+    "plastic": "plastic",
+    "metal": "plastic",  # Commingled recyclables in Berkeley/SF
+    "trash": "landfill",
+    "compost": "compost",
+    "organic": "compost",
+}
+
+
+def get_model_service() -> ModelService:
+    """Dependency provider returning the singleton ModelService."""
+    return model_service
+
 
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
-    location: str = Query("berkeley"),
+    location: str = Query("berkeley", description="Municipality name"),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
-):
-    """Ingest image upload and return waste classification result."""
-    # Category is still the Week 3 mock. Disposal copy comes from the tips engine.
-    item_name = "Almond Milk Carton (Scaffold)"
-    category = "compost"
-    confidence = 0.91
-    guidance = get_disposal_guidance(category, item_name, location)
+    service: ModelService = Depends(get_model_service),  # noqa: B008
+) -> ClassifyResponse:
+    """Ingest image upload, run model inference, and return waste classification."""
+    # 1. Read uploaded image bytes asynchronously
+    image_bytes = await file.read()
 
+    # 2. Run model inference in worker threadpool to avoid blocking event loop
+    try:
+        prediction = await run_in_threadpool(service.predict, image_bytes)
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Could not read the image. The file may be corrupted.",
+        ) from exc
+
+    # 3. Translate model label to canonical category and fetch disposal guidance
+    label = prediction["category"]
+    item_name = prediction.get("item_name") or label.title()
+    category = LABEL_TO_CATEGORY.get(label, "landfill")
+    guidance = get_disposal_guidance(category, item_name, location)
+    bin_color = BIN_COLORS.get(category, "Green")
+
+    # 4. Map alternative candidates through taxonomy normalization
+    raw_alternatives = prediction.get("alternatives", [])
+    alternatives: list[ClassificationAlternative] = []
+    for alt in raw_alternatives:
+        raw_cat = alt.get("category", "")
+        mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
+        if mapped_cat in ALLOWED_CATEGORIES:
+            alternatives.append(
+                ClassificationAlternative(
+                    category=mapped_cat,
+                    confidence=alt["confidence"],
+                )
+            )
+
+    # 5. Build validated response payload
     return ClassifyResponse(
         item_name=item_name,
         category=category,
-        confidence=confidence,
+        confidence=prediction["confidence"],
         location=location.lower(),
         disposal_tip=guidance["tip"],
-        bin_color="Green",
-        bin="Green Compost Bin",
+        bin_color=bin_color,
+        bin=f"{bin_color} {category.capitalize()} Bin",
         disposal_tips=DisposalTip(
             action=guidance["action"],
             bin_type=guidance["bin_type"],
             notes=guidance["notes"],
         ),
-        alternatives=[
-            ClassificationAlternative(category="paper", confidence=0.06),
-            ClassificationAlternative(category="landfill", confidence=0.03),
-        ],
+        alternatives=alternatives,
     )
