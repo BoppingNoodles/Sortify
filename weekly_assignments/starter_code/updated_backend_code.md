@@ -10,7 +10,7 @@
 - [Sprint 1: Weeks 6–7 — Live Inference, History & Tips Services](#sprint-1-weeks-67--live-inference-history--tips-services)
   - [Ticket: MobileNetV2 Architecture & Canonical 5-Bin Taxonomy in ModelService (`backend/app/services/model_service.py`)](#ticket-mobilenetv2-architecture--canonical-5-bin-taxonomy-in-modelservice)
   - [Ticket: Scan History Service with Guest Device UUID (`backend/app/services/history_service.py`)](#ticket-scan-history-service)
-  - [Ticket: Item-Specific Disposal Tips Engine (`backend/app/services/tips_service.py`)](#ticket-item-specific-disposal-tips-engine)
+  - [Ticket: Item-Specific Disposal Tips Engine & Item Matching (`backend/app/services/tips_service.py`)](#ticket-item-specific-disposal-tips-engine)
   - [Ticket: Bay Area Municipal Rules & Parameterized Tests (`backend/tests/test_rules.py`)](#ticket-municipal-rules-and-tests)
 - [Sprint 2: Weeks 8–9 — Cloud Deployment, Streaks, Stats & Error Handling](#sprint-2-weeks-89--cloud-deployment-streaks-stats--error-handling)
   - [Ticket: Production Multi-Stage Dockerfile (`backend/Dockerfile`)](#ticket-production-dockerfile)
@@ -347,65 +347,131 @@ history_service = HistoryService()
 
 ---
 
-### Ticket: Item-Specific Disposal Tips Engine
-* **Target File:** `backend/app/services/tips_service.py`
-* **Goal:** Match classified waste items with specific preparation tips and embed into classification responses.
+<a id="ticket-item-specific-disposal-tips-engine"></a>
+### Ticket: Item-Specific Disposal Tips Engine & Item Matching
+* **Target Files:**
+  * `backend/app/data/tips.json`
+  * `backend/app/services/tips_service.py`
+  * `backend/app/routers/classify.py`
+  * `backend/tests/test_tips.py`
+* **Goal:** Provide fine-grained, item-specific preparation and disposal tips (for cans, wrappers, cups, bottles) and connect them to classification responses using `get_disposal_guidance()`, bridging the gap where coarse CV model predictions need item-level sub-tips.
+* **Key Tasks:**
+  1. Expand `backend/app/data/tips.json` to include missing high-frequency item keys: `"can"`, `"aluminum can"`, `"soda can"`, `"wrapper"`, `"chip bag"`, and `"foil"`.
+  2. Implement `get_disposal_guidance(category, item_name, location)` with LRU caching, municipal notes, and longest-substring key matching (`_match_item`).
+  3. Support an optional `item_name: str | None = Query(default=None)` on `POST /api/classify` so mobile clients can supply item hints alongside camera scans.
+  4. Author parameterized tests in `backend/tests/test_tips.py` asserting sub-tip resolution for cans, wrappers, and unlisted items.
 * **Starter Scaffold:**
 
 ```python
-"""Item-specific disposal tips service."""
+"""Category tips and item-specific sub-tips for disposal guidance."""
 
+from functools import lru_cache
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
-TIPS_FILE = Path(__file__).resolve().parent.parent / "data" / "tips.json"
+logger = logging.getLogger(__name__)
+
+_TIPS_PATH = Path(__file__).resolve().parent.parent / "data" / "tips.json"
 
 
-class TipsService:
-    """Loads and queries item-level disposal instructions."""
-
-    def __init__(self, filepath: Path = TIPS_FILE):
-        self.filepath = filepath
-        self._tips: dict[str, Any] = self._load()
-
-    def _load(self) -> dict[str, Any]:
-        if not self.filepath.exists():
-            return {
-                "plastic": {
-                    "action": "Recycle",
-                    "tip": "Empty and rinse before binning.",
-                },
-                "compost": {
-                    "action": "Compost",
-                    "tip": "Empty all liquids. Food soiled paper is accepted.",
-                },
-                "landfill": {
-                    "action": "Landfill",
-                    "tip": "Non-recyclable wrappers and film go in trash.",
-                },
-            }
-        with open(self.filepath, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    def get_tip_for_category(
-        self, category: str, item_name: str = ""
-    ) -> dict[str, str]:
-        """Returns action and guidance text for a category and item."""
-        cat_key = category.strip().lower()
-        info = self._tips.get(
-            cat_key,
-            {
-                "action": "Check Signage",
-                "tip": "Place in appropriate campus container.",
-            },
-        )
-        return {"action": info.get("action", "Sort"), "tip": info.get("tip", "")}
+class TipsDataError(Exception):
+    """Raised when the tips file is missing or does not match the contract."""
 
 
-tips_service = TipsService()
+@lru_cache(maxsize=1)
+def load_tips() -> dict[str, Any]:
+    """Loads and caches disposal tips from JSON file."""
+    if not _TIPS_PATH.is_file():
+        raise TipsDataError(f"Disposal tips file not found at {_TIPS_PATH}")
+    with _TIPS_PATH.open(encoding="utf-8") as handle:
+        data = json.load(handle)
+    categories = data.get("categories")
+    if not isinstance(categories, dict) or "landfill" not in categories:
+        raise TipsDataError("tips.json must define categories, including landfill")
+    return data
+
+
+def _location_key(location: str | None) -> str:
+    """Normalize municipality names into canonical keys."""
+    if not location or not str(location).strip():
+        return "berkeley"
+    return str(location).strip().lower().replace("-", " ").replace(" ", "_")
+
+
+def _match_item(items: dict[str, Any], item_name: str | None) -> str | None:
+    """Match item sub-tip using case-insensitive substring search (longest match wins)."""
+    if not item_name or not isinstance(items, dict):
+        return None
+    haystack = item_name.strip().lower()
+    if not haystack:
+        return None
+    matches = [key for key in items if isinstance(key, str) and key.lower() in haystack]
+    if not matches:
+        return None
+    best = max(matches, key=len)
+    tip = items[best]
+    return tip if isinstance(tip, str) and tip.strip() else None
+
+
+def get_disposal_guidance(
+    category: str,
+    item_name: str = "",
+    location: str = "berkeley",
+) -> dict[str, Any]:
+    """Return the category guidance plus an item sub-tip when one matches.
+
+    Unknown categories fall back to landfill to ensure classification never crashes.
+    """
+    tips = load_tips()
+    categories = tips["categories"]
+    key = category.strip().lower() if isinstance(category, str) else ""
+    entry = categories.get(key)
+    resolved = key
+    if not isinstance(entry, dict):
+        entry = categories["landfill"]
+        resolved = "landfill"
+
+    general = entry.get("tip")
+    if not isinstance(general, str) or not general.strip():
+        raise TipsDataError(f"Category '{resolved}' is missing a tip")
+
+    item_tip = _match_item(entry.get("items") or {}, item_name)
+    loc_key = _location_key(location)
+    locations = entry.get("locations") or {}
+    location_note = locations.get(loc_key)
+    if not isinstance(location_note, str):
+        location_note = None
+
+    notes = item_tip or general
+    if location_note:
+        notes = f"{notes} {location_note}"
+
+    action = entry.get("action") or resolved.capitalize()
+    bin_type = entry.get("bin_type") or "gray"
+    return {
+        "category": resolved,
+        "action": action,
+        "bin_type": bin_type,
+        "tip": general,
+        "item_tip": item_tip,
+        "notes": notes,
+        "location": loc_key,
+    }
+
+
+def get_disposal_tip(
+    category: str,
+    item_name: str = "",
+    location: str = "berkeley",
+) -> str:
+    """User-facing compound tip combining category rule and matched item sub-tip."""
+    guidance = get_disposal_guidance(category, item_name, location)
+    if guidance["item_tip"]:
+        return f"{guidance['tip']} {guidance['item_tip']}"
+    return guidance["tip"]
 ```
-
 ---
 
 ### Ticket: Municipal Rules & Parameterized Tests

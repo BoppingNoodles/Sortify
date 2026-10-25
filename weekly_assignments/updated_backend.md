@@ -87,16 +87,27 @@
 
 ---
 
-### Ticket: Item-Specific Disposal Tips Engine & Integration
+<a id="ticket-item-specific-disposal-tips-engine"></a>
+### Ticket: Item-Specific Disposal Tips Engine & Item Matching
 * **Starter Code Scaffold:** [starter_code/updated_backend_code.md#ticket-item-specific-disposal-tips-engine](starter_code/updated_backend_code.md#ticket-item-specific-disposal-tips-engine)
-* **Goal & Context:** Provide users with actionable, practical disposal advice (e.g. "Rinse clean before binning", "Empty all liquids") tailored to the classified item.
+* **Goal & Context:** Provide users with actionable, practical disposal advice tailored to specific items (cans, wrappers, bottles, cups) and municipal guidelines, closing the gap between coarse model categories and fine-grained item sub-tips.
 * **Action Steps:**
-  1. Review and refine `backend/app/data/tips.json` with clear guidance for bottles, coffee cups, food containers, wrappers, and aluminum cans.
-  2. Author `backend/app/services/tips_service.py` to query tips by category and item name.
-  3. Update `POST /api/classify` to call `tips_service.get_tip_for_category()` and attach specific instructions into `disposal_tip` and `disposal_tips`.
-  4. Write unit tests in `backend/tests/test_tips.py` verifying fallback tips for unlisted items.
-* **Verification:** Execute classification requests for "plastic" and "compost"; verify item-specific tips appear in the returned JSON response.
-* **Deliverable & Branch:** `feat/backend/<claimant>/disposal-tips-service`
+  1. Expand `backend/app/data/tips.json`:
+     - Add explicit item guidance and keys for aluminum cans (`can`, `aluminum can`, `soda can`).
+     - Add explicit item keys for snack packaging (`wrapper`, `chip bag`, `foil`).
+     - Enrich category-specific items across plastic, paper, glass, compost, and landfill.
+  2. Enhance `backend/app/services/tips_service.py`:
+     - Provide `get_disposal_guidance(category, item_name, location)` returning typed guidance payloads (`action`, `bin_type`, `tip`, `item_tip`, `notes`).
+     - Support longest-match substring resolution and municipal location notes.
+  3. Update `POST /api/classify` in `backend/app/routers/classify.py`:
+     - Support optional `item_name: str | None = Query(default=None)` so clients can provide item hints alongside image scans.
+     - Call `get_disposal_guidance(category, item_name, location)` to populate response fields.
+  4. Expand test suite in `backend/tests/test_tips.py`:
+     - Assert can-specific tips fire for aluminum cans and soda cans.
+     - Assert wrapper-specific tips fire for candy wrappers and chip bags.
+     - Assert fallback behavior for unlisted items and unknown municipalities.
+* **Verification:** Run `pytest backend/tests/test_tips.py -v`; confirm all item matching, location notes, and endpoint integrations pass.
+* **Deliverable & Branch:** `feat/backend/<claimant>/disposal-tips-item-matching`
 
 ---
 
@@ -277,7 +288,7 @@
 |---|---|---|---|
 | **Sprint 1** | Weeks 6–7 | Live Model Inference Service (`ModelService`) | Real PyTorch checkpoint inference in classify route |
 | **Sprint 1** | Weeks 6–7 | Scan History Service with Guest Device UUID | Device-based scan history CRUD with pagination |
-| **Sprint 1** | Weeks 6–7 | Item-Specific Disposal Tips Engine | Preparation tips (`tips.json`) attached to classify |
+| **Sprint 1** | Weeks 6–7 | Item-Specific Disposal Tips & Item Matching | Can & wrapper matching, tips.json expansion & classify integration |
 | **Sprint 1** | Weeks 6–7 | Bay Area Municipal Rules Expansion & Tests | 5 Bay Area cities rules & parameterized pytest suite |
 | **Sprint 2** | Weeks 8–9 | Production Multi-Stage Dockerfile & Deployment | Containerization and live HTTPS web service |
 | **Sprint 2** | Weeks 8–9 | User Eco-Stats Aggregation Endpoint | Stats aggregation (`GET /api/stats`) calculation |
