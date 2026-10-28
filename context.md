@@ -75,8 +75,8 @@ Kathleen's separate merged campus report (`docs/ml/campus-evaluation-report/`) r
 ## Current state and next work
 
 - Team main at this review includes live classify integration (PR #30), campus evaluation (#33), backend tests (#34), and MobileNetV2/five-bin reconciliation (#47). Caden's config, upload validation, inference-service, and hardening PRs #48–51 were open at review; do not describe those proposals as merged functionality. The automated snapshot gives newer status after a sync.
-- **Max is assigned open issue [#44 — Dynamic INT8 Model Quantization & Latency Benchmark](https://github.com/BoppingNoodles/Sortify/issues/44).** The requested dynamic qint8 Linear experiment is implemented in [PR #52](https://github.com/BoppingNoodles/Sortify/pull/52), with Caden requested as reviewer. Three real runs pass the strict accuracy gate but miss >60% compression. The PR intentionally references the issue without auto-closing it; Caden must reconcile that target with a broader quantization method.
-- Issue #44's ~45 MB → ~12 MB / >60% reduction goal resembles ResNet sizing. Current MobileNetV2 is only 8.7 MB and dynamic linear-only quantization may leave convolution weights unchanged. Confirm the target checkpoint and report actual measurements before promising those targets. Never silently swap architectures or invent speedups.
+- **Max is assigned open issue [#44 — Dynamic INT8 Model Quantization & Latency Benchmark](https://github.com/BoppingNoodles/Sortify/issues/44).** PR #52 now includes the user-authorized convolution quantization extension, with Caden requested as reviewer. Both MobileNetV2 and ResNet-18 meet >60% compression and <1-point validation-loss targets. The PR now closes #44 when merged; it does not deploy a model.
+- Issue #44's ~45 MB → ~12 MB / >60% reduction goal resembles ResNet sizing. The initial dynamic Linear-only runs missed compression. The subsequent calibrated static convolution+Linear runs achieved 71.09% reduction for MobileNetV2 and 74.75% for ResNet-18. Keep architecture-specific sizes and accuracy separate; no serving architecture was silently swapped.
 - Ticket-based assignments supersede the old person-by-week schedule. Dataset-v2 curation (#42) is unassigned; retraining-v2 (#43) is assigned to Kathleen. Check live ownership before starting or duplicating work.
 - Current backend inference defaults to `backend/app/models/sortify_mvp_v1.pth` and returns a scaffold mock prediction when weights are missing. This differs from the ML training output path and from `settings.MODEL_PATH`; do not claim real deployed inference based only on a successful HTTP response.
 - Current inference preprocessing resizes directly to 224×224, while shared evaluation uses resize/center crop. Track parity and checkpoint metadata during future integration. No fixes to application code were included here.
@@ -84,33 +84,58 @@ Kathleen's separate merged campus report (`docs/ml/campus-evaluation-report/`) r
 
 ## New work and PRs from this session
 
-### PR #52 — dynamic INT8 experiment (issue #44)
+### PR #52 — calibrated convolution INT8 (issue #44)
 
 Branch: `feat/ml/max/int8-quantization`, based directly on team main, pushed to
 Max's fork. [PR #52](https://github.com/BoppingNoodles/Sortify/pull/52) requests
-`BoppingNoodles` as reviewer. GitHub CI passed. Its commits and files exclude
-`context.md` and personal context history.
+`BoppingNoodles` as reviewer and now closes #44 when merged. Updated PR head:
+`dac87e26e815f915507c0873698bd69e35777a61`. **GitHub CI passed for the convolution
+update** (Python lint/tests and frontend sanity). Its files/commits exclude personal context.
 
-`ml/scripts/quantize_model.py` safely loads trained checkpoints, selects an
-available CPU backend, converts `nn.Linear` to qint8, serializes metadata,
-reloads the artifact, evaluates the same validation samples, times 50 warmed
-synthetic forward passes, and returns nonzero for accuracy loss >=1 point.
-The generated `ml/models/sortify_quantized.pth` stays ignored. The existing
-serving loader is FP32-only and was not switched to quantized weights.
+Max explicitly requested quantizing convolution layers after the three earlier
+Linear-only runs missed the size target. The default CLI now uses FX static
+per-channel INT8 convolution+Linear weights and training-only calibration.
+`--method dynamic` retains the earlier Linear-only experiment. Static mode exits
+nonzero if either >60% compression or strictly <1 percentage-point loss fails.
 
-| Run | Validation FP32 → INT8 | Size reduction | CPU FP32 → INT8 |
-|---|---|---:|---|
-| MobileNetV2, 1 thread | 404/454 → 404/454 (88.99%) | 0.087% | 14.257 → 14.224 ms |
-| ResNet-18, 1 thread | 384/454 → 384/454 (84.58%) | 0.0094% | 16.346 → 19.921 ms |
-| MobileNetV2, 4 threads | 404/454 → 404/454 (88.99%) | 0.0366% | 20.442 → 23.785 ms |
+| Model | Calibration images | FP32 → INT8 validation | Reduction | CPU FP32 → INT8 |
+|---|---:|---|---:|---|
+| MobileNetV2 | 1,024 | 404/454 → 401/454 (88.99% → 88.33%) | 71.09% | 13.524 → 13.335 ms |
+| ResNet-18 | 256 | 384/454 → 381/454 (84.58% → 83.92%) | 74.75% | 15.407 → 38.517 ms |
 
-The latter two runs were explicitly requested after the first result. All used
-QNNPACK on macOS arm64 / PyTorch 2.14, 454 validation images, five warmups and
-50 timed passes. These measurements show no reliable speed improvement.
-Convolutions remain FP32; tiny serialized-size differences include ZIP filename
-overhead. Exact hashes/configuration/results and reproduction commands are in
-`docs/ml/quantization_report.md` and the three `*quantization_metrics.json` files.
-Full branch tests: **97 passed**, including six new quantization tests; Ruff passed.
+Both lose 0.6608 percentage points and pass both gates. MobileNet shrinks from
+9,154,379 to 2,646,491 bytes; ResNet from 44,792,779 to 11,311,915 bytes.
+All 52 MobileNet convolutions / 20 ResNet convolutions plus their classifiers
+are INT8 (zero FP32 convolution layers remain). This does not establish a
+meaningful MobileNet speedup; ResNet was slower on this CPU backend.
+
+Calibration is approximately balanced across the five classes, seed 42, using
+training images with shared deterministic transforms. All 454 separate validation
+photos are used after reloading the artifact; the held-out test split is unused.
+Calibration selection was assessed using validation, so these are not new held-out
+or campus performance claims. Reports include calibration path/content hashes,
+checkpoint hashes, layer counts, exact bytes and both acceptance flags.
+
+A first naive conversion scrambled quantized channels-last output in ReLU6 in the
+installed PyTorch build (16.52% accuracy). An explicit contiguous input before the
+quantized clamp fixes the layout issue; a small Conv→ReLU6 regression test checks
+numeric output against FP32. Shared observers around Conv→ReLU6 are bounded to
+[0,6] to preserve useful precision. With 256 calibration photos MobileNet still
+lost 1.54 points (397/454); 1,024 calibration photos reached 401/454 and passed.
+The rejected 256-image run is retained in `mobilenet_static_256_metrics.json`.
+
+Successful results: `docs/ml/static_quantization_metrics.json` and
+`docs/ml/resnet18_static_quantization_metrics.json`. Full methodology, commands,
+limits, and the three historical dynamic runs remain in
+`docs/ml/quantization_report.md`. Prior dynamic-only size reductions were 0.087%
+(MobileNet one thread), 0.0094% (ResNet), and 0.0366% (MobileNet four threads).
+
+Full independent PR branch suite: **102 passed** (11 quantization cases);
+Ruff and whitespace checks passed. Reload tests preserve bit-identical output
+for both static architectures and confirm the FP32 input model is unchanged.
+The generated `ml/models/sortify_quantized.pth` stays ignored. The current backend
+loader remains FP32-only; no quantized model was deployed. No PR #53 changes were
+included in the quantization PR.
 
 ### PR #53 — guest scan-history persistence (issue #39)
 
@@ -159,7 +184,7 @@ This narrative was reconstructed from the repositories, local checkout, commit h
 
 - Initial sync verification: `ruff check .` and `ruff format --check .` passed; 91 backend/ML tests passed. The older virtual environment lacked the declared `pydantic-settings` package, so test execution used an isolated temporary install through `PYTHONPATH` without changing that environment.
 - Workflow fixture checks passed for snapshot refresh, empty PR refusal, clean PR ancestry and files, main push/deletion blocking, team-repository personal-branch blocking, context file/history blocking, and allowed clean feature/personal pushes.
-- After combining the two independent features on the personal branch, the full backend/ML suite passed **109 tests**. Both Ruff checks and whitespace verification passed. The local HTTP verification server was shut down after its successful pagination check.
+- After adding convolution quantization and combining both independent features on the personal branch, the full backend/ML suite passed **114 tests** (previously 109 before the five new static cases). Both Ruff checks and whitespace verification passed. The local HTTP verification server was shut down after its successful pagination check.
 - Max subsequently authorized completing assigned issue #44, submitting a PR with Caden as reviewer, then selecting and assigning Max another suitable open issue. This extends the task beyond context setup; do not mark #44 complete until measured results and the PR exist.
 
 <!-- sortify-sync:start -->
