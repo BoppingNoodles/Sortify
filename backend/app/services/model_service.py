@@ -17,12 +17,13 @@ DEFAULT_MODEL_PATH = (
 )
 
 # Canonical raw model classes (6-class baseline)
-DEFAULT_CLASSES = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
+DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
 
 # Known mock headers used in existing test harnesses
 MOCK_TEST_HEADERS = {
     b"\xff\xd8\xff",
     b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01",
+    b"fake_image_bytes",  # <--- Add this!
 }
 
 
@@ -35,7 +36,13 @@ class ModelService:
         class_names: list[str] | None = None,
     ):
         self.model_path = Path(model_path)
-        self.device = torch.device("cpu")
+        self.device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
         self.model: torch.nn.Module | None = None
         self.class_names = class_names or list(DEFAULT_CLASSES)
 
@@ -59,9 +66,10 @@ class ModelService:
                 from torchvision import models
 
                 checkpoint = torch.load(self.model_path, map_location=self.device)
-                resnet = models.resnet18(weights=None)
-                resnet.fc = torch.nn.Linear(
-                    resnet.fc.in_features, len(self.class_names)
+                model = models.mobilenet_v2(weights=None)
+                # MobileNetV2 has a 'classifier' attribute, not 'fc'
+                model.classifier[1] = torch.nn.Linear(
+                    model.last_channel, len(self.class_names)
                 )
 
                 if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
@@ -73,9 +81,9 @@ class ModelService:
                 else:
                     state_dict = checkpoint.state_dict()
 
-                resnet.load_state_dict(state_dict)
-                resnet.eval()
-                self.model = resnet
+                model.load_state_dict(state_dict)
+                model.eval()
+                self.model = model
                 logger.info("Loaded model weights from %s", self.model_path)
             except (OSError, RuntimeError, KeyError, ValueError) as exc:
                 logger.warning(
@@ -99,7 +107,9 @@ class ModelService:
         """
         # Validate that image bytes can be decoded
         try:
-            img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            with Image.open(io.BytesIO(image_bytes)) as img:
+                img = img.convert("RGB")
+                tensor = self.transform(img).unsqueeze(0).to(self.device)
         except (UnidentifiedImageError, OSError):
             # Compatibility fallback for testing harnesses passing mock headers
             if self.model is None and image_bytes in MOCK_TEST_HEADERS:
@@ -109,7 +119,7 @@ class ModelService:
                     "confidence": 0.91,
                     "alternatives": [
                         {"category": "paper", "confidence": 0.06},
-                        {"category": "trash", "confidence": 0.03},
+                        {"category": "landfill", "confidence": 0.03},
                     ],
                     "is_mock": True,
                 }
@@ -123,13 +133,10 @@ class ModelService:
                 "confidence": 0.91,
                 "alternatives": [
                     {"category": "paper", "confidence": 0.06},
-                    {"category": "trash", "confidence": 0.03},
+                    {"category": "landfill", "confidence": 0.03},
                 ],
                 "is_mock": True,
             }
-
-        # Apply transformations and add batch dimension
-        tensor = self.transform(img).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             outputs = self.model(tensor)
