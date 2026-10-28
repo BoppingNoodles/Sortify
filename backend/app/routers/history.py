@@ -1,79 +1,52 @@
-"""User scan history router."""
+"""Guest scan history, scoped to the UUID saved by the client device."""
 
-from fastapi import APIRouter, Header, HTTPException, Query, status
+from typing import Annotated
+from uuid import UUID
 
-from backend.app.schemas import ScanRecord
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from backend.app.schemas import GuestScanRecord, HistoryPage, SavedGuestScan
+from backend.app.services.history_service import HistoryService, HistoryServiceError
+from backend.app.services.history_service import get_history_service as load_service
 
 router = APIRouter()
 
 
-def validate_bearer_token(authorization: str | None) -> str:
-    """Validate presence and format of Authorization Bearer token."""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or malformed Authorization header.",
-        )
-    token = authorization.removeprefix("Bearer ").strip()
-    if not token or token == "invalid":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials.",
-        )
-    return token
+def get_history_service() -> HistoryService:
+    try:
+        return load_service()
+    except HistoryServiceError as exc:
+        raise HTTPException(503, "Scan history storage is unavailable") from exc
 
 
-# In-memory storage for scaffolding history records
-MOCK_HISTORY: list[ScanRecord] = [
-    ScanRecord(
-        scan_id="scan-001",
-        user_id="user-caden-mock",
-        timestamp="2026-10-07T12:00:00Z",
-        category="plastic",
-        item_name="Beverage Bottle",
-        confidence=0.96,
-        location="berkeley",
-        bin_color="Blue",
-    ),
-    ScanRecord(
-        scan_id="scan-002",
-        user_id="user-caden-mock",
-        timestamp="2026-10-07T11:30:00Z",
-        category="compost",
-        item_name="Banana Peel",
-        confidence=0.99,
-        location="berkeley",
-        bin_color="Green",
-    ),
-]
-
-
-@router.get("/history")
+@router.get("/history", response_model=HistoryPage)
 def get_user_history(
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
-    authorization: str | None = Header(default=None),
+    user_id: Annotated[
+        UUID, Query(description="Guest UUID persisted on the client device")
+    ],
+    limit: int = Query(20, ge=1, le=100),
+    cursor: str | None = Query(None, max_length=1024),
+    service: HistoryService = Depends(get_history_service),  # noqa: B008
 ):
-    """Retrieve paginated scan history records."""
-    validate_bearer_token(authorization)
-    paginated = MOCK_HISTORY[offset : offset + limit]
-    return {
-        "scans": [record.model_dump() for record in paginated],
-        "total": len(MOCK_HISTORY),
-        "limit": limit,
-        "offset": offset,
-    }
+    """Return newest-first scans and an opaque next_cursor, without a login."""
+    try:
+        return service.get_user_history(user_id, limit, cursor)
+    except ValueError as exc:
+        raise HTTPException(400, "Invalid history cursor") from exc
+    except HistoryServiceError as exc:
+        raise HTTPException(503, "Scan history storage is unavailable") from exc
 
 
-@router.post("/history", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/history", status_code=status.HTTP_201_CREATED, response_model=SavedGuestScan
+)
 def record_scan(
-    scan: ScanRecord,
-    authorization: str | None = Header(default=None),
+    scan: GuestScanRecord,
+    service: HistoryService = Depends(get_history_service),  # noqa: B008
 ):
-    """Log a completed scan record."""
-    validate_bearer_token(authorization)
-    MOCK_HISTORY.insert(0, scan)
-    return {
-        "status": "created",
-        "scan_id": scan.scan_id,
-    }
+    """Save a guest scan; retrying the same scan_id replaces that record."""
+    try:
+        record = service.save_scan(scan)
+        return {"status": "created", "scan_id": record["scan_id"], "scan": record}
+    except HistoryServiceError as exc:
+        raise HTTPException(503, "Scan history storage is unavailable") from exc
