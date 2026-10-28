@@ -36,9 +36,12 @@ MUNICIPAL_RULES: dict[str, dict] = {
 }
 
 
-def normalize_city(city: str) -> str:
-    """'San Francisco', 'san-francisco' and 'san_francisco' all become 'san_francisco'."""
-    return city.strip().lower().replace("-", "_").replace(" ", "_")
+def normalize_city(city: str | None) -> str:
+    """Normalize user input to canonical city slug."""
+    if not city or not isinstance(city, str):
+        return ""
+    # Map both 'san_francisco' and 'San Francisco' to canonical 'san-francisco'
+    return city.strip().lower().replace("_", "-").replace(" ", "-")
 
 
 def list_cities() -> list[str]:
