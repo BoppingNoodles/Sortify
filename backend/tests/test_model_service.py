@@ -36,3 +36,15 @@ def test_model_service_predict_corrupted_image():
 
     with pytest.raises((UnidentifiedImageError, OSError)):
         service.predict(corrupted_bytes)
+
+
+def test_model_service_fallback():
+    # Pass a path that definitely doesn't exist
+    service = ModelService(model_path="non_existent_model.pth")
+    # Verify fallback mode
+    assert service.model is None
+
+    result = service.predict(_create_sample_jpeg())
+
+    assert "category" in result
+    assert result["is_mock"] is True

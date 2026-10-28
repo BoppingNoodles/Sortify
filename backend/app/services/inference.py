@@ -11,23 +11,50 @@ import torch
 from PIL import Image, ImageOps, UnidentifiedImageError
 from torchvision import transforms
 
-from backend.app.core.config import settings
+from backend.app.core.config import DEFAULT_MODEL_PATH, settings
 
 logger = logging.getLogger(__name__)
 
-# Default path to model weights
-DEFAULT_MODEL_PATH = (
-    Path(__file__).resolve().parent.parent / "models" / "sortify_mvp_v1.pth"
-)
+# Canonical five-bin order for checkpoints without label metadata.
+DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
 
-# Canonical raw model classes (6-class baseline)
-DEFAULT_CLASSES = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
 
-# Known mock headers used in existing test harnesses
-MOCK_TEST_HEADERS = {
-    b"\xff\xd8\xff",
-    b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01",
-}
+def detect_architecture(checkpoint: Any) -> str:
+    """Select the network from checkpoint metadata or its state-dict keys."""
+    if isinstance(checkpoint, dict):
+        arch = checkpoint.get("architecture") or checkpoint.get("base_architecture")
+        if arch is not None:
+            arch = str(arch).strip().lower()
+            if arch in {"mobilenet", "mobilenet_v2"}:
+                return "mobilenet_v2"
+            if arch == "resnet18":
+                return arch
+            raise ValueError(f"Unsupported checkpoint architecture: {arch}")
+        state = checkpoint.get(
+            "model_state_dict", checkpoint.get("state_dict", checkpoint)
+        )
+    else:
+        state = checkpoint.state_dict()
+    if "classifier.1.weight" in state:
+        return "mobilenet_v2"
+    if "fc.weight" in state:
+        return "resnet18"
+    raise ValueError("Checkpoint does not identify a supported architecture")
+
+
+def build_model(arch: str, num_classes: int) -> torch.nn.Module:
+    """Build a supported architecture without downloading pretrained weights."""
+    from torchvision import models
+
+    if arch == "mobilenet_v2":
+        model = models.mobilenet_v2(weights=None)
+        model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
+    elif arch == "resnet18":
+        model = models.resnet18(weights=None)
+        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
+    else:
+        raise ValueError(f"Unsupported architecture: {arch}")
+    return model
 
 
 class ModelService:
@@ -57,34 +84,24 @@ class ModelService:
         device: torch.device | str | None = None,
     ):
         with self._lock:
-            has_custom_args = (
-                model_path is not None or class_names is not None or device is not None
-            )
-            if getattr(self, "_initialized", False) and not has_custom_args:
+            if getattr(self, "_initialized", False):
                 return
 
-            cfg_model_path = getattr(settings, "MODEL_PATH", None)
-            if model_path is not None:
-                self.model_path = Path(model_path)
-            elif cfg_model_path:
-                candidate = Path(cfg_model_path)
-                if not candidate.is_absolute() and not candidate.is_file():
-                    repo_candidate = (
-                        Path(__file__).resolve().parent.parent.parent / candidate
-                    )
-                    if repo_candidate.is_file():
-                        candidate = repo_candidate
-                self.model_path = (
-                    candidate if candidate.is_file() else DEFAULT_MODEL_PATH
-                )
-            else:
-                self.model_path = DEFAULT_MODEL_PATH
+            self.model_path = Path(
+                model_path if model_path is not None else settings.MODEL_PATH
+            )
+            if not self.model_path.is_absolute():
+                self.model_path = Path(__file__).resolve().parents[3] / self.model_path
 
             if device is not None:
                 self.device = torch.device(device)
             else:
                 self.device = torch.device(
-                    "cuda" if torch.cuda.is_available() else "cpu"
+                    "cuda"
+                    if torch.cuda.is_available()
+                    else "mps"
+                    if torch.backends.mps.is_available()
+                    else "cpu"
                 )
 
             # Cap CPU thread contention if running on CPU worker pool
@@ -96,11 +113,10 @@ class ModelService:
                 list(class_names) if class_names else list(DEFAULT_CLASSES)
             )
 
-            # Standard torchvision evaluation pipeline (Resize, CenterCrop, Normalize)
+            # Preserve the current API model's preprocessing contract.
             self.transform = transforms.Compose(
                 [
-                    transforms.Resize(256),
-                    transforms.CenterCrop(224),
+                    transforms.Resize((224, 224)),
                     transforms.ToTensor(),
                     transforms.Normalize(
                         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -122,13 +138,14 @@ class ModelService:
             return
 
         try:
-            from torchvision import models
-
             checkpoint = torch.load(self.model_path, map_location=self.device)
+            arch = detect_architecture(checkpoint)
 
             # 1. Unpack checkpoint metadata and state dict before building the network head
             if isinstance(checkpoint, dict):
                 if "class_names" in checkpoint:
+                    if not isinstance(checkpoint["class_names"], (list, tuple)):
+                        raise ValueError("Checkpoint class_names must be a sequence")
                     self.class_names = list(checkpoint["class_names"])
                 if "model_state_dict" in checkpoint:
                     state_dict = checkpoint["model_state_dict"]
@@ -145,17 +162,22 @@ class ModelService:
             else:
                 state_dict = checkpoint
 
-            # 2. Infer output head dimensions dynamically from weight matrix shape
-            num_classes = len(self.class_names)
-            if isinstance(state_dict, dict) and "fc.weight" in state_dict:
-                num_classes = state_dict["fc.weight"].shape[0]
-
-            resnet = models.resnet18(weights=None)
-            resnet.fc = torch.nn.Linear(resnet.fc.in_features, num_classes)
-            resnet.load_state_dict(state_dict)
-            resnet.to(self.device)
-            resnet.eval()
-            self.model = resnet
+            head_key = "classifier.1.weight" if arch == "mobilenet_v2" else "fc.weight"
+            num_classes = state_dict[head_key].shape[0]
+            if (
+                num_classes != len(self.class_names)
+                or any(
+                    not isinstance(name, str) or not name.strip()
+                    for name in self.class_names
+                )
+                or len(set(self.class_names)) != num_classes
+            ):
+                raise ValueError("Checkpoint labels must match the classifier outputs")
+            model = build_model(arch, num_classes)
+            model.load_state_dict(state_dict)
+            model.to(self.device)
+            model.eval()
+            self.model = model
             logger.info(
                 "Loaded model weights from %s onto %s (classes: %d)",
                 self.model_path,
@@ -178,25 +200,10 @@ class ModelService:
         """
         start_time = time.perf_counter()
 
-        # Handle mock headers for compatibility with lightweight test suites
-        if image_bytes in MOCK_TEST_HEADERS:
-            elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
-            return {
-                "category": "compost",
-                "item_name": "Almond Milk Carton (Scaffold)",
-                "confidence": 0.91,
-                "alternatives": [
-                    {"category": "paper", "confidence": 0.06},
-                    {"category": "trash", "confidence": 0.03},
-                ],
-                "is_mock": True,
-                "latency_ms": elapsed_ms,
-            }
-
         # Validate and open image bytes, handling EXIF orientation and color formats
         try:
-            raw_img = Image.open(io.BytesIO(image_bytes))
-            img = ImageOps.exif_transpose(raw_img).convert("RGB")
+            with Image.open(io.BytesIO(image_bytes)) as raw_img:
+                img = ImageOps.exif_transpose(raw_img).convert("RGB")
         except (UnidentifiedImageError, OSError, ValueError) as err:
             logger.warning("[INFERENCE] Corrupted or invalid image payload: %s", err)
             raise
@@ -213,7 +220,7 @@ class ModelService:
                 "confidence": 0.91,
                 "alternatives": [
                     {"category": "paper", "confidence": 0.06},
-                    {"category": "trash", "confidence": 0.03},
+                    {"category": "landfill", "confidence": 0.03},
                 ],
                 "is_mock": True,
                 "latency_ms": elapsed_ms,
@@ -226,8 +233,9 @@ class ModelService:
             with torch.no_grad():
                 outputs = self.model(tensor)
                 probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
-                num_classes = min(probabilities.shape[0], len(self.class_names))
-                k = max(1, min(3, num_classes))
+                if probabilities.shape[0] != len(self.class_names):
+                    raise RuntimeError("Model outputs do not match checkpoint labels")
+                k = min(3, len(self.class_names))
                 topk = torch.topk(probabilities, k)
                 top_prob, top_idx = topk.values, topk.indices
 
@@ -240,7 +248,6 @@ class ModelService:
                         "confidence": round(float(top_prob[i].item()), 4),
                     }
                     for i in range(1, len(top_idx))
-                    if top_idx[i].item() < len(self.class_names)
                 ]
         except (
             RuntimeError,
@@ -275,7 +282,8 @@ model_service = ModelService()
 __all__ = [
     "DEFAULT_CLASSES",
     "DEFAULT_MODEL_PATH",
-    "MOCK_TEST_HEADERS",
     "ModelService",
+    "build_model",
+    "detect_architecture",
     "model_service",
 ]

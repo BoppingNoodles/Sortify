@@ -22,14 +22,15 @@ router = APIRouter()
 
 # Translates raw model prediction labels to canonical app categories.
 LABEL_TO_CATEGORY: dict[str, str] = {
-    "cardboard": "paper",
-    "paper": "paper",
-    "glass": "glass",
-    "plastic": "plastic",
-    "metal": "plastic",  # Commingled recyclables in Berkeley/SF
-    "trash": "landfill",
-    "landfill": "landfill",
     "compost": "compost",
+    "glass": "glass",
+    "landfill": "landfill",
+    "paper": "paper",
+    "plastic": "plastic",
+    # legacy comaptibility
+    "trash": "landfill",
+    "cardboard": "paper",
+    "metal": "plastic",
     "organic": "compost",
 }
 

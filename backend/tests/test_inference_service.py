@@ -10,6 +10,11 @@ from torchvision import models
 from backend.app.services.inference import ModelService, model_service
 
 
+@pytest.fixture(autouse=True)
+def isolate_singleton(monkeypatch):
+    monkeypatch.setattr(ModelService, "_instance", model_service)
+
+
 @pytest.fixture
 def sample_image_bytes() -> bytes:
     """Generate a real 10x10 RGB JPEG image."""
@@ -45,13 +50,13 @@ def test_predict_returns_valid_schema(sample_image_bytes):
     assert isinstance(result["alternatives"], list)
 
 
-def test_predict_handles_mock_test_header():
-    """Verify test harness mock headers return expected scaffold output."""
+@pytest.mark.parametrize("loaded", [False, True])
+def test_predict_rejects_mock_test_header(loaded, monkeypatch):
+    """Malformed fixtures must never bypass image decoding."""
+    monkeypatch.setattr(model_service, "model", torch.nn.Identity() if loaded else None)
     mock_header = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01"
-    result = model_service.predict(mock_header)
-    assert result["category"] == "compost"
-    assert result["is_mock"] is True
-    assert result["latency_ms"] >= 0.0
+    with pytest.raises((UnidentifiedImageError, OSError)):
+        model_service.predict(mock_header)
 
 
 def test_predict_rgba_image():
@@ -79,25 +84,37 @@ def test_predict_rejects_corrupted_bytes():
         model_service.predict(corrupted_bytes)
 
 
-def test_predict_with_real_model_weights(tmp_path):
+@pytest.mark.parametrize("arch", ["mobilenet_v2", "resnet18"])
+@pytest.mark.parametrize("wrapper", ["model_state_dict", "state_dict", "raw"])
+def test_predict_with_real_model_weights(tmp_path, arch, wrapper):
     """Verify real PyTorch forward pass, softmax, and top-k indexing with synthetic checkpoint."""
     # Reset singleton to test isolated instance with custom weights
     ModelService.reset_instance()
 
-    resnet = models.resnet18(weights=None)
-    resnet.fc = torch.nn.Linear(resnet.fc.in_features, 5)
+    if arch == "mobilenet_v2":
+        model = models.mobilenet_v2(weights=None)
+        model.classifier[1] = torch.nn.Linear(model.last_channel, 5)
+    else:
+        model = models.resnet18(weights=None)
+        model.fc = torch.nn.Linear(model.fc.in_features, 5)
     ckpt_path = tmp_path / "synthetic_model.pth"
-    torch.save(
-        {
-            "model_state_dict": resnet.state_dict(),
-            "class_names": ["compost", "glass", "landfill", "paper", "plastic"],
-        },
-        ckpt_path,
+    state = model.state_dict()
+    checkpoint = (
+        state
+        if wrapper == "raw"
+        else {
+            wrapper: state,
+            "class_names": ["plastic", "paper", "landfill", "glass", "compost"],
+        }
     )
+    torch.save(checkpoint, ckpt_path)
 
     svc = ModelService(model_path=ckpt_path)
     assert svc.model is not None
     assert len(svc.class_names) == 5
+    assert svc.model.training is False
+    assert svc.class_names[0] == ("compost" if wrapper == "raw" else "plastic")
+    assert svc.transform.transforms[0].size == (224, 224)
 
     # Run inference with real model
     img = Image.new("RGB", (224, 224), color="green")
@@ -111,6 +128,48 @@ def test_predict_with_real_model_weights(tmp_path):
 
     # Reset back to default for other tests
     ModelService.reset_instance()
+
+
+def test_rejects_checkpoint_label_count_mismatch(tmp_path):
+    ModelService.reset_instance()
+    model = models.mobilenet_v2(weights=None)
+    model.classifier[1] = torch.nn.Linear(model.last_channel, 6)
+    checkpoint = tmp_path / "six_without_labels.pth"
+    torch.save(model.state_dict(), checkpoint)
+    svc = ModelService(model_path=checkpoint)
+    assert svc.model is None
+
+
+def test_relative_configured_path_is_independent_of_working_directory(
+    tmp_path, monkeypatch
+):
+    from backend.app.services import inference
+
+    ModelService.reset_instance()
+    monkeypatch.setattr(inference.settings, "MODEL_PATH", "ml/models/mobile.pth")
+    monkeypatch.chdir(tmp_path)
+    svc = ModelService()
+    repo_root = inference.Path(inference.__file__).resolve().parents[3]
+    assert svc.model_path == repo_root / "ml/models/mobile.pth"
+
+
+def test_initialized_singleton_is_not_reconfigured():
+    original_path = model_service.model_path
+    assert ModelService(model_path="different.pth") is model_service
+    assert model_service.model_path == original_path
+
+
+def test_corrupt_jpeg_returns_422_with_installed_model(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from backend.app.main import app
+
+    monkeypatch.setattr(model_service, "model", torch.nn.Identity())
+    response = TestClient(app).post(
+        "/api/classify",
+        files={"file": ("corrupt.jpg", b"\xff\xd8\xff", "image/jpeg")},
+    )
+    assert response.status_code == 422
 
 
 def test_interoperability_with_model_service_module():
