@@ -1,0 +1,157 @@
+# Sortify — Max's working context
+
+Personal branch: `feat/ml/max/domain-gap` in [zmaxitaxi/Sortify](https://github.com/zmaxitaxi/Sortify).
+Team repository: [BoppingNoodles/Sortify](https://github.com/BoppingNoodles/Sortify).
+Narrative reviewed: **October 27, 2026 (America/Los_Angeles)**.
+
+## Working agreement
+
+- **PRs only. Never push directly to either repository's `main`.** Max explicitly confirmed this is Caden's requirement on October 27, 2026. This overrides the obsolete "Push to Main" section in `AGENTS.md`.
+- Keep this file committed only on Max's personal working branch. Never open a PR from that branch directly to team main: Git includes tracked documentation in PRs regardless of `.gitignore` or merge attributes.
+- Prepare a clean feature branch from the latest `upstream/main`, containing only the implementation changes and excluding this file. Verify the PR's files and commits before publishing. Do not merge personal context commits into main.
+- Use the repository's branch convention, `<type>/<subteam>/max/<feature-name>`, atomic Conventional Commits, the PR template, and Caden (`BoppingNoodles`) as reviewer. Aim for PRs under about 300 lines; explain necessary exceptions.
+- Run `ruff check .` and `ruff format --check .` over the whole tree before commits/pushes, plus meaningful tests for the change. Do not silently reformat unrelated team code to make a documentation-only change pass.
+- Read this file and the current tickets before starting work. Update the narrative after decisions, completed work, reviews, or new evidence. Automated sync updates the snapshot below; it cannot infer new engineering conclusions.
+
+## Local sync and PR workflow
+
+This workspace is `/Users/maxli/Documents/ChatGPT/Sortify`. `origin` is Max's fork; `upstream` is Caden's team repository. The older checkout `/Users/maxli/Sortify` remains untouched, including its untracked Cursor rules, virtual environment, datasets, and model weights. Its remote names differ (`origin` is the team repository and `fork` is Max's fork), so do not copy commands between checkouts blindly.
+
+Local helpers and hooks live under `.git/sortify/` and `.git/hooks/`; only `context.md` is added to tracked source. They are specific to this checkout and do not travel with a clone.
+
+1. On the personal branch, run **`git sync-context`**. It requires a clean working tree, fetches both repositories, merges remote personal work if present, merges `upstream/main`, refreshes GitHub PR/ticket status and the snapshot below, runs Ruff, and commits the context update. Merge conflicts stop the operation for resolution. Network failures stop the command visibly.
+2. Make and verify implementation changes on the personal branch, keeping context updates separate where practical.
+3. After syncing and committing work, run **`git prepare-pr feat/ml/max/<feature> "feat(ml): <description>"`**. It creates a new local branch with one clean implementation commit parented directly on `upstream/main`, excluding `context.md` and all personal context commit history. It does not change the current checkout or publish anything. If there are no implementation changes, it refuses to create an empty PR branch.
+4. Switch to that clean branch, run the relevant tests, push the named feature branch to `origin`, and open a PR targeting `BoppingNoodles/Sortify:main`, filling the template and requesting Caden's review. Verify `context.md` is absent from both PR files and commits. Never merge the personal branch itself.
+5. Return to `feat/ml/max/domain-gap`, run `git sync-context`, and push that named branch to `origin` to back up context. Neither remote main is a push target.
+
+The local post-merge hook refreshes the Git snapshot after successful merges on the personal branch; an ordinary merge may therefore leave `context.md` modified. `git sync-context` also refreshes GitHub metadata and commits the update. The pre-push hook blocks updates to `main`, blocks the personal branch going to the team repository, and blocks `context.md` on any other pushed branch. Hooks can be bypassed and GitHub UI operations do not run them: always inspect PR contents. Server-side enforcement would require team repository settings; none were changed.
+
+## Product and architecture
+
+Sortify is a UC Berkeley student project: identify waste from a phone photo, show the bin and disposal guidance for a municipality, and eventually support history, impact statistics, and streaks.
+
+- Mobile: React Native/Expo, React Navigation, screens in `mobile/src/screens`, API client in `mobile/src/services/api.js`.
+- Backend: FastAPI at `backend.app.main:app`; Swagger `/docs`, ReDoc `/redoc`, health `/health`, classification `/api/classify`, municipal rules `/api/rules`, history `/api/history`, and standalone `/upload-image`.
+- ML: PyTorch/Torchvision scripts in `ml/scripts`, primarily MobileNetV2 now, compared with a frozen-backbone ResNet-18 baseline.
+- Persistence: Firebase Admin/Firestore support exists, but the current history router still uses in-memory scaffolding and placeholder Bearer-token checks. Having Firestore services does not mean end-to-end persistence or production authentication is finished.
+- Canonical labels and checkpoint order: **`compost`, `glass`, `landfill`, `paper`, `plastic`**. Read `class_names` from the checkpoint or `classes.json`; never assume paper is index 0. Inference uses softmax confidence, not raw logits.
+- Datasets, checkpoints, and credentials are ignored. They were not copied from the older checkout. This fresh workspace has no trained weights or campus dataset.
+
+## Max's completed work
+
+| Work | Source and current status | Details |
+|---|---|---|
+| Week 1 transfer-learning exercise | PRs [#1](https://github.com/BoppingNoodles/Sortify/pull/1), [#2](https://github.com/BoppingNoodles/Sortify/pull/2), closed | Small pretrained ResNet-18 exercise; #2 replaced the initial fork PR. Do not label these as merged. |
+| Image preprocessing | PR [#7](https://github.com/BoppingNoodles/Sortify/pull/7), merged | RGB 224×224 outputs, corrupt-image skipping, EXIF orientation, transparency on white. Demo: 100 written, 1 unreadable skipped. |
+| Shared-loader ResNet baseline | PR [#12](https://github.com/BoppingNoodles/Sortify/pull/12), merged | Frozen pretrained backbone; augmented shared loaders; save best validation checkpoint with metadata and loss curves. |
+| MobileNetV2 benchmark | PR [#19](https://github.com/BoppingNoodles/Sortify/pull/19), merged | Same split/loaders, 10 epochs, confidence across all five bins; contract tests and CI integration. |
+| Domain-gap/demo evaluation | PR [#23](https://github.com/BoppingNoodles/Sortify/pull/23), merged | Simulated shadow, dim light, edge clutter on 453 lab photos; choose one qualifying golden item per bin before filling remaining slots. |
+| Local image upload | PR [#24](https://github.com/BoppingNoodles/Sortify/pull/24), merged | Streaming upload, size/type/empty checks, safe filenames, local storage, tests. |
+| Firestore schema, service, tips, logging | PRs [#25](https://github.com/BoppingNoodles/Sortify/pull/25), [#26](https://github.com/BoppingNoodles/Sortify/pull/26), [#27](https://github.com/BoppingNoodles/Sortify/pull/27), [#28](https://github.com/BoppingNoodles/Sortify/pull/28), closed without individual merges | Their implementation files are present in current upstream main through subsequent integration history. Verify code rather than equating "closed" with "merged." |
+
+The backend work covers typed user/scan record validation and credential-free seed dry runs; `FirestoreService` save/list/stats with injected clients and fake-client tests; category/item-specific disposal tips; and request telemetry for method, path, client, status, and latency. Historical PR test totals (28, 35, 43, 51, 54) belong to those PR versions, not a new verification of today's tree.
+
+## Measured ML results and limits
+
+Source dataset: 3,027 images (paper 997, plastic 482, glass 501, compost 500, landfill 547). Preprocessed to RGB 224×224, split 70/15/15 with seed 42: **2,120 train / 454 validation / 453 test**. Training uses augmentations; validation/test use deterministic evaluation transforms and ImageNet normalization.
+
+| Model | Best epoch | Validation accuracy | Test accuracy | Weights | CPU latency/image |
+|---|---:|---:|---:|---:|---:|
+| ResNet-18 baseline | 6 | 84.58% | 84.33% | 42.7 MB | 15.42 ms |
+| MobileNetV2 | 10 | 88.99% | 88.52% | 8.7 MB | 37.23 ms |
+
+These are the recorded comparable runs in `docs/ml/architecture_comparison.md`. MobileNetV2 was smaller and more accurate; ResNet-18 was faster on that CPU. An earlier unaugmented ResNet 87.42% test result was superseded by the shared-loader run. Roadmap examples such as "74% vs 83%" are not replacements for these measured results.
+
+Domain-gap script: `ml/scripts/domain_gap.py`, tests `ml/tests/test_domain_gap.py`, findings `docs/ml/demo_scanning_guide.md`. Mean confidence drops on clean predictions: **shadow 1.4%, dim 2.9%, clutter 3.7%**. CPU batch size 16 was used after MPS ran out of memory. The selected lab objects were vegetables, cardboard box, green glass bottle, plastic milk jug, and an aluminum can labeled landfill in that dataset. That last label describes the model/dataset and is not verified municipal disposal advice. Golden items had at least 90% confidence on the correct labeled bin under every simulated condition. Crumpling and actual phone-camera validation were not measured.
+
+Kathleen's separate merged campus report (`docs/ml/campus-evaluation-report/`) records **2/25 correct (8%)**, compared with about 89% lab accuracy: roughly **81 percentage points** lower. Seventeen predictions were landfill. This is a small, concerning real-world sample, not proof that the lab perturbation test transfers to campus photos. The report metadata uses lab validation accuracy 0.8899; the architecture comparison's held-out test accuracy is 0.8852. Keep those denominators distinct. Verify checkpoint, label order, and preprocessing before interpreting or extending the campus result.
+
+## Current state and next work
+
+- Team main at this review includes live classify integration (PR #30), campus evaluation (#33), backend tests (#34), and MobileNetV2/five-bin reconciliation (#47). Caden's config, upload validation, inference-service, and hardening PRs #48–51 were open at review; do not describe those proposals as merged functionality. The automated snapshot gives newer status after a sync.
+- **Max is assigned open issue [#44 — Dynamic INT8 Model Quantization & Latency Benchmark](https://github.com/BoppingNoodles/Sortify/issues/44).** It asks for `ml/scripts/quantize_model.py`, dynamic qint8 quantization of linear layers, 50 CPU forward-pass benchmarks, file-size comparison, and validation accuracy loss under 1 percentage point. No implementation was started in this context/sync task.
+- Issue #44's ~45 MB → ~12 MB / >60% reduction goal resembles ResNet sizing. Current MobileNetV2 is only 8.7 MB and dynamic linear-only quantization may leave convolution weights unchanged. Confirm the target checkpoint and report actual measurements before promising those targets. Never silently swap architectures or invent speedups.
+- Ticket-based assignments supersede the old person-by-week schedule. Dataset-v2 curation (#42) is unassigned; retraining-v2 (#43) is assigned to Kathleen. Check live ownership before starting or duplicating work.
+- Current backend inference defaults to `backend/app/models/sortify_mvp_v1.pth` and returns a scaffold mock prediction when weights are missing. This differs from the ML training output path and from `settings.MODEL_PATH`; do not claim real deployed inference based only on a successful HTTP response.
+- Current inference preprocessing resizes directly to 224×224, while shared evaluation uses resize/center crop. Track parity and checkpoint metadata during future integration. No fixes to application code were included here.
+- Remaining backlog includes dataset expansion, real-world retraining, confidence calibration, ONNX parity, out-of-distribution testing, charts, release packaging, persistent history, frontend camera integration, and deployment. These are plans, not completed deliverables.
+
+## Reading order and evidence
+
+1. Current GitHub tickets and PRs, especially #44 and the generated snapshot.
+2. `README.md`, `SETUP.md`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`.
+3. `weekly_assignments/updated_team_weekly_assignments.md`, `updated_ml-ai.md`, `updated_backend.md`, `updated_frontend.md`, plus their matching `starter_code/updated_*_code.md` files. Scaffolds illustrate intended work; inspect actual implementation before copying them.
+4. `docs/ml/architecture_comparison.md`, `docs/ml/demo_scanning_guide.md`, `docs/ml/campus-evaluation-report/{README.md,metrics.json,predictions.json}`.
+5. `ml/scripts/{preprocess,dataset,split_data,train_baseline,train_mobilenet,domain_gap,evaluate,export_model}.py`, ML tests, backend services/routers/tests, and `docs/firestore-schema.md`.
+6. `docs/IMPLEMENTATION_PLAN.md` for older project rationale. Its timelines and contributor lists may differ from the revised ticket backlog.
+
+This narrative was reconstructed from the repositories, local checkout, commit history, available PR descriptions/discussion, and issues. It does not claim access to unrecorded team conversations or presentation assets.
+
+## Validation and current authorization
+
+- Initial sync verification: `ruff check .` and `ruff format --check .` passed; 91 backend/ML tests passed. The older virtual environment lacked the declared `pydantic-settings` package, so test execution used an isolated temporary install through `PYTHONPATH` without changing that environment.
+- Workflow fixture checks passed for snapshot refresh, empty PR refusal, clean PR ancestry and files, main push/deletion blocking, team-repository personal-branch blocking, context file/history blocking, and allowed clean feature/personal pushes.
+- Max subsequently authorized completing assigned issue #44, submitting a PR with Caden as reviewer, then selecting and assigning Max another suitable open issue. This extends the task beyond context setup; do not mark #44 complete until measured results and the PR exist.
+
+<!-- sortify-sync:start -->
+## Automatic sync snapshot
+
+- Refreshed: `2026-10-27T23:48:44-07:00` (America/Los_Angeles).
+- Personal branch: `feat/ml/max/domain-gap`.
+- Team main: [`d4662d0f74b8`](https://github.com/BoppingNoodles/Sortify/commit/d4662d0f74b88e58f7c0c062514ea8022eea4981).
+- Team main fully included in personal branch: **yes**.
+- Neither remote main is updated by this workflow.
+
+### Recent team main commits
+
+- d4662d0 Merge pull request #47 from BoppingNoodles/feat/backend/edward/mobilenet-taxonomy-upgrade
+- dfa3773 feat(backend): upgrade to MobileNetV2, reconcile 5-bin taxonomy, and fix test suite
+- ca7003e feat(backend): reconcile classify endpoint with ModelService integration
+- fd00d80 docs(assignments): update disposal tips ticket and starter code for item matching
+- cf731c2 docs(assignments): update live inference starter code for mobilenetv2 and 5-bin taxonomy
+- cf224f0 Merge pull request #30 from BoppingNoodles/feat/backend/david/live-classify-integration
+- 97116e2 chore(classify): merge main and implement model service with live inference integration
+- 3aff5f9 docs(assignments): transition work plans and starter code to ticket system
+- 009ae9a Merge branch 'main' into feat/backend/edward/automated-pytest-suite
+- 7503503 chore(test): remove redundant test_api.py and update README references
+- 1e80a06 chore(docs): merge main into docs/backend/edward/api-testing-guide and resolve conflicts
+- b4af597 Merge branch 'main' into feat/backend/max/request-logging
+
+GitHub metadata fetched: `2026-10-27T23:48:44-07:00`.
+
+### Max's PR status
+
+- [#28](https://github.com/BoppingNoodles/Sortify/pull/28) **CLOSED** — feat(backend): log method, path, client, status, and latency
+- [#27](https://github.com/BoppingNoodles/Sortify/pull/27) **CLOSED** — feat(backend): add item-specific disposal tips to classify
+- [#26](https://github.com/BoppingNoodles/Sortify/pull/26) **CLOSED** — feat(backend): read and write user scans through a firestore service
+- [#25](https://github.com/BoppingNoodles/Sortify/pull/25) **CLOSED** — feat(backend): define the firestore user and scan contract
+- [#24](https://github.com/BoppingNoodles/Sortify/pull/24) **MERGED** — feat(backend): accept local image uploads on /upload-image
+- [#23](https://github.com/BoppingNoodles/Sortify/pull/23) **MERGED** — Score lab photos under shadow, dim light, and clutter
+- [#19](https://github.com/BoppingNoodles/Sortify/pull/19) **MERGED** — feat(ml): compare MobileNetV2 with the ResNet-18 baseline
+- [#12](https://github.com/BoppingNoodles/Sortify/pull/12) **MERGED** — feat(ml): add resnet-18 baseline training script
+- [#7](https://github.com/BoppingNoodles/Sortify/pull/7) **MERGED** — feat(ml): Week 2 image preprocessing pipeline
+- [#2](https://github.com/BoppingNoodles/Sortify/pull/2) **CLOSED** — feat(ml): Week 1 ResNet-18 transfer learning exercise
+- [#1](https://github.com/BoppingNoodles/Sortify/pull/1) **CLOSED** — feat(ml): Week 1 ResNet-18 transfer learning exercise
+
+### Open team PRs
+
+- [#51](https://github.com/BoppingNoodles/Sortify/pull/51) — feat(classify): classification pipeline hardening and error resilience
+- [#50](https://github.com/BoppingNoodles/Sortify/pull/50) — feat(inference): pytorch model singleton inference service with latency profiling
+- [#49](https://github.com/BoppingNoodles/Sortify/pull/49) — feat(validation): multipart upload validation and request streaming middleware
+- [#48](https://github.com/BoppingNoodles/Sortify/pull/48) — feat(backend): centralized environment configuration and settings management
+- [#46](https://github.com/BoppingNoodles/Sortify/pull/46) — Feat/backend/david/rules endpoint integration
+- [#10](https://github.com/BoppingNoodles/Sortify/pull/10) — Feat/backend/carlos/backend config setup
+
+### Open tickets and owners
+
+- [#44](https://github.com/BoppingNoodles/Sortify/issues/44) — [AI/ML] Dynamic INT8 Model Quantization & Latency Benchmark (zmaxitaxi)
+- [#43](https://github.com/BoppingNoodles/Sortify/issues/43) — [AI/ML] Model Retraining Pipeline v2 on Augmented Dataset (kathleen-maung)
+- [#42](https://github.com/BoppingNoodles/Sortify/issues/42) — [AI/ML] Curate & Balance Campus Waste Dataset v2 (Challenging Items) (unassigned)
+- [#41](https://github.com/BoppingNoodles/Sortify/issues/41) — [Backend] Bay Area Municipal Rules Expansion (5 Cities) & Parameterized Tests (davidcontreras-ucb)
+- [#39](https://github.com/BoppingNoodles/Sortify/issues/39) — [Backend] Scan History Persistence Service with Guest Device UUID (unassigned)
+- [#38](https://github.com/BoppingNoodles/Sortify/issues/38) — [Backend] Item-Specific Disposal Tips Engine & Item Matching (janicedeng)
+- [#37](https://github.com/BoppingNoodles/Sortify/issues/37) — [Frontend] API Client Resilience, Retries & Physical Device Testing (unassigned)
+- [#36](https://github.com/BoppingNoodles/Sortify/issues/36) — [Frontend] Dynamic Waste Result Modal & Bin Color Styling (vumongthanhmai98)
+- [#35](https://github.com/BoppingNoodles/Sortify/issues/35) — [Frontend] Connect Live Camera Scan to Classification API (unassigned)
+<!-- sortify-sync:end -->
