@@ -13,7 +13,7 @@ MUNICIPAL_RULES: dict[str, dict] = {
         },
         "source_url": "https://berkeleyca.gov/city-services/trash-recycling",
     },
-    "san_francisco": {
+    "san-francisco": {
         "rules": {
             "compost": "Food scraps, plant debris, soiled paper products.",
             "plastic": "Clean rigid plastics, containers, bottles.",
