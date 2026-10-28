@@ -1,6 +1,5 @@
 """Classification API router with timeout protection and hardened error resilience."""
 
-import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
@@ -89,7 +88,7 @@ async def classify_item(
             detail="Inference capacity is busy. Please retry shortly.",
             headers={"Retry-After": "1"},
         ) from exc
-    except asyncio.TimeoutError as exc:
+    except TimeoutError as exc:
         logger.error("Inference request timed out after %.2f seconds", timeout_seconds)
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
