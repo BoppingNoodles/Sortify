@@ -41,8 +41,12 @@ async def classify_item(
     service: ModelService = Depends(get_model_service),  # noqa: B008
 ) -> ClassifyResponse:
     """Ingest image upload, run model inference, and return waste classification."""
-    # 1. Read uploaded image bytes asynchronously
-    image_bytes = await file.read()
+    # 1. Read uploaded image bytes asynchronously and release file handle
+    try:
+        image_bytes = await file.read() if hasattr(file, "read") else file
+    finally:
+        if hasattr(file, "close"):
+            await file.close()
 
     # 2. Run model inference in worker threadpool to avoid blocking event loop
     try:
