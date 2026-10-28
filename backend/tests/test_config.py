@@ -8,6 +8,12 @@ from pydantic import ValidationError
 from backend.app.config import Settings
 
 
+@pytest.fixture(autouse=True)
+def isolate_settings_environment(monkeypatch):
+    for name in (*Settings.model_fields, "ALLOWED_ORIGINS"):
+        monkeypatch.delenv(name, raising=False)
+
+
 def test_default_settings():
     """Verify default settings initialization without external .env interference."""
     cfg = Settings(_env_file=None)
@@ -96,3 +102,58 @@ def test_core_config_interoperability():
     assert core_settings.PORT == app_settings.PORT
     assert core_settings.ENV == app_settings.ENV
     assert core_settings.ALLOWED_ORIGINS == app_settings.CORS_ORIGINS
+
+
+@pytest.mark.parametrize("name", ["CORS_ORIGINS", "ALLOWED_ORIGINS"])
+@pytest.mark.parametrize("source", ["environment", "dotenv"])
+def test_cors_aliases(name, source, monkeypatch, tmp_path):
+    value = '["https://only.example"]'
+    env_file = tmp_path / ".env"
+    if source == "environment":
+        monkeypatch.setenv(name, value)
+    else:
+        env_file.write_text(f"{name}={value}\n", encoding="utf-8")
+    cfg = Settings(_env_file=env_file)
+    assert cfg.CORS_ORIGINS == cfg.ALLOWED_ORIGINS == ["https://only.example"]
+
+
+def test_new_cors_name_takes_precedence_within_source(monkeypatch):
+    monkeypatch.setenv("CORS_ORIGINS", '["https://new.example"]')
+    monkeypatch.setenv("ALLOWED_ORIGINS", '["https://old.example"]')
+    assert Settings(_env_file=None).ALLOWED_ORIGINS == ["https://new.example"]
+
+
+@pytest.mark.parametrize(
+    ("env_name", "dotenv_name"),
+    [("CORS_ORIGINS", "ALLOWED_ORIGINS"), ("ALLOWED_ORIGINS", "CORS_ORIGINS")],
+)
+def test_cors_environment_overrides_dotenv_alias(
+    env_name, dotenv_name, monkeypatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text(f'{dotenv_name}=["https://file.example"]\n', encoding="utf-8")
+    monkeypatch.setenv(env_name, '["https://env.example"]')
+    assert Settings(_env_file=env_file).ALLOWED_ORIGINS == ["https://env.example"]
+
+
+def test_legacy_cors_setting_restricts_preflight(monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.testclient import TestClient
+
+    monkeypatch.setenv("ALLOWED_ORIGINS", '["https://only.example"]')
+    cfg = Settings(_env_file=None)
+    app = FastAPI()
+    app.add_middleware(CORSMiddleware, allow_origins=cfg.ALLOWED_ORIGINS)
+    client = TestClient(app)
+    for origin, expected in [
+        ("https://only.example", 200),
+        ("https://other.example", 400),
+    ]:
+        response = client.options(
+            "/health",
+            headers={"Origin": origin, "Access-Control-Request-Method": "GET"},
+        )
+        assert response.status_code == expected
+        if expected == 400:
+            assert "access-control-allow-origin" not in response.headers

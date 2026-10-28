@@ -4,8 +4,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field, field_validator
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BACKEND_DIR.parent
@@ -26,7 +30,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = Field(default="/api", description="API route prefix")
     MODEL_PATH: str = Field(
-        default="backend/models/resnet18_trashnet.pth",
+        default=str(BACKEND_DIR / "app" / "models" / "sortify_mvp_v1.pth"),
         description="Path to model weights checkpoint",
     )
     CORS_ORIGINS: list[str] | str = Field(
@@ -40,6 +44,7 @@ class Settings(BaseSettings):
             "*",
         ],
         description="Allowed CORS origin domains",
+        validation_alias=AliasChoices("CORS_ORIGINS", "ALLOWED_ORIGINS"),
     )
     MAX_UPLOAD_SIZE_MB: int = Field(
         default=10,
@@ -52,12 +57,42 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file=(".env", "backend/.env", str(ROOT_DIR / ".env")),
+        env_file=(str(ROOT_DIR / ".env"), str(BACKEND_DIR / ".env")),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
         frozen=True,
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple:
+        """Normalize aliases per source so environment values still override dotenv."""
+
+        def normalize(source):
+            def read():
+                values = source()
+                if "ALLOWED_ORIGINS" in values:
+                    values.setdefault("CORS_ORIGINS", values.pop("ALLOWED_ORIGINS"))
+                return values
+
+            return read
+
+        return tuple(
+            normalize(source)
+            for source in (
+                init_settings,
+                env_settings,
+                dotenv_settings,
+                file_secret_settings,
+            )
+        )
 
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
