@@ -119,7 +119,8 @@ unclaimed tickets. It is now assigned to `zmaxitaxi`.
 [PR #53](https://github.com/BoppingNoodles/Sortify/pull/53), branch
 `feat/backend/max/scan-history-service`, requests Caden's review and closes #39
 when merged. It is independent of #52, based directly on main, with no context
-file or personal context commits.
+file or personal context commits. **GitHub CI passed** (Python lint/tests and
+frontend sanity checks); both PRs are awaiting Caden's review.
 
 - `HistoryService` saves to `users/{user_id}/scans/{scan_id}` in Firestore mode;
   bounded `limit+1` reads use descending timestamp/document-ID cursors.
