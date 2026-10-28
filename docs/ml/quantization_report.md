@@ -47,3 +47,32 @@ Use `load_quantized()` from the script to reconstruct and load it; the current
 FP32-only backend loader cannot consume this package directly. ResNet-18 training
 checkpoints are also supported. This follows the ticket's requested eager dynamic
 API, which emits deprecation warnings in the installed PyTorch version.
+
+## Follow-up runs requested during review preparation
+
+The trained ResNet-18 baseline was also measured with the same 454 validation
+images, QNNPACK, one CPU thread, five warmups and 50 timed passes. It preserved
+**384/454 correct (84.58%)**, with **0.00 percentage-point loss**. Size changed
+from 44,792,779 to 44,788,573 bytes: **0.0094% reduction**, also below 60%.
+FP32 averaged **16.346 ms**, compared with **19.921 ms** after quantization
+(0.821× speedup, a slowdown). Exact results and checkpoint hash are in
+`resnet18_quantization_metrics.json`. The approximate 45 MB source therefore
+does not solve the compression limitation either.
+
+```bash
+python ml/scripts/quantize_model.py --checkpoint ml/models/resnet18_baseline.pth --output ml/models/resnet18_quantized.pth --report docs/ml/resnet18_quantization_metrics.json
+```
+
+A four-thread MobileNetV2 repeat also preserved 404/454 correct. FP32 averaged
+20.442 ms and INT8 23.785 ms (0.859×, also a slowdown). Its 9,151,031-byte artifact
+was 0.0366% smaller than the source. Tiny serialized-size differences across runs
+include ZIP packaging overhead from different output filenames, not a practical
+compression improvement. See `mobilenet_4threads_quantization_metrics.json`.
+
+```bash
+python ml/scripts/quantize_model.py --threads 4 --output ml/models/mobilenet_v2_quantized_4threads.pth --report docs/ml/mobilenet_4threads_quantization_metrics.json
+```
+
+All three runs pass the accuracy gate and miss the compression target. Issue #44
+should remain open for the reviewer to reconcile that target with a broader
+quantization method; rerunning Linear-only conversion does not quantize convolutions.
