@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_MODEL_PATH = (
@@ -25,7 +26,7 @@ class Settings(BaseSettings):
         "*",
     ]
     MAX_UPLOAD_SIZE_MB: int = 10
-    INFERENCE_TIMEOUT_SECONDS: float = 10.0
+    INFERENCE_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, allow_inf_nan=False)
     FIREBASE_CREDENTIALS_PATH: str = "serviceAccountKey.json"
 
     model_config = SettingsConfigDict(

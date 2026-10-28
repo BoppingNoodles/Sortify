@@ -4,7 +4,6 @@ import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
-from fastapi.concurrency import run_in_threadpool
 from PIL import UnidentifiedImageError
 from PIL.Image import DecompressionBombError
 
@@ -15,6 +14,7 @@ from backend.app.schemas import (
     DisposalTip,
 )
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
+from backend.app.services.inference_runner import InferenceBusyError, inference_runner
 from backend.app.services.model_service import ModelService, model_service
 from backend.app.services.tips_service import get_disposal_guidance, get_disposal_tip
 from backend.app.utils.validators import validate_image_upload
@@ -22,9 +22,6 @@ from backend.app.utils.validators import validate_image_upload
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Bound concurrent CPU inference requests to prevent threadpool starvation
-INFERENCE_SEMAPHORE = asyncio.Semaphore(4)
 
 IMAGE_DECODE_ERRORS = (
     UnidentifiedImageError,
@@ -83,11 +80,15 @@ async def classify_item(
     # 2. Run model inference in bounded worker threadpool with timeout protection
     timeout_seconds = getattr(settings, "INFERENCE_TIMEOUT_SECONDS", 10.0)
     try:
-        async with INFERENCE_SEMAPHORE:
-            prediction = await asyncio.wait_for(
-                run_in_threadpool(service.predict, image_bytes),
-                timeout=timeout_seconds,
-            )
+        prediction = await inference_runner.run(
+            service.predict, image_bytes, timeout_seconds
+        )
+    except InferenceBusyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Inference capacity is busy. Please retry shortly.",
+            headers={"Retry-After": "1"},
+        ) from exc
     except asyncio.TimeoutError as exc:
         logger.error("Inference request timed out after %.2f seconds", timeout_seconds)
         raise HTTPException(
