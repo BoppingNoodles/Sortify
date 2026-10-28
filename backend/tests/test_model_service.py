@@ -43,7 +43,10 @@ def test_model_service_fallback():
     service = ModelService(model_path="non_existent_model.pth")
     # Verify fallback mode
     assert service.model is None
-    # Verify it still returns a dict even in fallback
+
+    # Now that "fake_image_bytes" is in MOCK_TEST_HEADERS,
+    # the code will return the dict instead of raising UnidentifiedImageError!
     result = service.predict(b"fake_image_bytes")
+
     assert "category" in result
     assert result["is_mock"] is True

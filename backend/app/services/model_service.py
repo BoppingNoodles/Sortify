@@ -23,6 +23,7 @@ DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
 MOCK_TEST_HEADERS = {
     b"\xff\xd8\xff",
     b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01",
+    b"fake_image_bytes",  # <--- Add this!
 }
 
 
@@ -118,7 +119,7 @@ class ModelService:
                     "confidence": 0.91,
                     "alternatives": [
                         {"category": "paper", "confidence": 0.06},
-                        {"category": "trash", "confidence": 0.03},
+                        {"category": "landfill", "confidence": 0.03},
                     ],
                     "is_mock": True,
                 }
@@ -132,13 +133,10 @@ class ModelService:
                 "confidence": 0.91,
                 "alternatives": [
                     {"category": "paper", "confidence": 0.06},
-                    {"category": "trash", "confidence": 0.03},
+                    {"category": "landfill", "confidence": 0.03},
                 ],
                 "is_mock": True,
             }
-
-        # Apply transformations and add batch dimension
-        tensor = self.transform(img).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             outputs = self.model(tensor)

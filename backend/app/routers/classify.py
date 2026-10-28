@@ -23,6 +23,11 @@ LABEL_TO_CATEGORY = {
     "landfill": "landfill",
     "paper": "paper",
     "plastic": "plastic",
+    # legacy comaptibility
+    "trash": "landfill",
+    "cardboard": "paper",
+    "metal": "plastic",
+    "organic": "compost",
 }
 
 
