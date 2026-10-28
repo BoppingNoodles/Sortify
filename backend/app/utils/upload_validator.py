@@ -1,8 +1,9 @@
-"""Multipart image upload validator and request streaming helper."""
+"""Validate parsed multipart image uploads before classification."""
 
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 
 from backend.app.core.config import settings
 
@@ -12,6 +13,12 @@ JPEG_MAGIC = b"\xff\xd8\xff"
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 WEBP_RIFF = b"RIFF"
 WEBP_MARKER = b"WEBP"
+
+
+def _measure_file_size(file: UploadFile) -> int:
+    """Measure disk-backed uploads in a worker when size metadata is absent."""
+    file.file.seek(0, 2)
+    return file.file.tell()
 
 
 def get_max_upload_bytes() -> int:
@@ -70,8 +77,7 @@ async def validate_image_payload(
     # 2. Check total file size non-blockingly
     size = getattr(file, "size", None)
     if size is None:
-        file.file.seek(0, 2)
-        size = file.file.tell()
+        size = await run_in_threadpool(_measure_file_size, file)
     await file.seek(0)
 
     if size == 0:

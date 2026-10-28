@@ -5,6 +5,7 @@ import io
 import pytest
 from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
+from PIL import Image
 from starlette.datastructures import Headers
 
 from backend.app.main import app
@@ -147,3 +148,44 @@ def test_classify_endpoint_ignores_query_pollution():
     )
     assert response.status_code == 200
     assert "category" in response.json()
+
+
+def test_classify_accepts_complete_image():
+    payload = io.BytesIO()
+    Image.new("RGB", (32, 32), "green").save(payload, format="PNG")
+    response = client.post(
+        "/api/classify",
+        files={"file": ("camera.png", payload.getvalue(), "image/png")},
+    )
+    assert response.status_code == 200
+
+
+def test_classify_rejects_corrupt_image_after_signature_check():
+    response = client.post(
+        "/api/classify",
+        files={"file": ("broken.jpg", b"\xff\xd8\xffinvalid-jpeg", "image/jpeg")},
+    )
+    assert response.status_code == 422
+
+
+def test_query_cannot_override_server_upload_limit(monkeypatch):
+    monkeypatch.setattr(
+        "backend.app.utils.upload_validator.get_max_upload_bytes", lambda: 4
+    )
+    response = client.post(
+        "/api/classify?max_bytes=999999&return_bytes=true",
+        files={"file": ("large.jpg", VALID_JPEG, "image/jpeg")},
+    )
+    assert response.status_code == 413
+    params = client.get("/openapi.json").json()["paths"]["/api/classify"]["post"][
+        "parameters"
+    ]
+    assert {param["name"] for param in params} == {"location"}
+
+
+@pytest.mark.anyio
+async def test_rejected_upload_is_closed():
+    upload = create_upload(VALID_PNG, "spoofed.jpg", "image/jpeg")
+    with pytest.raises(HTTPException):
+        await validate_image_upload(upload)
+    assert upload.file.closed
