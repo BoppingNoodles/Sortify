@@ -2,7 +2,7 @@
 
 Personal branch: `feat/ml/max/domain-gap` in [zmaxitaxi/Sortify](https://github.com/zmaxitaxi/Sortify).
 Team repository: [BoppingNoodles/Sortify](https://github.com/BoppingNoodles/Sortify).
-Narrative reviewed: **October 27, 2026 (America/Los_Angeles)**.
+Narrative reviewed: **October 28, 2026 (America/Los_Angeles)**.
 
 ## Working agreement
 
@@ -25,6 +25,11 @@ Local helpers and hooks live under `.git/sortify/` and `.git/hooks/`; only `cont
 4. Switch to that clean branch, run the relevant tests, push the named feature branch to `origin`, and open a PR targeting `BoppingNoodles/Sortify:main`, filling the template and requesting Caden's review. Verify `context.md` is absent from both PR files and commits. Never merge the personal branch itself.
 5. Return to `feat/ml/max/domain-gap`, run `git sync-context`, and push that named branch to `origin` to back up context. Neither remote main is a push target.
 
+This personal branch currently includes **two independent, unmerged features**
+(PRs #52 and #53). Start further independent work on a fresh branch from
+`upstream/main`. `git prepare-pr` exports the entire personal implementation
+diff, so do not use it to combine these outstanding features into another PR.
+
 The local post-merge hook refreshes the Git snapshot after successful merges on the personal branch; an ordinary merge may therefore leave `context.md` modified. `git sync-context` also refreshes GitHub metadata and commits the update. The pre-push hook blocks updates to `main`, blocks the personal branch going to the team repository, and blocks `context.md` on any other pushed branch. Hooks can be bypassed and GitHub UI operations do not run them: always inspect PR contents. Server-side enforcement would require team repository settings; none were changed.
 
 ## Product and architecture
@@ -34,7 +39,7 @@ Sortify is a UC Berkeley student project: identify waste from a phone photo, sho
 - Mobile: React Native/Expo, React Navigation, screens in `mobile/src/screens`, API client in `mobile/src/services/api.js`.
 - Backend: FastAPI at `backend.app.main:app`; Swagger `/docs`, ReDoc `/redoc`, health `/health`, classification `/api/classify`, municipal rules `/api/rules`, history `/api/history`, and standalone `/upload-image`.
 - ML: PyTorch/Torchvision scripts in `ml/scripts`, primarily MobileNetV2 now, compared with a frozen-backbone ResNet-18 baseline.
-- Persistence: Firebase Admin/Firestore support exists, but the current history router still uses in-memory scaffolding and placeholder Bearer-token checks. Having Firestore services does not mean end-to-end persistence or production authentication is finished.
+- Persistence on upstream main: the history router still uses shared in-memory scaffolding and placeholder Bearer-token checks. Personal branch / PR #53 replaces that with guest UUID history, explicit memory/Firestore modes and cursor pagination. It is implemented and tested, but awaits review/merge; production account authentication remains separate.
 - Canonical labels and checkpoint order: **`compost`, `glass`, `landfill`, `paper`, `plastic`**. Read `class_names` from the checkpoint or `classes.json`; never assume paper is index 0. Inference uses softmax confidence, not raw logits.
 - Datasets, checkpoints, and credentials are ignored. They were not copied from the older checkout. This fresh workspace has no trained weights or campus dataset.
 
@@ -70,12 +75,73 @@ Kathleen's separate merged campus report (`docs/ml/campus-evaluation-report/`) r
 ## Current state and next work
 
 - Team main at this review includes live classify integration (PR #30), campus evaluation (#33), backend tests (#34), and MobileNetV2/five-bin reconciliation (#47). Caden's config, upload validation, inference-service, and hardening PRs #48–51 were open at review; do not describe those proposals as merged functionality. The automated snapshot gives newer status after a sync.
-- **Max is assigned open issue [#44 — Dynamic INT8 Model Quantization & Latency Benchmark](https://github.com/BoppingNoodles/Sortify/issues/44).** It asks for `ml/scripts/quantize_model.py`, dynamic qint8 quantization of linear layers, 50 CPU forward-pass benchmarks, file-size comparison, and validation accuracy loss under 1 percentage point. No implementation was started in this context/sync task.
+- **Max is assigned open issue [#44 — Dynamic INT8 Model Quantization & Latency Benchmark](https://github.com/BoppingNoodles/Sortify/issues/44).** The requested dynamic qint8 Linear experiment is implemented in [PR #52](https://github.com/BoppingNoodles/Sortify/pull/52), with Caden requested as reviewer. Three real runs pass the strict accuracy gate but miss >60% compression. The PR intentionally references the issue without auto-closing it; Caden must reconcile that target with a broader quantization method.
 - Issue #44's ~45 MB → ~12 MB / >60% reduction goal resembles ResNet sizing. Current MobileNetV2 is only 8.7 MB and dynamic linear-only quantization may leave convolution weights unchanged. Confirm the target checkpoint and report actual measurements before promising those targets. Never silently swap architectures or invent speedups.
 - Ticket-based assignments supersede the old person-by-week schedule. Dataset-v2 curation (#42) is unassigned; retraining-v2 (#43) is assigned to Kathleen. Check live ownership before starting or duplicating work.
 - Current backend inference defaults to `backend/app/models/sortify_mvp_v1.pth` and returns a scaffold mock prediction when weights are missing. This differs from the ML training output path and from `settings.MODEL_PATH`; do not claim real deployed inference based only on a successful HTTP response.
 - Current inference preprocessing resizes directly to 224×224, while shared evaluation uses resize/center crop. Track parity and checkpoint metadata during future integration. No fixes to application code were included here.
-- Remaining backlog includes dataset expansion, real-world retraining, confidence calibration, ONNX parity, out-of-distribution testing, charts, release packaging, persistent history, frontend camera integration, and deployment. These are plans, not completed deliverables.
+- Remaining backlog includes dataset expansion, real-world retraining, confidence calibration, ONNX parity, out-of-distribution testing, charts, release packaging, frontend camera integration, and deployment. History is now implemented in PR #53, pending review/merge. Do not claim production persistence was verified.
+
+## New work and PRs from this session
+
+### PR #52 — dynamic INT8 experiment (issue #44)
+
+Branch: `feat/ml/max/int8-quantization`, based directly on team main, pushed to
+Max's fork. [PR #52](https://github.com/BoppingNoodles/Sortify/pull/52) requests
+`BoppingNoodles` as reviewer. GitHub CI passed. Its commits and files exclude
+`context.md` and personal context history.
+
+`ml/scripts/quantize_model.py` safely loads trained checkpoints, selects an
+available CPU backend, converts `nn.Linear` to qint8, serializes metadata,
+reloads the artifact, evaluates the same validation samples, times 50 warmed
+synthetic forward passes, and returns nonzero for accuracy loss >=1 point.
+The generated `ml/models/sortify_quantized.pth` stays ignored. The existing
+serving loader is FP32-only and was not switched to quantized weights.
+
+| Run | Validation FP32 → INT8 | Size reduction | CPU FP32 → INT8 |
+|---|---|---:|---|
+| MobileNetV2, 1 thread | 404/454 → 404/454 (88.99%) | 0.087% | 14.257 → 14.224 ms |
+| ResNet-18, 1 thread | 384/454 → 384/454 (84.58%) | 0.0094% | 16.346 → 19.921 ms |
+| MobileNetV2, 4 threads | 404/454 → 404/454 (88.99%) | 0.0366% | 20.442 → 23.785 ms |
+
+The latter two runs were explicitly requested after the first result. All used
+QNNPACK on macOS arm64 / PyTorch 2.14, 454 validation images, five warmups and
+50 timed passes. These measurements show no reliable speed improvement.
+Convolutions remain FP32; tiny serialized-size differences include ZIP filename
+overhead. Exact hashes/configuration/results and reproduction commands are in
+`docs/ml/quantization_report.md` and the three `*quantization_metrics.json` files.
+Full branch tests: **97 passed**, including six new quantization tests; Ruff passed.
+
+### PR #53 — guest scan-history persistence (issue #39)
+
+Max explicitly authorized assigning and implementing issue #39 after reviewing
+unclaimed tickets. It is now assigned to `zmaxitaxi`.
+[PR #53](https://github.com/BoppingNoodles/Sortify/pull/53), branch
+`feat/backend/max/scan-history-service`, requests Caden's review and closes #39
+when merged. It is independent of #52, based directly on main, with no context
+file or personal context commits.
+
+- `HistoryService` saves to `users/{user_id}/scans/{scan_id}` in Firestore mode;
+  bounded `limit+1` reads use descending timestamp/document-ID cursors.
+- The typed guest record extends the shared schema with UUID IDs, generated scan
+  IDs and UTC timestamps, and a bin field. Guest identity uses a device UUID,
+  without Bearer login; this is not verified account authentication.
+- `GET /api/history` requires `user_id` UUID and accepts `limit` and `cursor`;
+  `POST` accepts the record. The old mock Bearer/offset contract was migrated
+  explicitly in API docs and tests. Mobile UUID persistence remains client work.
+- Default `HISTORY_STORAGE=memory` uses one locked process-local store, no
+  Firebase initialization, and no restart/multi-worker durability. Set
+  `HISTORY_STORAGE=firestore` and configure the existing Firebase helper for
+  persistence. Storage errors return safe 503s without silently switching modes.
+- Full independent branch tests: **103 passed**; Ruff passed. Real localhost
+  Uvicorn HTTP check: **three POSTs → two scans + cursor → one scan + null cursor**;
+  OpenAPI exposes the typed response. Real SDK query construction is tested with
+  network operations replaced by doubles. **Live Firestore/emulator persistence
+  has not been run** because no credentials or emulator were configured.
+
+Both implementations are present on this personal branch for continuity, while
+the two PRs contain only their respective feature. Both remote main refs remain
+unchanged; review and merging belong to the PR workflow.
 
 ## Reading order and evidence
 
@@ -92,6 +158,7 @@ This narrative was reconstructed from the repositories, local checkout, commit h
 
 - Initial sync verification: `ruff check .` and `ruff format --check .` passed; 91 backend/ML tests passed. The older virtual environment lacked the declared `pydantic-settings` package, so test execution used an isolated temporary install through `PYTHONPATH` without changing that environment.
 - Workflow fixture checks passed for snapshot refresh, empty PR refusal, clean PR ancestry and files, main push/deletion blocking, team-repository personal-branch blocking, context file/history blocking, and allowed clean feature/personal pushes.
+- After combining the two independent features on the personal branch, the full backend/ML suite passed **109 tests**. Both Ruff checks and whitespace verification passed. The local HTTP verification server was shut down after its successful pagination check.
 - Max subsequently authorized completing assigned issue #44, submitting a PR with Caden as reviewer, then selecting and assigning Max another suitable open issue. This extends the task beyond context setup; do not mark #44 complete until measured results and the PR exist.
 
 <!-- sortify-sync:start -->
