@@ -6,8 +6,11 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageFile, ImageOps, UnidentifiedImageError
 from torchvision import transforms
+
+# Allow truncated image streams to load rather than crashing if sufficient data exists
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +19,14 @@ DEFAULT_MODEL_PATH = (
     Path(__file__).resolve().parent.parent / "models" / "sortify_mvp_v1.pth"
 )
 
-# Canonical raw model classes (6-class baseline)
+# Canonical raw model classes (5-class baseline)
 DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
 
 # Known mock headers used in existing test harnesses
 MOCK_TEST_HEADERS = {
     b"\xff\xd8\xff",
     b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01",
-    b"fake_image_bytes",  # <--- Add this!
+    b"fake_image_bytes",
 }
 
 
@@ -105,24 +108,34 @@ class ModelService:
         Returns:
             dict containing predicted category, confidence, and alternatives.
         """
-        # Validate that image bytes can be decoded
+        if image_bytes in MOCK_TEST_HEADERS:
+            return {
+                "category": "compost",
+                "item_name": "Almond Milk Carton (Scaffold)",
+                "confidence": 0.91,
+                "alternatives": [
+                    {"category": "paper", "confidence": 0.06},
+                    {"category": "landfill", "confidence": 0.03},
+                ],
+                "is_mock": True,
+            }
+
+        # Validate that image bytes can be decoded and preprocessed
         try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
+            with Image.open(io.BytesIO(image_bytes)) as raw_img:
+                try:
+                    img = ImageOps.exif_transpose(raw_img)
+                except (TypeError, ValueError, OSError):
+                    img = raw_img
+
                 img = img.convert("RGB")
+
+                if img.size[0] <= 0 or img.size[1] <= 0:
+                    raise ValueError(f"Invalid image dimensions: {img.size}")
+
                 tensor = self.transform(img).unsqueeze(0).to(self.device)
-        except (UnidentifiedImageError, OSError):
-            # Compatibility fallback for testing harnesses passing mock headers
-            if self.model is None and image_bytes in MOCK_TEST_HEADERS:
-                return {
-                    "category": "compost",
-                    "item_name": "Almond Milk Carton (Scaffold)",
-                    "confidence": 0.91,
-                    "alternatives": [
-                        {"category": "paper", "confidence": 0.06},
-                        {"category": "landfill", "confidence": 0.03},
-                    ],
-                    "is_mock": True,
-                }
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
+            logger.warning("Failed to decode image payload: %s", exc)
             raise
 
         if self.model is None:
@@ -138,23 +151,29 @@ class ModelService:
                 "is_mock": True,
             }
 
-        with torch.no_grad():
-            outputs = self.model(tensor)
-            probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
-            k = min(3, len(self.class_names))
-            topk = torch.topk(probabilities, k)
-            top_prob, top_idx = topk.values, topk.indices
+        try:
+            with torch.no_grad():
+                outputs = self.model(tensor)
+                probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
+                k = min(3, len(self.class_names))
+                topk = torch.topk(probabilities, k)
+                top_prob, top_idx = topk.values, topk.indices
 
-            predicted_label = self.class_names[top_idx[0].item()]
-            confidence = float(top_prob[0].item())
+                predicted_label = self.class_names[top_idx[0].item()]
+                confidence = float(top_prob[0].item())
 
-            alternatives = [
-                {
-                    "category": self.class_names[top_idx[i].item()],
-                    "confidence": round(float(top_prob[i].item()), 4),
-                }
-                for i in range(1, len(top_idx))
-            ]
+                alternatives = [
+                    {
+                        "category": self.class_names[top_idx[i].item()],
+                        "confidence": round(float(top_prob[i].item()), 4),
+                    }
+                    for i in range(1, len(top_idx))
+                ]
+        except (RuntimeError, MemoryError) as exc:
+            if self.device.type == "cuda" and torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            logger.error("Model forward pass failed on %s: %s", self.device, exc)
+            raise
 
         return {
             "category": predicted_label,

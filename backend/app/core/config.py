@@ -19,6 +19,7 @@ class Settings(BaseSettings):
         "*",
     ]
     MAX_UPLOAD_SIZE_MB: int = 10
+    INFERENCE_TIMEOUT_SECONDS: float = 10.0
     FIREBASE_CREDENTIALS_PATH: str = "serviceAccountKey.json"
 
     model_config = SettingsConfigDict(
