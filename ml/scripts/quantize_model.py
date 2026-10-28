@@ -1,11 +1,13 @@
-"""Benchmark dynamic qint8 Linear layers against a trained FP32 checkpoint on CPU."""
+"""Calibrate INT8 convolutions/Linear layers and compare a trained checkpoint on CPU."""
 
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import platform
+import random
 import statistics
 import sys
 import time
@@ -13,8 +15,17 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from torch.ao.quantization import quantize_dynamic
-from torch.utils.data import DataLoader
+from torch.ao.nn import quantized as nnq
+from torch.ao.quantization import (
+    FixedQParamsObserver,
+    QConfig,
+    QConfigMapping,
+    default_per_channel_weight_observer,
+    get_default_qconfig,
+    quantize_dynamic,
+)
+from torch.ao.quantization.quantize_fx import convert_fx, prepare_fx
+from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import ImageFolder
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -57,15 +68,123 @@ def quantize(model: nn.Module) -> nn.Module:
     return quantize_dynamic(model.cpu().eval(), {nn.Linear}, dtype=torch.qint8)
 
 
+class ContiguousReLU6(nn.Module):
+    """Avoid quantized hardtanh scrambling channels-last storage on some builds."""
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return nn.functional.hardtanh(inputs.contiguous(), 0.0, 6.0)
+
+
+def convert_static(prepared: nn.Module) -> nn.Module:
+    model = convert_fx(prepared).eval()
+    for name, module in list(model.named_modules()):
+        if isinstance(module, nn.ReLU6):
+            model.set_submodule(name, ContiguousReLU6())
+    return model
+
+
+def prepare_static(model: nn.Module, engine: str) -> nn.Module:
+    """Preserve the original graph (including ReLU6 and residual connections)."""
+    qconfig = QConfig(
+        activation=get_default_qconfig(engine).activation,
+        weight=default_per_channel_weight_observer,
+    )
+    prepared = prepare_fx(
+        copy.deepcopy(model).cpu().eval(),
+        QConfigMapping().set_global(qconfig),
+        (torch.zeros(1, 3, 224, 224),),
+    )
+    # FX shares the observer before/after ReLU6. Observing the unclipped Conv
+    # wastes precision on values that ReLU6 will discard. Saturate the Conv
+    # directly to [0, 6] when its sole consumer is that bounded activation.
+    modules = dict(prepared.named_modules(remove_duplicate=False))
+    quant_max = qconfig.activation().quant_max
+    for node in prepared.graph.nodes:
+        if node.op != "call_module" or not isinstance(modules[node.target], nn.ReLU6):
+            continue
+        observer = node.args[0]
+        if observer.op != "call_module" or not observer.args:
+            continue
+        conv = observer.args[0]
+        if (
+            conv.op != "call_module"
+            or not isinstance(modules[conv.target], nn.Conv2d)
+            or len(conv.users) != 1
+        ):
+            continue
+        shared = modules[observer.target]
+        fixed = FixedQParamsObserver(
+            scale=6.0 / quant_max,
+            zero_point=0,
+            dtype=torch.quint8,
+            quant_min=0,
+            quant_max=quant_max,
+        )
+        for name, module in modules.items():
+            if module is shared:
+                prepared.set_submodule(name, fixed)
+    return prepared
+
+
+def quantize_static(model: nn.Module, loader, engine: str) -> nn.Module:
+    prepared = prepare_static(model, engine)
+    count = 0
+    with torch.inference_mode():
+        for images, _ in loader:
+            prepared(images.cpu())
+            count += images.shape[0]
+    if not count:
+        raise ValueError("Calibration dataset is empty")
+    return convert_static(prepared)
+
+
+def calibration_subset(dataset, max_images: int, seed: int = 42) -> Subset:
+    """Choose a bounded, reproducible sample with equal quotas for every bin."""
+    if dataset.classes != CLASS_NAMES or max_images < len(CLASS_NAMES):
+        raise ValueError(
+            "Calibration needs the canonical five bins and at least five images"
+        )
+    rng = random.Random(seed)
+    indices = []
+    for label in range(len(CLASS_NAMES)):
+        candidates = [
+            i for i, (_, target) in enumerate(dataset.samples) if target == label
+        ]
+        rng.shuffle(candidates)
+        quota = max_images // len(CLASS_NAMES) + (label < max_images % len(CLASS_NAMES))
+        indices.extend(candidates[:quota])
+    rng.shuffle(indices)
+    return Subset(dataset, indices)
+
+
+def calibration_digest(subset: Subset) -> str:
+    digest = hashlib.sha256()
+    for index in subset.indices:
+        path, label = subset.dataset.samples[index]
+        relative = Path(path).relative_to(subset.dataset.root).as_posix()
+        digest.update(f"{label}:{relative}\n".encode())
+        digest.update(hashlib.sha256(Path(path).read_bytes()).digest())
+    return digest.hexdigest()
+
+
 def load_quantized(path: Path) -> nn.Module:
-    """Rebuild the CPU quantized architecture before loading packed Linear weights."""
+    """Rebuild the quantized graph, then restore all calibrated scales and weights."""
     package = torch.load(path, map_location="cpu", weights_only=True)
-    if package.get("quantization") != "dynamic_qint8_linear":
-        raise ValueError("Expected a dynamic_qint8_linear package")
+    method = package.get("quantization")
+    if method not in ("dynamic_qint8_linear", "static_qint8_per_channel"):
+        raise ValueError("Unsupported quantization package")
     if package.get("class_names") != CLASS_NAMES:
         raise ValueError("Quantized package has an incompatible class order")
-    select_engine(package["engine"])
-    model = quantize(build_model(package["architecture"]))
+    engine = select_engine(package["engine"])
+    fp32 = build_model(package["architecture"]).eval()
+    if method == "dynamic_qint8_linear":
+        model = quantize(fp32)
+    else:
+        prepared = prepare_static(fp32, engine)
+        # Only instantiate the graph here. load_state_dict restores real calibration.
+        with torch.inference_mode():
+            prepared(torch.zeros(1, 3, 224, 224))
+        model = convert_static(prepared)
     model.load_state_dict(package["model_state_dict"], strict=True)
     return model.eval()
 
@@ -115,11 +234,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--val-dir", type=Path, default=REPO_ROOT / "data/processed/val"
     )
+    parser.add_argument("--method", choices=["static", "dynamic"], default="static")
+    parser.add_argument(
+        "--calibration-dir", type=Path, default=REPO_ROOT / "data/processed/train"
+    )
+    parser.add_argument("--calibration-images", type=int, default=1024)
     parser.add_argument(
         "--output", type=Path, default=REPO_ROOT / "ml/models/sortify_quantized.pth"
     )
     parser.add_argument(
-        "--report", type=Path, default=REPO_ROOT / "docs/ml/quantization_metrics.json"
+        "--report",
+        type=Path,
+        help="JSON report (defaults to a separate file for each method)",
     )
     parser.add_argument("--engine", default="auto")
     parser.add_argument("--passes", type=int, default=50)
@@ -127,11 +253,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--threads", type=int, default=1)
     args = parser.parse_args(argv)
+    if args.report is None:
+        name = (
+            "static_quantization_metrics.json"
+            if args.method == "static"
+            else "quantization_metrics.json"
+        )
+        args.report = REPO_ROOT / "docs/ml" / name
     if min(args.passes, args.warmup, args.batch_size, args.threads) < 1:
         parser.error("passes, warmup, batch-size and threads must be positive")
     paths = [args.checkpoint.resolve(), args.output.resolve(), args.report.resolve()]
     if len(set(paths)) != 3:
         parser.error("checkpoint, output and report must be distinct files")
+    if (
+        args.method == "static"
+        and args.calibration_dir.resolve() == args.val_dir.resolve()
+    ):
+        parser.error("Calibration must use training images, separate from validation")
     torch.set_num_threads(args.threads)
     torch.manual_seed(42)
     engine = select_engine(args.engine)
@@ -142,14 +280,35 @@ def main(argv: list[str] | None = None) -> int:
     loader = DataLoader(
         dataset, batch_size=args.batch_size, shuffle=False, num_workers=0
     )
-    int8 = quantize(fp32)
+    calibration = None
+    if args.method == "static":
+        training = ImageFolder(args.calibration_dir, transform=get_eval_transforms())
+        validation_paths = {Path(path).resolve() for path, _ in dataset.samples}
+        if validation_paths.intersection(
+            Path(path).resolve() for path, _ in training.samples
+        ):
+            raise ValueError(
+                "Calibration and validation contain overlapping image paths"
+            )
+        calibration = calibration_subset(training, args.calibration_images)
+        calibration_loader = DataLoader(
+            calibration, batch_size=args.batch_size, shuffle=False, num_workers=0
+        )
+        int8 = quantize_static(fp32, calibration_loader, engine)
+    else:
+        int8 = quantize(fp32)
+    method = (
+        "static_qint8_per_channel"
+        if calibration is not None
+        else "dynamic_qint8_linear"
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
             "model_state_dict": int8.state_dict(),
             "architecture": architecture,
             "class_names": CLASS_NAMES,
-            "quantization": "dynamic_qint8_linear",
+            "quantization": method,
             "engine": engine,
         },
         args.output,
@@ -166,13 +325,23 @@ def main(argv: list[str] | None = None) -> int:
     metrics = {
         "architecture": architecture,
         "class_names": CLASS_NAMES,
-        "quantization": "dynamic_qint8_linear",
+        "quantization": method,
         "engine": engine,
         "torch_version": str(torch.__version__),
         "platform": platform.platform(),
         "machine": platform.machine(),
         "cpu_threads": args.threads,
         "checkpoint_sha256": hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
+        "calibration_images": len(calibration) if calibration is not None else 0,
+        "calibration_samples_sha256": calibration_digest(calibration)
+        if calibration is not None
+        else None,
+        "calibration_seed": 42 if calibration is not None else None,
+        "quantized_conv_layers": sum(isinstance(m, nnq.Conv2d) for m in int8.modules()),
+        "fp32_conv_layers": sum(isinstance(m, nn.Conv2d) for m in int8.modules()),
+        "quantized_linear_layers": sum(
+            isinstance(m, nnq.Linear) for m in int8.modules()
+        ),
         "validation_images": count,
         "fp32_correct": fp32_correct,
         "int8_correct": int8_correct,
@@ -194,10 +363,11 @@ def main(argv: list[str] | None = None) -> int:
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(metrics, indent=2))
+    targets_met = passed and reduction > 60
     print(
-        "Linear layers only: convolution weights remain FP32; >60% compression is not guaranteed."
+        f"Accuracy target passed: {passed}; >60% compression passed: {reduction > 60}"
     )
-    return 0 if passed else 1
+    return 0 if (targets_met if args.method == "static" else passed) else 1
 
 
 if __name__ == "__main__":
