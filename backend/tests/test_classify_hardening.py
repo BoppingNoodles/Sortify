@@ -1,6 +1,7 @@
 """Tests for classification pipeline hardening, error resilience, and benchmarking."""
 
 import io
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -234,7 +235,8 @@ def test_classify_unknown_model_label_fallback(monkeypatch):
     assert res.json()["bin_color"] == "Gray"
 
 
-def test_model_service_dynamic_checkpoint_dimension(tmp_path):
+@pytest.mark.parametrize("configured", [False, True])
+def test_model_service_dynamic_checkpoint_dimension(tmp_path, monkeypatch, configured):
     """Verify ModelService adapts classification head to checkpoint class count."""
     mobilenet = models.mobilenet_v2(weights=None)
     mobilenet.classifier[1] = torch.nn.Linear(mobilenet.last_channel, 6)
@@ -247,10 +249,61 @@ def test_model_service_dynamic_checkpoint_dimension(tmp_path):
         ckpt_path,
     )
 
-    svc = ModelService(model_path=ckpt_path)
+    if configured:
+        monkeypatch.setattr(
+            "backend.app.services.model_service.settings.MODEL_PATH", str(ckpt_path)
+        )
+        svc = ModelService()
+    else:
+        svc = ModelService(model_path=ckpt_path)
     assert svc.model is not None
     assert len(svc.class_names) == 6
     assert svc.model.classifier[1].out_features == 6
+    assert svc.predict(create_test_image())["is_mock"] is False
+
+
+def test_default_settings_use_existing_checkpoint_location(monkeypatch):
+    from backend.app.core.config import Settings
+    from backend.app.services.model_service import DEFAULT_MODEL_PATH
+
+    monkeypatch.delenv("MODEL_PATH", raising=False)
+    cfg = Settings(_env_file=None)
+    assert Path(cfg.MODEL_PATH) == DEFAULT_MODEL_PATH
+    assert DEFAULT_MODEL_PATH.parts[-4:] == (
+        "backend",
+        "app",
+        "models",
+        "sortify_mvp_v1.pth",
+    )
+
+
+def test_relative_checkpoint_path_does_not_depend_on_cwd(tmp_path, monkeypatch):
+    from backend.app.services import model_service as service_module
+
+    monkeypatch.chdir(tmp_path)
+    service = ModelService(model_path="ml/models/custom.pth")
+    root = Path(service_module.__file__).resolve().parents[3]
+    assert service.model_path == root / "ml/models/custom.pth"
+
+
+@pytest.mark.parametrize("loaded", [False, True])
+def test_corrupt_jpeg_header_returns_422_even_with_model(monkeypatch, loaded):
+    monkeypatch.setattr(
+        "backend.app.services.model_service.model_service.model",
+        torch.nn.Identity() if loaded else None,
+    )
+    response = client.post(
+        "/api/classify", files={"file": ("broken.jpg", b"\xff\xd8\xff", "image/jpeg")}
+    )
+    assert response.status_code == 422
+
+
+def test_checkpoint_with_missing_labels_cannot_load_six_outputs(tmp_path):
+    mobilenet = models.mobilenet_v2(weights=None)
+    mobilenet.classifier[1] = torch.nn.Linear(mobilenet.last_channel, 6)
+    checkpoint = tmp_path / "unlabeled.pth"
+    torch.save(mobilenet.state_dict(), checkpoint)
+    assert ModelService(model_path=checkpoint).model is None
 
 
 def test_calculate_percentile():

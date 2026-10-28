@@ -10,7 +10,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from PIL.Image import DecompressionBombError
 from torchvision import transforms
 
-from backend.app.core.config import settings
+from backend.app.core.config import DEFAULT_MODEL_PATH, settings
+
+__all__ = ["DEFAULT_CLASSES", "DEFAULT_MODEL_PATH", "ModelService", "model_service"]
 
 # Cap maximum decompression pixels to 25 million (~5000x5000) to protect against memory exhaustion
 Image.MAX_IMAGE_PIXELS = 25_000_000
@@ -25,20 +27,8 @@ IMAGE_DECODE_ERRORS = (
 
 logger = logging.getLogger(__name__)
 
-# Default path to frozen model weights
-DEFAULT_MODEL_PATH = (
-    Path(__file__).resolve().parent.parent / "models" / "sortify_mvp_v1.pth"
-)
-
 # Canonical raw model classes (5-class baseline)
 DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
-
-# Known mock headers used in existing test harnesses
-MOCK_TEST_HEADERS = {
-    b"\xff\xd8\xff",
-    b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01",
-    b"fake_image_bytes",
-}
 
 
 class ModelService:
@@ -49,17 +39,10 @@ class ModelService:
         model_path: Path | str | None = None,
         class_names: list[str] | None = None,
     ):
-        resolved_path = model_path or getattr(
-            settings, "MODEL_PATH", DEFAULT_MODEL_PATH
-        )
+        resolved_path = model_path if model_path is not None else settings.MODEL_PATH
         self.model_path = Path(resolved_path)
-        if not self.model_path.is_absolute() and not self.model_path.exists():
-            # Try resolving relative to repository root
-            repo_root_path = (
-                Path(__file__).resolve().parent.parent.parent.parent / self.model_path
-            )
-            if repo_root_path.exists():
-                self.model_path = repo_root_path
+        if not self.model_path.is_absolute():
+            self.model_path = Path(__file__).resolve().parents[3] / self.model_path
 
         self.device = torch.device(
             "cuda"
@@ -92,10 +75,14 @@ class ModelService:
 
                 checkpoint = torch.load(self.model_path, map_location=self.device)
                 if isinstance(checkpoint, dict) and "class_names" in checkpoint:
-                    self.class_names = checkpoint["class_names"]
+                    if not isinstance(checkpoint["class_names"], (list, tuple)):
+                        raise ValueError("Checkpoint class_names must be a sequence")
+                    self.class_names = list(checkpoint["class_names"])
 
                 if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
                     state_dict = checkpoint["model_state_dict"]
+                elif isinstance(checkpoint, dict) and "state_dict" in checkpoint:
+                    state_dict = checkpoint["state_dict"]
                 elif isinstance(checkpoint, dict):
                     state_dict = checkpoint
                 else:
@@ -106,6 +93,18 @@ class ModelService:
                     num_classes = state_dict["classifier.1.weight"].shape[0]
                 else:
                     num_classes = len(self.class_names)
+
+                if (
+                    num_classes != len(self.class_names)
+                    or any(
+                        not isinstance(name, str) or not name.strip()
+                        for name in self.class_names
+                    )
+                    or len(set(self.class_names)) != num_classes
+                ):
+                    raise ValueError(
+                        "Checkpoint labels must match the classifier outputs"
+                    )
 
                 model = models.mobilenet_v2(weights=None)
                 model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
@@ -136,18 +135,6 @@ class ModelService:
         Returns:
             dict containing predicted category, confidence, and alternatives.
         """
-        if image_bytes in MOCK_TEST_HEADERS:
-            return {
-                "category": "compost",
-                "item_name": "Almond Milk Carton (Scaffold)",
-                "confidence": 0.91,
-                "alternatives": [
-                    {"category": "paper", "confidence": 0.06},
-                    {"category": "landfill", "confidence": 0.03},
-                ],
-                "is_mock": True,
-            }
-
         # Validate that image bytes can be decoded and preprocessed
         try:
             with Image.open(io.BytesIO(image_bytes)) as raw_img:
@@ -186,6 +173,8 @@ class ModelService:
             with torch.no_grad():
                 outputs = self.model(tensor)
                 probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
+                if probabilities.shape[0] != len(self.class_names):
+                    raise RuntimeError("Model outputs do not match checkpoint labels")
                 k = min(3, len(self.class_names))
                 topk = torch.topk(probabilities, k)
                 top_prob, top_idx = topk.values, topk.indices
@@ -219,4 +208,4 @@ class ModelService:
 
 
 # Global singleton instance configured from settings
-model_service = ModelService(model_path=settings.MODEL_PATH)
+model_service = ModelService()
