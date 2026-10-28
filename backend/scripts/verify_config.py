@@ -23,6 +23,7 @@ def verify_configuration() -> bool:
 
     assert isinstance(settings.ENV, str), "ENV must be a string"
     assert isinstance(settings.PORT, int), "PORT must be an integer"
+    assert 1 <= settings.PORT <= 65535, "PORT must be between 1 and 65535"
     assert isinstance(settings.CORS_ORIGINS, list), "CORS_ORIGINS must be a list"
     assert isinstance(settings.MAX_UPLOAD_SIZE_MB, int), (
         "MAX_UPLOAD_SIZE_MB must be an integer"

@@ -1,17 +1,26 @@
 """Centralized application environment configuration."""
 
 import json
+from pathlib import Path
 from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
     """Application configuration settings parsed from environment variables."""
 
     ENV: str = Field(default="development", description="Runtime environment")
-    PORT: int = Field(default=8000, description="Port server listens on")
+    PORT: int = Field(
+        default=8000,
+        ge=1,
+        le=65535,
+        description="Port server listens on (1-65535)",
+    )
     PROJECT_NAME: str = Field(
         default="Sortify Backend", description="Project display name"
     )
@@ -33,7 +42,9 @@ class Settings(BaseSettings):
         description="Allowed CORS origin domains",
     )
     MAX_UPLOAD_SIZE_MB: int = Field(
-        default=10, description="Maximum image upload size in megabytes"
+        default=10,
+        gt=0,
+        description="Maximum image upload size in megabytes (must be > 0)",
     )
     FIREBASE_CREDENTIALS_PATH: str = Field(
         default="serviceAccountKey.json",
@@ -41,9 +52,11 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True,
+        env_file=(".env", "backend/.env", str(ROOT_DIR / ".env")),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
         extra="ignore",
+        frozen=True,
     )
 
     @field_validator("CORS_ORIGINS", mode="after")
@@ -52,18 +65,30 @@ class Settings(BaseSettings):
         """Safely parse CORS_ORIGINS from JSON list, comma-separated string, or list."""
         if isinstance(value, str):
             val = value.strip()
+            if not val:
+                return []
             if val.startswith("[") and val.endswith("]"):
                 try:
                     parsed = json.loads(val)
                     if isinstance(parsed, list):
                         return [
-                            str(item).strip() for item in parsed if str(item).strip()
+                            str(item).strip().strip("'\"")
+                            for item in parsed
+                            if str(item).strip().strip("'\"")
                         ]
                 except json.JSONDecodeError:
-                    pass
-            return [item.strip() for item in val.split(",") if item.strip()]
-        if isinstance(value, list):
-            return [str(item) for item in value]
+                    val = val[1:-1].strip()
+            return [
+                item.strip().strip("'\"")
+                for item in val.split(",")
+                if item.strip().strip("'\"")
+            ]
+        if isinstance(value, (list, tuple, set)):
+            return [
+                str(item).strip().strip("'\"")
+                for item in value
+                if str(item).strip().strip("'\"")
+            ]
         return []
 
     @property
