@@ -1,5 +1,7 @@
 """Classification API router."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from PIL import UnidentifiedImageError
@@ -14,6 +16,8 @@ from backend.app.services.model_service import ModelService, model_service
 from backend.app.services.tips_service import get_disposal_guidance
 from backend.app.utils.validators import validate_image_upload
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 # Translates raw model prediction labels to canonical app categories.
@@ -24,6 +28,7 @@ LABEL_TO_CATEGORY: dict[str, str] = {
     "plastic": "plastic",
     "metal": "plastic",  # Commingled recyclables in Berkeley/SF
     "trash": "landfill",
+    "landfill": "landfill",
     "compost": "compost",
     "organic": "compost",
 }
@@ -47,26 +52,35 @@ async def classify_item(
     # 2. Run model inference in worker threadpool to avoid blocking event loop
     try:
         prediction = await run_in_threadpool(service.predict, image_bytes)
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Could not read the image. The file may be corrupted.",
         ) from exc
+    except RuntimeError as exc:
+        logger.error("Model inference execution error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Model inference execution failed.",
+        ) from exc
 
     # 3. Translate model label to canonical category and fetch disposal guidance
-    label = prediction["category"]
+    label = str(prediction["category"]).strip().lower()
     item_name = prediction.get("item_name") or label.title()
     category = LABEL_TO_CATEGORY.get(label, "landfill")
     guidance = get_disposal_guidance(category, item_name, location)
     bin_color = BIN_COLORS.get(category, "Green")
 
-    # 4. Map alternative candidates through taxonomy normalization
+    # 4. Map alternative candidates through taxonomy normalization, filtering duplicates
     raw_alternatives = prediction.get("alternatives", [])
     alternatives: list[ClassificationAlternative] = []
+    seen_categories: set[str] = {category}
+
     for alt in raw_alternatives:
-        raw_cat = alt.get("category", "")
+        raw_cat = str(alt.get("category", "")).strip().lower()
         mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
-        if mapped_cat in ALLOWED_CATEGORIES:
+        if mapped_cat in ALLOWED_CATEGORIES and mapped_cat not in seen_categories:
+            seen_categories.add(mapped_cat)
             alternatives.append(
                 ClassificationAlternative(
                     category=mapped_cat,

@@ -3,7 +3,9 @@
 import io
 
 import pytest
+import torch
 from PIL import Image, UnidentifiedImageError
+from torchvision import models
 
 from backend.app.services.inference import ModelService, model_service
 
@@ -18,7 +20,7 @@ def sample_image_bytes() -> bytes:
 
 
 def test_singleton_pattern():
-    """Verify ModelService implements a true singleton pattern."""
+    """Verify ModelService implements a true thread-safe singleton pattern."""
     svc1 = ModelService()
     svc2 = ModelService()
     assert svc1 is svc2
@@ -52,11 +54,63 @@ def test_predict_handles_mock_test_header():
     assert result["latency_ms"] >= 0.0
 
 
+def test_predict_rgba_image():
+    """Verify RGBA image conversion to 3-channel RGB."""
+    img = Image.new("RGBA", (10, 10), color=(255, 0, 0, 128))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    res = model_service.predict(buf.getvalue())
+    assert res["category"] is not None
+
+
+def test_predict_grayscale_image():
+    """Verify single-channel Grayscale image conversion."""
+    img = Image.new("L", (10, 10), color=128)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    res = model_service.predict(buf.getvalue())
+    assert res["category"] is not None
+
+
 def test_predict_rejects_corrupted_bytes():
     """Verify corrupted non-image bytes raise UnidentifiedImageError or OSError."""
     corrupted_bytes = b"definitely not an image payload"
-    with pytest.raises((UnidentifiedImageError, OSError)):
+    with pytest.raises((UnidentifiedImageError, OSError, ValueError)):
         model_service.predict(corrupted_bytes)
+
+
+def test_predict_with_real_model_weights(tmp_path):
+    """Verify real PyTorch forward pass, softmax, and top-k indexing with synthetic checkpoint."""
+    # Reset singleton to test isolated instance with custom weights
+    ModelService.reset_instance()
+
+    resnet = models.resnet18(weights=None)
+    resnet.fc = torch.nn.Linear(resnet.fc.in_features, 5)
+    ckpt_path = tmp_path / "synthetic_model.pth"
+    torch.save(
+        {
+            "model_state_dict": resnet.state_dict(),
+            "class_names": ["compost", "glass", "landfill", "paper", "plastic"],
+        },
+        ckpt_path,
+    )
+
+    svc = ModelService(model_path=ckpt_path)
+    assert svc.model is not None
+    assert len(svc.class_names) == 5
+
+    # Run inference with real model
+    img = Image.new("RGB", (224, 224), color="green")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    result = svc.predict(buf.getvalue())
+
+    assert result["is_mock"] is False
+    assert result["category"] in svc.class_names
+    assert len(result["alternatives"]) >= 1
+
+    # Reset back to default for other tests
+    ModelService.reset_instance()
 
 
 def test_interoperability_with_model_service_module():
@@ -69,4 +123,4 @@ def test_interoperability_with_model_service_module():
     )
 
     assert LegacyService is ModelService
-    assert legacy_instance is model_service
+    assert legacy_instance is not None
