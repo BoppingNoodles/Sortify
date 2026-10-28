@@ -190,7 +190,7 @@ This narrative was reconstructed from the repositories, local checkout, commit h
 <!-- sortify-sync:start -->
 ## Automatic sync snapshot
 
-- Refreshed: `2026-10-28T00:12:27-07:00` (America/Los_Angeles).
+- Refreshed: `2026-10-28T00:38:45-07:00` (America/Los_Angeles).
 - Personal branch: `feat/ml/max/domain-gap`.
 - Team main: [`d4662d0f74b8`](https://github.com/BoppingNoodles/Sortify/commit/d4662d0f74b88e58f7c0c062514ea8022eea4981).
 - Team main fully included in personal branch: **yes**.
@@ -211,12 +211,12 @@ This narrative was reconstructed from the repositories, local checkout, commit h
 - 1e80a06 chore(docs): merge main into docs/backend/edward/api-testing-guide and resolve conflicts
 - b4af597 Merge branch 'main' into feat/backend/max/request-logging
 
-GitHub metadata fetched: `2026-10-28T00:12:27-07:00`.
+GitHub metadata fetched: `2026-10-28T00:38:45-07:00`.
 
 ### Max's PR status
 
 - [#53](https://github.com/BoppingNoodles/Sortify/pull/53) **OPEN** — feat(backend): persist guest scan history with cursor pagination
-- [#52](https://github.com/BoppingNoodles/Sortify/pull/52) **OPEN** — feat(ml): benchmark dynamic int8 quantization and report its limits
+- [#52](https://github.com/BoppingNoodles/Sortify/pull/52) **OPEN** — feat(ml): quantize convolutions and meet compression and accuracy targets
 - [#28](https://github.com/BoppingNoodles/Sortify/pull/28) **CLOSED** — feat(backend): log method, path, client, status, and latency
 - [#27](https://github.com/BoppingNoodles/Sortify/pull/27) **CLOSED** — feat(backend): add item-specific disposal tips to classify
 - [#26](https://github.com/BoppingNoodles/Sortify/pull/26) **CLOSED** — feat(backend): read and write user scans through a firestore service
@@ -232,7 +232,7 @@ GitHub metadata fetched: `2026-10-28T00:12:27-07:00`.
 ### Open team PRs
 
 - [#53](https://github.com/BoppingNoodles/Sortify/pull/53) — feat(backend): persist guest scan history with cursor pagination
-- [#52](https://github.com/BoppingNoodles/Sortify/pull/52) — feat(ml): benchmark dynamic int8 quantization and report its limits
+- [#52](https://github.com/BoppingNoodles/Sortify/pull/52) — feat(ml): quantize convolutions and meet compression and accuracy targets
 - [#51](https://github.com/BoppingNoodles/Sortify/pull/51) — feat(classify): classification pipeline hardening and error resilience
 - [#50](https://github.com/BoppingNoodles/Sortify/pull/50) — feat(inference): pytorch model singleton inference service with latency profiling
 - [#49](https://github.com/BoppingNoodles/Sortify/pull/49) — feat(validation): multipart upload validation and request streaming middleware
