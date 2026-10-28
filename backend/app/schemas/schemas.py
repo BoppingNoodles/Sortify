@@ -1,8 +1,10 @@
 """Pydantic v2 Schemas and Contracts for Sortify API."""
 
+from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, Field, field_validator, model_validator
 
 # Canonical 5 waste categories and corresponding color associations
 ALLOWED_CATEGORIES: set[str] = {"compost", "glass", "landfill", "paper", "plastic"}
@@ -159,3 +161,46 @@ class ScanRecord(BaseModel):
         if not self.bin_color:
             self.bin_color = BIN_COLORS.get(self.category.lower(), "Green")
         return self
+
+
+class GuestScanRecord(ScanRecord):
+    """History contract for a guest device UUID; identifiers are safe document IDs."""
+
+    scan_id: UUID = Field(default_factory=uuid4)
+    user_id: UUID
+    timestamp: AwareDatetime = Field(default_factory=lambda: datetime.now(UTC))
+    item_name: str = Field(min_length=1, max_length=200)
+    bin: str | None = Field(default=None, min_length=1, max_length=200)
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def validate_category(cls, value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or value.strip().lower() not in ALLOWED_CATEGORIES
+        ):
+            raise ValueError("Category must be one of the canonical five bins")
+        return value.strip().lower()
+
+    @field_validator("timestamp")
+    @classmethod
+    def normalize_timestamp(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def populate_bin(self) -> "GuestScanRecord":
+        if not self.bin:
+            self.bin = f"{self.bin_color} {self.category.capitalize()} Bin"
+        return self
+
+
+class HistoryPage(BaseModel):
+    scans: list[GuestScanRecord]
+    limit: int
+    next_cursor: str | None
+
+
+class SavedGuestScan(BaseModel):
+    status: str = "created"
+    scan_id: UUID
+    scan: GuestScanRecord

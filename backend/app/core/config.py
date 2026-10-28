@@ -1,5 +1,7 @@
 """Centralized environment configuration for Sortify Backend."""
 
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +22,7 @@ class Settings(BaseSettings):
     ]
     MAX_UPLOAD_SIZE_MB: int = 10
     FIREBASE_CREDENTIALS_PATH: str = "serviceAccountKey.json"
+    HISTORY_STORAGE: Literal["memory", "firestore"] = "memory"
 
     model_config = SettingsConfigDict(
         env_file=".env",
