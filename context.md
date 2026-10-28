@@ -190,28 +190,28 @@ This narrative was reconstructed from the repositories, local checkout, commit h
 <!-- sortify-sync:start -->
 ## Automatic sync snapshot
 
-- Refreshed: `2026-10-28T00:38:45-07:00` (America/Los_Angeles).
+- Refreshed: `2026-10-28T09:53:16-07:00` (America/Los_Angeles).
 - Personal branch: `feat/ml/max/domain-gap`.
-- Team main: [`d4662d0f74b8`](https://github.com/BoppingNoodles/Sortify/commit/d4662d0f74b88e58f7c0c062514ea8022eea4981).
+- Team main: [`4e05488b779c`](https://github.com/BoppingNoodles/Sortify/commit/4e05488b779cbbe28eaef8c53c5634934b7a4e65).
 - Team main fully included in personal branch: **yes**.
 - Neither remote main is updated by this workflow.
 
 ### Recent team main commits
 
+- 4e05488 Merge pull request #46 from BoppingNoodles/feat/backend/david/rules-endpoint-integration
+- 92d5fc8 fix(municipal_rules): replaced underscore for hyphen in san francisco
 - d4662d0 Merge pull request #47 from BoppingNoodles/feat/backend/edward/mobilenet-taxonomy-upgrade
+- e822293 fix(municipal_rules): Added a null check in normalized_city()
+- b135f1d fix(classify): reformatted cleanly so the text doesn't repeat itself
 - dfa3773 feat(backend): upgrade to MobileNetV2, reconcile 5-bin taxonomy, and fix test suite
 - ca7003e feat(backend): reconcile classify endpoint with ModelService integration
+- d2a1c52 feat(classify): add municipal rules to disposal notes
+- 00b8d94 refactor(rules): move municipal rules into a shared service
 - fd00d80 docs(assignments): update disposal tips ticket and starter code for item matching
 - cf731c2 docs(assignments): update live inference starter code for mobilenetv2 and 5-bin taxonomy
 - cf224f0 Merge pull request #30 from BoppingNoodles/feat/backend/david/live-classify-integration
-- 97116e2 chore(classify): merge main and implement model service with live inference integration
-- 3aff5f9 docs(assignments): transition work plans and starter code to ticket system
-- 009ae9a Merge branch 'main' into feat/backend/edward/automated-pytest-suite
-- 7503503 chore(test): remove redundant test_api.py and update README references
-- 1e80a06 chore(docs): merge main into docs/backend/edward/api-testing-guide and resolve conflicts
-- b4af597 Merge branch 'main' into feat/backend/max/request-logging
 
-GitHub metadata fetched: `2026-10-28T00:38:45-07:00`.
+GitHub metadata fetched: `2026-10-28T09:53:16-07:00`.
 
 ### Max's PR status
 
@@ -237,7 +237,6 @@ GitHub metadata fetched: `2026-10-28T00:38:45-07:00`.
 - [#50](https://github.com/BoppingNoodles/Sortify/pull/50) — feat(inference): pytorch model singleton inference service with latency profiling
 - [#49](https://github.com/BoppingNoodles/Sortify/pull/49) — feat(validation): multipart upload validation and request streaming middleware
 - [#48](https://github.com/BoppingNoodles/Sortify/pull/48) — feat(backend): centralized environment configuration and settings management
-- [#46](https://github.com/BoppingNoodles/Sortify/pull/46) — Feat/backend/david/rules endpoint integration
 - [#10](https://github.com/BoppingNoodles/Sortify/pull/10) — Feat/backend/carlos/backend config setup
 
 ### Open tickets and owners
