@@ -6,11 +6,22 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from PIL import Image, ImageFile, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL.Image import DecompressionBombError
 from torchvision import transforms
 
-# Allow truncated image streams to load rather than crashing if sufficient data exists
-ImageFile.LOAD_TRUNCATED_IMAGES = True
+from backend.app.core.config import settings
+
+# Cap maximum decompression pixels to 25 million (~5000x5000) to protect against memory exhaustion
+Image.MAX_IMAGE_PIXELS = 25_000_000
+
+IMAGE_DECODE_ERRORS = (
+    UnidentifiedImageError,
+    OSError,
+    ValueError,
+    SyntaxError,
+    DecompressionBombError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +46,26 @@ class ModelService:
 
     def __init__(
         self,
-        model_path: Path | str = DEFAULT_MODEL_PATH,
+        model_path: Path | str | None = None,
         class_names: list[str] | None = None,
     ):
-        self.model_path = Path(model_path)
+        resolved_path = model_path or getattr(
+            settings, "MODEL_PATH", DEFAULT_MODEL_PATH
+        )
+        self.model_path = Path(resolved_path)
+        if not self.model_path.is_absolute() and not self.model_path.exists():
+            # Try resolving relative to repository root
+            repo_root_path = (
+                Path(__file__).resolve().parent.parent.parent.parent / self.model_path
+            )
+            if repo_root_path.exists():
+                self.model_path = repo_root_path
+
         self.device = torch.device(
             "cuda"
             if torch.cuda.is_available()
             else "mps"
-            if torch.backends.mps.is_available()
+            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
             else "cpu"
         )
         self.model: torch.nn.Module | None = None
@@ -69,25 +91,31 @@ class ModelService:
                 from torchvision import models
 
                 checkpoint = torch.load(self.model_path, map_location=self.device)
-                model = models.mobilenet_v2(weights=None)
-                # MobileNetV2 has a 'classifier' attribute, not 'fc'
-                model.classifier[1] = torch.nn.Linear(
-                    model.last_channel, len(self.class_names)
-                )
+                if isinstance(checkpoint, dict) and "class_names" in checkpoint:
+                    self.class_names = checkpoint["class_names"]
 
                 if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
                     state_dict = checkpoint["model_state_dict"]
-                    if "class_names" in checkpoint:
-                        self.class_names = checkpoint["class_names"]
                 elif isinstance(checkpoint, dict):
                     state_dict = checkpoint
                 else:
                     state_dict = checkpoint.state_dict()
 
+                # Infer classification head dimension dynamically from state_dict
+                if "classifier.1.weight" in state_dict:
+                    num_classes = state_dict["classifier.1.weight"].shape[0]
+                else:
+                    num_classes = len(self.class_names)
+
+                model = models.mobilenet_v2(weights=None)
+                model.classifier[1] = torch.nn.Linear(model.last_channel, num_classes)
                 model.load_state_dict(state_dict)
+                model.to(self.device)
                 model.eval()
                 self.model = model
-                logger.info("Loaded model weights from %s", self.model_path)
+                logger.info(
+                    "Loaded model weights from %s on %s", self.model_path, self.device
+                )
             except (OSError, RuntimeError, KeyError, ValueError) as exc:
                 logger.warning(
                     "Failed to load weights from %s: %s. Running in fallback mode.",
@@ -123,18 +151,21 @@ class ModelService:
         # Validate that image bytes can be decoded and preprocessed
         try:
             with Image.open(io.BytesIO(image_bytes)) as raw_img:
+                if raw_img.width <= 0 or raw_img.height <= 0:
+                    raise ValueError(f"Invalid image dimensions: {raw_img.size}")
+                if raw_img.width > 8192 or raw_img.height > 8192:
+                    raise ValueError(
+                        f"Image dimensions {raw_img.size} exceed maximum permitted size 8192x8192."
+                    )
+
                 try:
                     img = ImageOps.exif_transpose(raw_img)
                 except (TypeError, ValueError, OSError):
                     img = raw_img
 
                 img = img.convert("RGB")
-
-                if img.size[0] <= 0 or img.size[1] <= 0:
-                    raise ValueError(f"Invalid image dimensions: {img.size}")
-
                 tensor = self.transform(img).unsqueeze(0).to(self.device)
-        except (UnidentifiedImageError, OSError, ValueError) as exc:
+        except IMAGE_DECODE_ERRORS as exc:
             logger.warning("Failed to decode image payload: %s", exc)
             raise
 
@@ -170,8 +201,11 @@ class ModelService:
                     for i in range(1, len(top_idx))
                 ]
         except (RuntimeError, MemoryError) as exc:
+            del tensor
             if self.device.type == "cuda" and torch.cuda.is_available():
                 torch.cuda.empty_cache()
+            elif self.device.type == "mps" and hasattr(torch, "mps"):
+                torch.mps.empty_cache()
             logger.error("Model forward pass failed on %s: %s", self.device, exc)
             raise
 
@@ -184,5 +218,5 @@ class ModelService:
         }
 
 
-# Global singleton instance
-model_service = ModelService()
+# Global singleton instance configured from settings
+model_service = ModelService(model_path=settings.MODEL_PATH)

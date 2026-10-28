@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "Sortify Backend"
     API_V1_STR: str = "/api"
-    MODEL_PATH: str = "backend/models/resnet18_trashnet.pth"
+    MODEL_PATH: str = "backend/models/sortify_mvp_v1.pth"
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:19006",
         "http://localhost:8081",

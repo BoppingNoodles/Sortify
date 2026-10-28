@@ -10,9 +10,10 @@ import statistics
 import time
 from typing import Any
 
+import torch
 from PIL import Image
 
-from backend.app.services.model_service import model_service
+from backend.app.services.model_service import ModelService, model_service
 
 # 20 diverse test image specifications (aspect ratios, sizes, modes, formats)
 BENCHMARK_IMAGE_SPECS: list[dict[str, Any]] = [
@@ -63,10 +64,11 @@ def generate_test_image(
 
 
 def calculate_percentile(data: list[float], percentile: float) -> float:
-    """Calculate the given percentile (0 to 100) from sorted list."""
+    """Calculate the given percentile (0 to 100) from sorted list with boundary clamping."""
     if not data:
         return 0.0
-    k = (len(data) - 1) * (percentile / 100.0)
+    p = max(0.0, min(100.0, float(percentile)))
+    k = (len(data) - 1) * (p / 100.0)
     f = math.floor(k)
     c = math.ceil(k)
     if f == c:
@@ -79,17 +81,27 @@ def calculate_percentile(data: list[float], percentile: float) -> float:
 def run_inference_benchmark(
     specs: list[dict[str, Any]] | None = None,
     warmup_runs: int = 2,
+    force_cpu: bool = True,
+    service: ModelService | None = None,
 ) -> dict[str, Any]:
-    """Run CPU inference benchmark across test image specifications.
+    """Run inference benchmark across test image specifications.
 
     Args:
         specs: List of image configuration dictionaries. Defaults to 20 images.
         warmup_runs: Number of initial untimed warmup executions.
+        force_cpu: Whether to force execution strictly on CPU.
+        service: Custom ModelService instance to benchmark. Defaults to global instance.
 
     Returns:
         dict containing latency metrics and per-image execution times.
     """
     image_specs = specs or BENCHMARK_IMAGE_SPECS
+    bench_service = service or model_service
+
+    if force_cpu:
+        bench_service.device = torch.device("cpu")
+        if bench_service.model is not None:
+            bench_service.model = bench_service.model.to("cpu")
 
     # Pre-generate image payloads
     image_payloads = [
@@ -100,14 +112,18 @@ def run_inference_benchmark(
     # Warmup runs
     for _ in range(warmup_runs):
         if image_payloads:
-            model_service.predict(image_payloads[0][1])
+            bench_service.predict(image_payloads[0][1])
 
     results: list[dict[str, Any]] = []
     latencies: list[float] = []
 
     for index, (spec, payload) in enumerate(image_payloads, 1):
+        if bench_service.device.type == "cuda" and torch.cuda.is_available():
+            torch.cuda.synchronize()
         start = time.perf_counter()
-        prediction = model_service.predict(payload)
+        prediction = bench_service.predict(payload)
+        if bench_service.device.type == "cuda" and torch.cuda.is_available():
+            torch.cuda.synchronize()
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 
         latencies.append(elapsed_ms)
@@ -128,6 +144,7 @@ def run_inference_benchmark(
     sorted_latencies = sorted(latencies)
     mean_ms = statistics.mean(sorted_latencies) if sorted_latencies else 0.0
     stdev_ms = statistics.stdev(sorted_latencies) if len(sorted_latencies) > 1 else 0.0
+    is_mock = any(res.get("is_mock", False) for res in results)
 
     metrics = {
         "count": len(sorted_latencies),
@@ -142,6 +159,8 @@ def run_inference_benchmark(
         "p95_ms": round(calculate_percentile(sorted_latencies, 95), 2),
         "p99_ms": round(calculate_percentile(sorted_latencies, 99), 2),
         "stdev_ms": round(stdev_ms, 2),
+        "device": str(bench_service.device),
+        "is_mock": is_mock,
         "individual_results": results,
     }
     return metrics
@@ -149,8 +168,13 @@ def run_inference_benchmark(
 
 def print_benchmark_report(metrics: dict[str, Any]) -> None:
     """Print formatted summary report table to stdout."""
+    device_label = metrics.get("device", "cpu").upper()
     print("=" * 80)
-    print(f" SORTIFY CPU INFERENCE BENCHMARK ({metrics['count']} Images)")
+    print(f" SORTIFY INFERENCE BENCHMARK ({metrics['count']} Images on {device_label})")
+    if metrics.get("is_mock"):
+        print(
+            " [NOTICE] Execution completed in Mock/Fallback Mode (weights file not loaded)."
+        )
     print("=" * 80)
     print(
         f"{'#':<3} | {'Description':<24} | {'Size':<12} | {'Mode':<5} | {'Latency':<10} | {'Category':<10}"
@@ -162,7 +186,7 @@ def print_benchmark_report(metrics: dict[str, Any]) -> None:
             f"{res['index']:<3} | {res['description']:<24} | {size_str:<12} | {res['mode']:<5} | {res['latency_ms']:>7.2f} ms | {res['predicted_category']!s:<10}"
         )
     print("-" * 80)
-    print(" SUMMARY METRICS (CPU):")
+    print(f" SUMMARY METRICS ({device_label}):")
     print(f"  - Total Elapsed Time : {metrics['total_ms']:.2f} ms")
     print(
         f"  - Mean Latency        : {metrics['mean_ms']:.2f} ms (+/- {metrics['stdev_ms']:.2f} ms)"

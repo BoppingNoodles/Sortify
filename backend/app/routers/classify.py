@@ -6,6 +6,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from PIL import UnidentifiedImageError
+from PIL.Image import DecompressionBombError
 
 from backend.app.core.config import settings
 from backend.app.schemas import (
@@ -15,12 +16,23 @@ from backend.app.schemas import (
 )
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
 from backend.app.services.model_service import ModelService, model_service
-from backend.app.services.tips_service import get_disposal_guidance
+from backend.app.services.tips_service import get_disposal_guidance, get_disposal_tip
 from backend.app.utils.validators import validate_image_upload
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Bound concurrent CPU inference requests to prevent threadpool starvation
+INFERENCE_SEMAPHORE = asyncio.Semaphore(4)
+
+IMAGE_DECODE_ERRORS = (
+    UnidentifiedImageError,
+    OSError,
+    ValueError,
+    SyntaxError,
+    DecompressionBombError,
+)
 
 # Translates raw model prediction labels to canonical app categories.
 LABEL_TO_CATEGORY = {
@@ -49,8 +61,8 @@ async def classify_item(
     service: ModelService = Depends(get_model_service),  # noqa: B008
 ) -> ClassifyResponse:
     """Ingest image upload, run model inference with timeout resilience, and return classification."""
+    # 1. Read uploaded image bytes and immediately release file descriptor
     try:
-        # 1. Read uploaded image bytes asynchronously with defensive error handling
         try:
             image_bytes = await file.read()
         except Exception as exc:
@@ -59,50 +71,52 @@ async def classify_item(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Unable to read the uploaded image stream.",
             ) from exc
+    finally:
+        await file.close()
 
-        if not image_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Uploaded file is empty.",
-            )
+    if not image_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Uploaded file is empty.",
+        )
 
-        # 2. Run model inference in worker threadpool with timeout protection
-        timeout_seconds = getattr(settings, "INFERENCE_TIMEOUT_SECONDS", 10.0)
-        try:
+    # 2. Run model inference in bounded worker threadpool with timeout protection
+    timeout_seconds = getattr(settings, "INFERENCE_TIMEOUT_SECONDS", 10.0)
+    try:
+        async with INFERENCE_SEMAPHORE:
             prediction = await asyncio.wait_for(
                 run_in_threadpool(service.predict, image_bytes),
                 timeout=timeout_seconds,
             )
-        except asyncio.TimeoutError as exc:
-            logger.error(
-                "Inference request timed out after %.2f seconds", timeout_seconds
-            )
-            raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Inference request timed out after {timeout_seconds:.1f}s.",
-            ) from exc
-        except (UnidentifiedImageError, OSError, ValueError) as exc:
-            logger.warning("Invalid or corrupted image payload: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Could not read the image. The file may be corrupted or has an invalid format.",
-            ) from exc
-        except (RuntimeError, MemoryError) as exc:
-            logger.error("Model inference runtime execution failure: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Inference engine temporarily unavailable or execution failed.",
-            ) from exc
-        except HTTPException:
-            raise
-        except Exception:
-            logger.exception("Unexpected classification pipeline error")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Inference pipeline encountered an unexpected error.",
-            ) from None
+    except asyncio.TimeoutError as exc:
+        logger.error("Inference request timed out after %.2f seconds", timeout_seconds)
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"Inference request timed out after {timeout_seconds:.1f}s.",
+        ) from exc
+    except IMAGE_DECODE_ERRORS as exc:
+        logger.warning("Invalid or corrupted image payload: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Could not read the image. The file may be corrupted, oversized, or has an invalid format.",
+        ) from exc
+    except (RuntimeError, MemoryError) as exc:
+        logger.error("Model inference runtime execution failure: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Inference engine temporarily unavailable or execution failed.",
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Unexpected classification pipeline error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Inference pipeline encountered an unexpected error.",
+        ) from None
 
-        # 3. Translate model label to canonical category and fetch disposal guidance
+    # 3. Post-inference defensive processing
+    try:
         label = str(prediction.get("category", "")).strip().lower()
         item_name = prediction.get("item_name") or label.title()
         category = LABEL_TO_CATEGORY.get(label, "landfill")
@@ -110,29 +124,39 @@ async def classify_item(
         bin_color = BIN_COLORS.get(category, "Green")
 
         # 4. Map alternative candidates through taxonomy normalization, filtering duplicates
-        raw_alternatives = prediction.get("alternatives", [])
+        raw_alternatives = prediction.get("alternatives") or []
         alternatives: list[ClassificationAlternative] = []
         seen_categories: set[str] = {category}
 
         for alt in raw_alternatives:
+            if not isinstance(alt, dict):
+                continue
             raw_cat = str(alt.get("category", "")).strip().lower()
             mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
             if mapped_cat in ALLOWED_CATEGORIES and mapped_cat not in seen_categories:
-                seen_categories.add(mapped_cat)
+                conf = alt.get("confidence")
+                if conf is None or not isinstance(conf, (int, float)):
+                    continue
+                bounded_conf = max(0.0, min(1.0, float(conf)))
                 alternatives.append(
                     ClassificationAlternative(
                         category=mapped_cat,
-                        confidence=alt["confidence"],
+                        confidence=round(bounded_conf, 4),
                     )
                 )
+                seen_categories.add(mapped_cat)
+
+        raw_conf = prediction.get("confidence", 0.0)
+        primary_conf = float(raw_conf) if isinstance(raw_conf, (int, float)) else 0.0
+        primary_conf = max(0.0, min(1.0, primary_conf))
 
         # 5. Build validated response payload
         return ClassifyResponse(
             item_name=item_name,
             category=category,
-            confidence=prediction.get("confidence", 0.0),
+            confidence=round(primary_conf, 4),
             location=location.lower(),
-            disposal_tip=guidance["tip"],
+            disposal_tip=get_disposal_tip(category, item_name, location),
             bin_color=bin_color,
             bin=f"{bin_color} {category.capitalize()} Bin",
             disposal_tips=DisposalTip(
@@ -142,5 +166,9 @@ async def classify_item(
             ),
             alternatives=alternatives,
         )
-    finally:
-        await file.close()
+    except Exception:
+        logger.exception("Failed to build classification response payload")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error constructing classification response.",
+        ) from None
