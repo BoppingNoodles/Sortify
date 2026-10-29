@@ -21,6 +21,11 @@ from backend.scripts.benchmark_inference import (
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def isolate_custom_model_instances(monkeypatch):
+    monkeypatch.setattr(ModelService, "_instance", None)
+
+
 @pytest.mark.parametrize("city", ["berkeley", "san-francisco", "oakland"])
 @pytest.mark.parametrize(
     "category", ["compost", "glass", "landfill", "paper", "plastic"]
@@ -130,6 +135,14 @@ def test_classify_corrupted_payload_returns_422():
 
     assert response.status_code == 422
     assert "Could not read the image" in response.json()["detail"]
+
+
+def test_classify_rejects_oversized_dimensions():
+    payload = create_test_image((8193, 1), "RGB", "PNG")
+    response = client.post(
+        "/api/classify", files={"file": ("too-wide.png", payload, "image/png")}
+    )
+    assert response.status_code == 422
 
 
 def test_classify_empty_payload():
@@ -277,7 +290,7 @@ def test_model_service_dynamic_checkpoint_dimension(tmp_path, monkeypatch, confi
     )
 
     if configured:
-        from backend.app.services import model_service as service_module
+        from backend.app.services import inference as service_module
 
         monkeypatch.setattr(
             service_module,
