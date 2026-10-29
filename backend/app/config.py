@@ -13,6 +13,7 @@ from pydantic_settings import (
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BACKEND_DIR.parent
+DEFAULT_MODEL_PATH = BACKEND_DIR / "app" / "models" / "sortify_mvp_v1.pth"
 
 
 class Settings(BaseSettings):
@@ -30,7 +31,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = Field(default="/api", description="API route prefix")
     MODEL_PATH: str = Field(
-        default=str(BACKEND_DIR / "app" / "models" / "sortify_mvp_v1.pth"),
+        default=str(DEFAULT_MODEL_PATH),
         description="Path to model weights checkpoint",
     )
     CORS_ORIGINS: list[str] | str = Field(
@@ -55,6 +56,7 @@ class Settings(BaseSettings):
         default="serviceAccountKey.json",
         description="Path to Firebase credentials service account key",
     )
+    INFERENCE_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, allow_inf_nan=False)
 
     model_config = SettingsConfigDict(
         env_file=(str(ROOT_DIR / ".env"), str(BACKEND_DIR / ".env")),
