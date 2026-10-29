@@ -21,6 +21,33 @@ from backend.scripts.benchmark_inference import (
 client = TestClient(app)
 
 
+@pytest.mark.parametrize("city", ["berkeley", "san-francisco", "oakland"])
+@pytest.mark.parametrize(
+    "category", ["compost", "glass", "landfill", "paper", "plastic"]
+)
+def test_classify_preserves_municipal_rules(city, category, monkeypatch):
+    from backend.app.services.municipal_rules import get_category_rule
+
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image: {
+            "category": category,
+            "confidence": 0.9,
+            "item_name": "Bottle",
+        },
+    )
+    response = client.post(
+        "/api/classify",
+        params={"location": city},
+        files={"file": ("photo.jpg", create_test_image(), "image/jpeg")},
+    )
+    assert response.status_code == 200
+    assert (
+        get_category_rule(category, city) in response.json()["disposal_tips"]["notes"]
+    )
+
+
 def create_test_image(
     size: tuple[int, int] = (100, 100),
     mode: str = "RGB",
@@ -106,10 +133,10 @@ def test_classify_corrupted_payload_returns_422():
 
 
 def test_classify_empty_payload():
-    """Verify empty file upload returns HTTP 422 without server error."""
+    """Preserve the upload validator's HTTP 400 contract for empty files."""
     files = {"file": ("empty.jpg", b"", "image/jpeg")}
     response = client.post("/api/classify", files=files)
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert "empty" in response.json()["detail"].lower()
 
 
@@ -250,8 +277,12 @@ def test_model_service_dynamic_checkpoint_dimension(tmp_path, monkeypatch, confi
     )
 
     if configured:
+        from backend.app.services import model_service as service_module
+
         monkeypatch.setattr(
-            "backend.app.services.model_service.settings.MODEL_PATH", str(ckpt_path)
+            service_module,
+            "settings",
+            service_module.settings.model_copy(update={"MODEL_PATH": str(ckpt_path)}),
         )
         svc = ModelService()
     else:

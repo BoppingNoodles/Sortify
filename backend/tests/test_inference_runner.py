@@ -86,7 +86,11 @@ def test_concurrent_http_timeouts_never_exceed_worker_limit(monkeypatch):
                 active -= 1
 
     monkeypatch.setattr(classify, "inference_runner", runner)
-    monkeypatch.setattr(classify.settings, "INFERENCE_TIMEOUT_SECONDS", 0.05)
+    monkeypatch.setattr(
+        classify,
+        "settings",
+        classify.settings.model_copy(update={"INFERENCE_TIMEOUT_SECONDS": 0.05}),
+    )
     monkeypatch.setattr(classify.ModelService, "predict", slow_predict)
     image = io.BytesIO()
     Image.new("RGB", (16, 16)).save(image, format="JPEG")
