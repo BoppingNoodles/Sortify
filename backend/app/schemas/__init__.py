@@ -6,7 +6,10 @@ from backend.app.schemas.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
     DisposalTip,
+    GuestScanRecord,
+    HistoryPage,
     RuleResponse,
+    SavedGuestScan,
     ScanRecord,
 )
 
@@ -16,6 +19,9 @@ __all__ = [
     "ClassificationAlternative",
     "ClassifyResponse",
     "DisposalTip",
+    "GuestScanRecord",
+    "HistoryPage",
     "RuleResponse",
+    "SavedGuestScan",
     "ScanRecord",
 ]

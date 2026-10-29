@@ -28,7 +28,7 @@ The Sortify REST API decouples client applications (Expo / React Native mobile c
 ### Request Headers
 | Header | Type | Description | Required |
 |---|---|---|---|
-| `Authorization` | String | Firebase ID token in format `Bearer <token>` | Optional for guest endpoints, Required for user data (`/api/history`, `/api/auth/me`) |
+| `Authorization` | String | Firebase ID token in format `Bearer <token>` | Optional for guest endpoints (including `/api/history`), required for `/api/auth/me` |
 | `Content-Type` | String | `application/json` for standard requests; `multipart/form-data` for image uploads | Required |
 | `Accept` | String | `application/json` | Recommended |
 
@@ -144,65 +144,55 @@ The Sortify REST API decouples client applications (Expo / React Native mobile c
 
 ---
 
-### 3.4 Scan History & User Logs
+### 3.4 Guest Scan History
+
+History uses a randomly generated device UUID persisted by the mobile client.
+This identifier selects the guest's records; it is not verified account
+identity. Bearer login is not required. Keep the device UUID private and avoid
+putting personal information in guest scan records.
 
 #### 3.4.1 Retrieve Paginated Scan History
 * **Endpoint:** `GET /api/history`
-* **Description:** Retrieves logged scans for the authenticated user with pagination.
-* **Authentication:** Required (`Bearer <token>`)
+* **Query:** required `user_id` (UUID), optional `limit` (1–100, default 20),
+  optional `cursor` (opaque `next_cursor` from the previous response).
+* **Response:** `scans`, `limit`, `next_cursor`; no global total or numeric offset.
+* Records are ordered by timestamp descending, then scan UUID descending.
+  The extra record fetched by the service distinguishes a full final page from
+  one with more results. Cursors are scoped to the device UUID.
 
-##### Query Parameters
-- `limit` *(integer, optional, default: 20, max: 100)*: Number of records per page.
-- `offset` *(integer, optional, default: 0)*: Number of records to skip.
-
-##### Response (HTTP 200 OK)
 ```json
 {
-  "scans": [
-    {
-      "scan_id": "scan_abc123",
-      "user_id": "user_456",
-      "timestamp": "2026-10-07T12:00:00Z",
-      "category": "plastic",
-      "item_name": "Plastic Water Bottle",
-      "confidence": 0.94,
-      "location": "berkeley",
-      "bin_color": "Blue"
-    }
-  ],
-  "total": 1,
+  "scans": [{
+    "scan_id": "e60685c7-5dcc-42f0-9dc4-176b9676fec7",
+    "user_id": "d993af39-f604-4426-abf7-fdd664918d15",
+    "timestamp": "2026-10-28T08:00:00Z",
+    "category": "plastic",
+    "item_name": "Plastic Water Bottle",
+    "confidence": 0.94,
+    "location": "berkeley",
+    "bin_color": "Blue",
+    "bin": "Blue Plastic Bin"
+  }],
   "limit": 20,
-  "offset": 0
+  "next_cursor": null
 }
 ```
 
 #### 3.4.2 Log New Scan Record
-* **Endpoint:** `POST /api/history`
-* **Description:** Logs a completed scan to the user's profile and updates leaderboard stats.
-* **Authentication:** Required (`Bearer <token>`)
-* **Content-Type:** `application/json`
+* **Endpoint:** `POST /api/history`, JSON body, **201 Created**.
+* Required: `user_id` (device UUID), `item_name`, canonical `category`, and
+  `confidence` in [0,1]. The server generates `scan_id` (UUID) and UTC `timestamp`
+  if omitted, and derives `bin_color` and `bin`. Supplied timestamps must include
+  a timezone; they are normalized to UTC.
+* The response contains `status: "created"`, `scan_id`, and the complete `scan`.
+  Resending the complete record with the same scan UUID replaces it without
+  duplicating it. Stats/leaderboards are not modified by this endpoint.
+* Invalid fields/limits: **422**; malformed or other-device cursor: **400**;
+  configured Firestore unavailable: **503** without exposing database details.
 
-##### Request Body
-```json
-{
-  "scan_id": "scan_abc123",
-  "user_id": "user_456",
-  "timestamp": "2026-10-07T12:00:00Z",
-  "category": "plastic",
-  "item_name": "Plastic Water Bottle",
-  "confidence": 0.94,
-  "location": "berkeley",
-  "bin_color": "Blue"
-}
-```
-
-##### Response (HTTP 201 Created)
-```json
-{
-  "status": "created",
-  "scan_id": "scan_abc123"
-}
-```
+See [the backend history guide](../backend/README.md#guest-scan-history) for
+storage configuration and a three-record pagination example. Clients using the
+old mock Bearer/offset contract must migrate to the device UUID/cursor contract.
 
 ---
 

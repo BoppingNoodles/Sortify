@@ -112,36 +112,39 @@ def test_auth_verify_endpoint():
 
 
 def test_history_get_endpoint_success():
-    response = client.get("/api/history?limit=10&offset=0", headers=AUTH_HEADERS)
+    response = client.get(
+        "/api/history",
+        params={"user_id": "d993af39-f604-4426-abf7-fdd664918d15", "limit": 10},
+    )
     assert response.status_code == 200
     data = response.json()
     assert "scans" in data
     assert data["limit"] == 10
-    assert data["offset"] == 0
+    assert "next_cursor" in data
 
 
-def test_history_get_endpoint_unauthorized():
-    response = client.get("/api/history?limit=10&offset=0")
-    assert response.status_code == 401
+def test_history_get_requires_guest_uuid():
+    response = client.get("/api/history?limit=10")
+    assert response.status_code == 422
 
 
 def test_history_post_endpoint_success():
     payload = {
-        "scan_id": "scan-unit-test-1",
-        "user_id": "user-test",
+        "scan_id": "e60685c7-5dcc-42f0-9dc4-176b9676fec7",
+        "user_id": "d993af39-f604-4426-abf7-fdd664918d15",
         "timestamp": "2026-10-07T12:00:00Z",
         "category": "paper",
         "item_name": "Cardboard Box",
         "confidence": 0.95,
         "location": "berkeley",
     }
-    response = client.post("/api/history", json=payload, headers=AUTH_HEADERS)
+    response = client.post("/api/history", json=payload)
     assert response.status_code == 201
     assert response.json()["status"] == "created"
-    assert response.json()["scan_id"] == "scan-unit-test-1"
+    assert response.json()["scan_id"] == payload["scan_id"]
 
 
-def test_history_post_endpoint_unauthorized():
+def test_history_post_rejects_invalid_guest_identifiers():
     payload = {
         "scan_id": "scan-unit-test-2",
         "user_id": "user-test",
@@ -152,7 +155,7 @@ def test_history_post_endpoint_unauthorized():
         "location": "berkeley",
     }
     response = client.post("/api/history", json=payload)
-    assert response.status_code == 401
+    assert response.status_code == 422
 
 
 def test_cors_headers():

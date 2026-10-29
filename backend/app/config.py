@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import (
@@ -57,13 +57,17 @@ class Settings(BaseSettings):
         description="Path to Firebase credentials service account key",
     )
     INFERENCE_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, allow_inf_nan=False)
+    HISTORY_STORAGE: Literal["memory", "firestore"] = Field(
+        default="memory",
+        description="Scan history storage backend ('memory' or 'firestore')",
+    )
 
     model_config = SettingsConfigDict(
         env_file=(str(ROOT_DIR / ".env"), str(BACKEND_DIR / ".env")),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
-        frozen=True,
+        frozen=False,
     )
 
     @classmethod
