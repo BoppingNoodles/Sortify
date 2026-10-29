@@ -11,6 +11,7 @@ from backend.app.schemas import (
 )
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
 from backend.app.services.model_service import ModelService, model_service
+from backend.app.services.municipal_rules import get_category_rule
 from backend.app.services.tips_service import get_disposal_guidance
 from backend.app.utils.validators import validate_image_upload
 
@@ -59,7 +60,20 @@ async def classify_item(
     label = prediction["category"]
     item_name = prediction.get("item_name") or label.title()
     category = LABEL_TO_CATEGORY.get(label, "landfill")
+
     guidance = get_disposal_guidance(category, item_name, location)
+    notes = guidance.get("notes", "")
+    city_rule = get_category_rule(category, location)
+
+    if city_rule:
+        # Clean and check both components to prevent redundant phrasing
+        clean_notes = notes.strip().lower()
+        clean_rule = city_rule.strip().lower()
+        if clean_rule not in clean_notes and clean_notes not in clean_rule:
+            # Avoid double punctiation if notes already end with a period
+            separator = " " if notes.endswith(".") else ". "
+            notes = f"{notes}{separator}Local rules: {city_rule}"
+
     bin_color = BIN_COLORS.get(category, "Green")
 
     # 4. Map alternative candidates through taxonomy normalization
@@ -88,7 +102,7 @@ async def classify_item(
         disposal_tips=DisposalTip(
             action=guidance["action"],
             bin_type=guidance["bin_type"],
-            notes=guidance["notes"],
+            notes=notes,
         ),
         alternatives=alternatives,
     )
