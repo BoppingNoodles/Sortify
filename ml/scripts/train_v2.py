@@ -1,12 +1,13 @@
 """Model retraining pipeline for Sortify v2.
 
-Fine-tunes a ResNet-18 backbone on the augmented dataset v2.
+Fine-tunes a MobileNetV2 backbone on the augmented dataset v2.
 
 Run from the repo root:
     python ml/scripts/train_v2.py
 """
 
 import json
+import sys
 from pathlib import Path
 
 import torch
@@ -14,15 +15,25 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
-DATA_DIR = Path("data/processed_v2")
-OUTPUT_MODEL_PATH = Path("ml/models/sortify_v2.pth")
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from ml.scripts.dataset import DEFAULT_NUM_WORKERS
+
+DATA_DIR = REPO_ROOT / "data" / "processed_v2"
+OUTPUT_MODEL_PATH = REPO_ROOT / "ml" / "models" / "sortify_v2.pth"
 HISTORY_PATH = OUTPUT_MODEL_PATH.with_name("sortify_v2_history.json")
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-def get_data_loaders(data_dir: Path, batch_size: int = 32):
+def get_data_loaders(
+    data_dir: Path,
+    batch_size: int = 32,
+    num_workers: int = DEFAULT_NUM_WORKERS,
+):
     train_transform = transforms.Compose(
         [
             transforms.RandomResizedCrop(224),
@@ -46,10 +57,18 @@ def get_data_loaders(data_dir: Path, batch_size: int = 32):
     train_ds = datasets.ImageFolder(data_dir / "train", transform=train_transform)
     val_ds = datasets.ImageFolder(data_dir / "val", transform=val_transform)
 
+    if train_ds.classes != val_ds.classes:
+        raise ValueError(
+            f"Class parity mismatch between train and val splits: "
+            f"train={train_ds.classes}, val={val_ds.classes}"
+        )
+
     train_loader = DataLoader(
-        train_ds, batch_size=batch_size, shuffle=True, num_workers=2
+        train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers
     )
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=2)
+    val_loader = DataLoader(
+        val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
     return train_loader, val_loader, train_ds.classes
 
 
@@ -83,8 +102,8 @@ def train_model(epochs: int = 15, lr: float = 1e-4):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader, val_loader, classes = get_data_loaders(DATA_DIR)
 
-    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-    model.fc = nn.Linear(model.fc.in_features, len(classes))
+    model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
+    model.classifier[1] = nn.Linear(model.classifier[1].in_features, len(classes))
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -126,7 +145,14 @@ def train_model(epochs: int = 15, lr: float = 1e-4):
             best_val_acc = val_acc
             best_per_class = per_class
             OUTPUT_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-            torch.save(model.state_dict(), OUTPUT_MODEL_PATH)
+            checkpoint = {
+                "architecture": "mobilenet_v2",
+                "model_state_dict": {k: v.cpu() for k, v in model.state_dict().items()},
+                "class_names": list(classes),
+                "best_epoch": epoch + 1,
+                "val_accuracy": best_val_acc,
+            }
+            torch.save(checkpoint, OUTPUT_MODEL_PATH)
             print(f"[*] Saved new best model to {OUTPUT_MODEL_PATH}")
 
     # Persist the loss/accuracy curves for later plotting.
