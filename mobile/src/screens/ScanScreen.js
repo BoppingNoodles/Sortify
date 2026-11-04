@@ -1,13 +1,26 @@
 // src/screens/ScanScreen.js
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, SafeAreaView, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  SafeAreaView,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { COLORS, SPACING } from '../styles/theme';
+import { classifyImage } from '../services/api';
+
+const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
 
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('berkeley');
   const cameraRef = useRef(null);
 
   if (!permission) {
@@ -23,8 +36,10 @@ export default function ScanScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionBody}>Sortify requires camera access to scan and classify waste items in real time.</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
+        <Text style={styles.permissionBody}>
+          Sortify requires camera access to scan and classify waste items in real time.
+        </Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission} activeOpacity={0.8}>
           <Text style={styles.buttonText}>Grant Permission</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -34,65 +49,138 @@ export default function ScanScreen({ navigation }) {
   const handleCapture = async () => {
     if (!cameraRef.current || isAnalyzing) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-      setCapturedPhoto(photo);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        skipProcessing: false,
+      });
+      if (photo?.uri) {
+        setCapturedPhoto(photo);
+      }
     } catch (error) {
       console.error('Failed to capture photo:', error);
+      Alert.alert('Camera Error', 'Could not capture photo. Please try again.');
     }
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!capturedPhoto?.uri || isAnalyzing) return;
+
     setIsAnalyzing(true);
-    // TODO: In Week 4, call classifyImage(capturedPhoto.uri)
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    try {
+      const result = await classifyImage(capturedPhoto.uri, selectedCity);
+
+      if (!result || typeof result !== 'object') {
+        throw new Error('Classification server returned an invalid response.');
+      }
+
       const photoUri = capturedPhoto.uri;
+
+      // Clear captured photo so camera preview resets cleanly when returning from result modal
       setCapturedPhoto(null);
+
+      // Navigate to ResultModal with live prediction fields
       navigation.navigate('ResultModal', {
-        itemName: 'Paper Coffee Cup',
-        category: 'compost',
-        confidence: 0.94,
-        tip: 'Accepted in Berkeley green compost bins. Please empty liquids first.',
+        itemName: result.item_name || result.itemName || 'Detected Waste Item',
+        category: (result.category || 'landfill').toLowerCase(),
+        confidence: typeof result.confidence === 'number' ? result.confidence : 0.0,
+        bin: result.bin || result.bin_color || 'Landfill Bin',
+        binColor: result.bin_color || null,
+        disposalTip: result.disposal_tip || result.tip || 'Place in designated waste receptacle.',
+        tip: result.disposal_tip || result.tip || 'Place in designated waste receptacle.',
+        location: result.location || selectedCity,
+        alternatives: result.alternatives || [],
         photoUri,
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Classification request failed:', error);
+      Alert.alert(
+        'Scan Failed',
+        error.message || 'Unable to analyze image. Please ensure your backend server is running.',
+        [
+          { text: 'Retake', style: 'cancel', onPress: handleRetake },
+          { text: 'Try Again', onPress: handleAnalyze },
+        ]
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleRetake = () => {
+    if (isAnalyzing) return;
     setCapturedPhoto(null);
   };
+
+  const handleCycleCity = () => {
+    const currentIndex = SUPPORTED_CITIES.indexOf(selectedCity);
+    const nextCity = SUPPORTED_CITIES[(currentIndex + 1) % SUPPORTED_CITIES.length];
+    setSelectedCity(nextCity);
+  };
+
+  const formattedCity = selectedCity.replace('-', ' ').toUpperCase();
 
   return (
     <View style={styles.container}>
       {capturedPhoto ? (
         <View style={styles.previewContainer}>
           <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
+
           {isAnalyzing ? (
             <View style={styles.analyzingOverlay}>
               <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.analyzingText}>Analyzing item with Sortify AI...</Text>
+              <Text style={styles.analyzingText}>Analyzing waste item with AI...</Text>
+              <Text style={styles.analyzingSubtext}>Checking {formattedCity} sorting rules</Text>
             </View>
           ) : (
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.retakeButton} onPress={handleRetake}>
-                <Text style={styles.retakeText}>Retake</Text>
+            <View style={styles.previewControls}>
+              <TouchableOpacity
+                style={styles.retakeButton}
+                onPress={handleRetake}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.retakeButtonText}>Retake</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.analyzeButton} onPress={handleAnalyze}>
-                <Text style={styles.buttonText}>Analyze Item</Text>
+              <TouchableOpacity
+                style={styles.analyzeButton}
+                onPress={handleAnalyze}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.analyzeButtonText}>Identify Bin</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
       ) : (
         <CameraView style={styles.camera} ref={cameraRef}>
-          {/* Target Reticle Overlay */}
-          <View style={styles.reticle} />
-          <Text style={styles.reticleHint}>Center item inside frame</Text>
+          <SafeAreaView style={styles.cameraOverlay}>
+            {/* Top Bar with Municipality Selector */}
+            <View style={styles.topBar}>
+              <TouchableOpacity
+                style={styles.cityPill}
+                onPress={handleCycleCity}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Shutter Bar */}
-          <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.shutterButton} onPress={handleCapture} activeOpacity={0.7} />
-          </View>
+            {/* Target Reticle Overlay */}
+            <View style={styles.reticleContainer}>
+              <View style={styles.reticleBox} />
+              <Text style={styles.reticleHint}>Center item inside frame</Text>
+            </View>
+
+            {/* Shutter Button Controls */}
+            <View style={styles.bottomControls}>
+              <TouchableOpacity
+                style={styles.shutterButton}
+                onPress={handleCapture}
+                activeOpacity={0.7}
+              >
+                <View style={styles.shutterInner} />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
         </CameraView>
       )}
     </View>
@@ -100,24 +188,173 @@ export default function ScanScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, backgroundColor: COLORS.background.primary },
-  statusText: { marginTop: 12, color: COLORS.text.secondary },
-  permissionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8, color: COLORS.text.primary },
-  permissionBody: { fontSize: 14, color: COLORS.text.secondary, textAlign: 'center', marginBottom: 20 },
-  primaryButton: { backgroundColor: COLORS.bins.compost, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
-  buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  camera: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  reticle: { width: 260, height: 260, borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)', borderRadius: 20 },
-  reticleHint: { color: 'rgba(255,255,255,0.8)', marginTop: 16, fontSize: 13, fontWeight: '600' },
-  bottomBar: { position: 'absolute', bottom: 44, width: '100%', alignItems: 'center' },
-  shutterButton: { width: 74, height: 74, borderRadius: 37, borderWidth: 4, borderColor: '#FFF', backgroundColor: 'rgba(255,255,255,0.3)' },
-  previewContainer: { flex: 1 },
-  previewImage: { flex: 1 },
-  actionRow: { position: 'absolute', bottom: 44, flexDirection: 'row', width: '100%', justifyContent: 'space-evenly', paddingHorizontal: 20 },
-  retakeButton: { backgroundColor: 'rgba(0,0,0,0.6)', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12, borderWidth: 1, borderColor: '#FFF' },
-  retakeText: { color: '#FFF', fontWeight: '600', fontSize: 15 },
-  analyzeButton: { backgroundColor: COLORS.bins.compost, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 },
-  analyzingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
-  analyzingText: { color: '#FFF', marginTop: 16, fontSize: 16, fontWeight: '600' },
+  container: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    backgroundColor: COLORS.background.primary,
+  },
+  statusText: {
+    marginTop: 12,
+    color: COLORS.text.secondary,
+    fontSize: 14,
+  },
+  permissionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: COLORS.text.primary,
+  },
+  permissionBody: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.accent.berkeleyBlue,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraOverlay: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  cityPill: {
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  cityPillText: {
+    color: '#F8FAFC',
+    fontWeight: '600',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  reticleContainer: {
+    alignItems: 'center',
+  },
+  reticleBox: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 18,
+    borderStyle: 'dashed',
+  },
+  reticleHint: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 14,
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  bottomControls: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  shutterButton: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shutterInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+  },
+  previewContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
+  previewImage: {
+    flex: 1,
+    resizeMode: 'cover',
+  },
+  analyzingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.82)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  analyzingText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  analyzingSubtext: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  previewControls: {
+    position: 'absolute',
+    bottom: 36,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  retakeButton: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  retakeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  analyzeButton: {
+    flex: 1.5,
+    backgroundColor: COLORS.accent.berkeleyBlue,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  analyzeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });
