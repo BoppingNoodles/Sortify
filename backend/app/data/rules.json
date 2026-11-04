@@ -41,12 +41,12 @@
   },
   "sunnyvale": {
     "rules": {
-      "compost": "Food scraps, including meat, dairy, bones, shells, tea bags and coffee grounds, go in the food side of the split cart in a clear plastic bag. Apartments use the shared brown food scraps cart or bin.",
-      "plastic": "Rinse plastic containers and place them in the recycling cart. Clamshell and hinged plastic containers and black plastic go in the garbage.",
-      "paper": "Flatten cardboard and keep paper clean. Milk, soup and juice cartons are accepted. Frozen food boxes go in the garbage.",
-      "glass": "Glass bottles and jars go in the recycling cart. Ceramics, glassware, window glass and mirrors go in the garbage.",
-      "landfill": "Garbage goes in the garbage side of the split cart. Frozen food boxes, clamshell containers and black plastic belong here. Plastic bags can be returned to grocery stores."
+      "compost": "Put food scraps in a clear plastic bag in the food side of your split cart or your food-only cart. Compostable or paper bags are fine.",
+      "plastic": "Rinse plastic containers and place them in the recycling cart. Metal cans and clean foil go in the recycling cart. Plastic bags can be recycled at grocery stores.",
+      "paper": "Flatten cardboard boxes and keep paper clean. Remove inserts from paper boxes.",
+      "glass": "Glass bottles and jars go in the recycling cart. Empty and rinse containers, put lids back on.",
+      "landfill": "Place these items in your split garbage cart or garbage bin. Hazardous waste, electronics, and batteries must be taken to a household hazardous waste facility."
     },
-    "source_url": "https://sunnyvale.ca.gov"
+    "source_url": "https://www.sunnyvale.ca.gov/homes-streets-and-property/recycling-and-garbage"
   }
 }
