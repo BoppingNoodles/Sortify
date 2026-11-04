@@ -1,8 +1,9 @@
 """Automated tests for the municipal rules endpoints."""
 
 import pytest
-from backend.app.main import app
 from fastapi.testclient import TestClient
+
+from backend.app.main import app
 
 client = TestClient(app)
 
