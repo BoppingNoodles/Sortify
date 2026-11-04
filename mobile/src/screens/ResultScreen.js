@@ -9,7 +9,6 @@ export default function ResultScreen({ route, navigation }) {
     category = 'compost',
     confidence = 0.94,
     bin = null,
-    binColor: passedBinColor = null,
     tip = null,
     disposalTip = null,
     location = 'berkeley',
@@ -17,7 +16,8 @@ export default function ResultScreen({ route, navigation }) {
   } = route?.params || {};
 
   const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
-  const binColor = passedBinColor || COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
+  // API bin_color values are display labels ("Green"), not native style colors.
+  const binColor = COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
   const confidencePercent = Math.round((typeof confidence === 'number' ? confidence : 0.94) * 100);
   const locationLabel = location
     ? location

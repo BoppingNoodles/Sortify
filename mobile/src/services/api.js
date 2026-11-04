@@ -50,7 +50,7 @@ function resolveMimeType(filename) {
  * @returns {Promise<Object>} Backend classification response
  */
 export async function classifyImage(imageUri, location = 'berkeley', maxRetries = MAX_RETRIES) {
-  const filename = imageUri.split('/').pop() || 'photo.jpg';
+  let filename = imageUri.split('/').pop() || 'photo.jpg';
   const type = resolveMimeType(filename);
   const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
 
@@ -59,9 +59,22 @@ export async function classifyImage(imageUri, location = 'berkeley', maxRetries 
   if (Platform.OS === 'web') {
     try {
       const blobResponse = await fetch(imageUri);
+      if (!blobResponse.ok) {
+        throw new Error('Could not read captured photo.');
+      }
       webBlob = await blobResponse.blob();
-    } catch (err) {
-      console.warn('Could not convert URI to blob on web platform, continuing with direct URI:', err);
+      const extension = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+      }[webBlob.type];
+      if (!extension || !webBlob.size) {
+        throw new Error('Captured photo must be a non-empty JPEG, PNG, or WebP image.');
+      }
+      // A data URI contains image bytes, not a safe multipart filename.
+      filename = `photo.${extension}`;
+    } catch {
+      throw new Error('Could not read captured photo. Please retake it and try again.');
     }
   }
 
@@ -100,7 +113,15 @@ export async function classifyImage(imageUri, location = 'berkeley', maxRetries 
         let errorDetail = '';
         try {
           const errorJson = await response.json();
-          errorDetail = errorJson.detail || '';
+          const detail = errorJson.detail;
+          if (typeof detail === 'string') {
+            errorDetail = detail;
+          } else if (Array.isArray(detail)) {
+            errorDetail = detail
+              .map((entry) => typeof entry?.msg === 'string' ? entry.msg : '')
+              .filter(Boolean)
+              .join(' ');
+          }
         } catch {
           // Response body was not JSON
         }

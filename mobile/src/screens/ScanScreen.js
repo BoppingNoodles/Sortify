@@ -22,6 +22,7 @@ export default function ScanScreen({ navigation }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedCity, setSelectedCity] = useState('berkeley');
   const cameraRef = useRef(null);
+  const operationInProgress = useRef(false);
 
   if (!permission) {
     return (
@@ -47,7 +48,8 @@ export default function ScanScreen({ navigation }) {
   }
 
   const handleCapture = async () => {
-    if (!cameraRef.current || isAnalyzing) return;
+    if (!cameraRef.current || operationInProgress.current) return;
+    operationInProgress.current = true;
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
@@ -59,12 +61,15 @@ export default function ScanScreen({ navigation }) {
     } catch (error) {
       console.error('Failed to capture photo:', error);
       Alert.alert('Camera Error', 'Could not capture photo. Please try again.');
+    } finally {
+      operationInProgress.current = false;
     }
   };
 
   const handleAnalyze = async () => {
-    if (!capturedPhoto?.uri || isAnalyzing) return;
+    if (!capturedPhoto?.uri || operationInProgress.current) return;
 
+    operationInProgress.current = true;
     setIsAnalyzing(true);
     try {
       const result = await classifyImage(capturedPhoto.uri, selectedCity);
@@ -102,12 +107,13 @@ export default function ScanScreen({ navigation }) {
         ]
       );
     } finally {
+      operationInProgress.current = false;
       setIsAnalyzing(false);
     }
   };
 
   const handleRetake = () => {
-    if (isAnalyzing) return;
+    if (operationInProgress.current) return;
     setCapturedPhoto(null);
   };
 
