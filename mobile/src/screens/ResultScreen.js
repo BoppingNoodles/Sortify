@@ -4,16 +4,27 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'rea
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function ResultScreen({ route, navigation }) {
-  const { 
-    itemName = 'Item Classified', 
-    category = 'compost', 
+  const {
+    itemName = 'Item Classified',
+    category = 'compost',
     confidence = 0.94,
-    tip = 'Compostable in Berkeley if certified BPI or lining is plant-based.',
+    bin = null,
+    tip = null,
+    disposalTip = null,
+    location = 'berkeley',
     photoUri = null,
   } = route?.params || {};
 
-  const binColor = COLORS.bins[category.toLowerCase()] || COLORS.bins.landfill;
-  const confidencePercent = Math.round(confidence * 100);
+  const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
+  // API bin_color values are display labels ("Green"), not native style colors.
+  const binColor = COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
+  const confidencePercent = Math.round((typeof confidence === 'number' ? confidence : 0.94) * 100);
+  const locationLabel = location
+    ? location
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    : 'Berkeley';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -23,10 +34,11 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Top Category Banner */}
       <View style={[styles.badge, { backgroundColor: binColor }]}>
-        <Text style={styles.badgeText}>{category.toUpperCase()}</Text>
+        <Text style={styles.badgeText}>{(category || 'LANDFILL').toUpperCase()}</Text>
       </View>
 
       <Text style={styles.itemName}>{itemName}</Text>
+      {bin ? <Text style={styles.binName}>Target: {bin}</Text> : null}
 
       {/* Confidence Score Bar */}
       <View style={styles.confidenceContainer}>
@@ -41,8 +53,8 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Disposal Recommendation Card */}
       <View style={styles.tipCard}>
-        <Text style={styles.tipTitle}>Disposal Guideline (Berkeley 📍)</Text>
-        <Text style={styles.tipBody}>{tip}</Text>
+        <Text style={styles.tipTitle}>Disposal Guideline ({locationLabel} 📍)</Text>
+        <Text style={styles.tipBody}>{effectiveTip}</Text>
       </View>
 
       {/* Action Buttons */}
@@ -63,7 +75,8 @@ const styles = StyleSheet.create({
   thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: '#CBD5E1' },
   badge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
   badgeText: { color: COLORS.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
-  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 20 },
+  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 6 },
+  binName: { fontSize: 15, fontWeight: '600', color: COLORS.text.secondary, marginBottom: 18 },
   confidenceContainer: { width: '100%', marginBottom: 24 },
   confidenceHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   confidenceLabel: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary },
