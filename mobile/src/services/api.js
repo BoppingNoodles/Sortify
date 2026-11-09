@@ -1,6 +1,8 @@
 
 // src/services/api.js
 
+import { Platform } from 'react-native';
+
 // 1. API URL configuration
 const FALLBACK_API_URL = 'http://10.45.153.115:8000';
 
@@ -114,15 +116,33 @@ export async function classifyImage(imageUri, location = 'berkeley') {
 
   const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
 
+  // Browsers need a real Blob, not a React Native URI descriptor.
+  let webBlob = null;
+
+  if (Platform.OS === 'web') {
+    const imageResponse = await fetch(imageUri);
+
+    if (!imageResponse.ok) {
+      throw new Error('Unable to read the captured image.');
+    }
+
+    webBlob = await imageResponse.blob();
+  }
+
   return requestWithRetry(url, () => {
     // Create fresh FormData for every retry.
     const formData = new FormData();
 
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type,
-    });
+    if (Platform.OS === 'web') {
+      formData.append('file', webBlob, filename);
+    } else {
+      // Native iOS and Android image upload.
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      });
+    }
 
     return {
       method: 'POST',

@@ -103,6 +103,8 @@ export default function ScanScreen({ navigation }) {
 
       navigation.navigate('ResultModal', {
         ...result,
+        itemName: result.item_name,
+        tip: result.disposal_tip,
         photoUri,
       });
 
