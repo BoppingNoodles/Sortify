@@ -137,3 +137,6 @@ def get_history_service() -> HistoryService:
         return HistoryService(get_db())
     except Exception as exc:
         raise HistoryServiceError("Could not connect to scan history storage") from exc
+
+
+history_service = HistoryService()
