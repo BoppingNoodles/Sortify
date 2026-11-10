@@ -59,6 +59,7 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+*.save
 .DS_Store
 Thumbs.db
 

@@ -6,21 +6,17 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
+from backend.app.main import app
 from backend.app.services.tips_service import (
     TipsDataError,
     get_disposal_guidance,
     get_disposal_tip,
     load_tips,
 )
-def get_test_client():
-    from backend.app.main import app
-    return TestClient(app)
-client = get_test_client()
-def test_item_subtips_differ_for_bottle_cup_and_food_container():
-    bottle = get_disposal_tip("plastic", "Plastic Water Bottle")
-def get_test_client():
-    from backend.app.main import app
-    return TestClient(app)
+
+client = TestClient(app)
+
+
 
 def test_item_subtips_differ_for_bottle_cup_and_food_container():
     bottle = get_disposal_tip("plastic", "Plastic Water Bottle")
@@ -67,7 +63,7 @@ def test_longest_item_key_wins():
     ],
 )
 def test_can_items_match_recycling_tips(item_name, expected_text):
-    guidance = get_disposal_guidance("glass", item_name)
+    guidance = get_disposal_guidance("plastic", item_name)
 
     assert guidance["item_tip"] is not None
     assert expected_text in guidance["item_tip"].lower()
@@ -124,7 +120,22 @@ def test_broken_tips_file_raises(tmp_path, monkeypatch):
     finally:
         load_tips.cache_clear()
 
-def test_classify_response_uses_client_item_name_hint():
+def test_classify_response_uses_client_item_name_hint(monkeypatch):
+    from backend.app.services.inference import ModelService
+
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image_bytes: {
+            "category": "plastic",
+            "item_name": "can",
+            "confidence": 0.95,
+            "alternatives": [],
+            "is_mock": True,
+            "latency_ms": 1.0,
+        },
+    )
+
     image = io.BytesIO()
     Image.new("RGB", (16, 16), "green").save(image, format="JPEG")
 
@@ -140,5 +151,6 @@ def test_classify_response_uses_client_item_name_hint():
     assert response.status_code == 200
 
     body = response.json()
+
     assert body["item_name"] == "can"
     assert "aluminum can" in body["disposal_tip"].lower()

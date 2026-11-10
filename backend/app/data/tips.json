@@ -55,9 +55,7 @@
         "items": {
           "bottle": "Rinse the bottle. Recycle the glass and keep non-metal caps out of the bottle.",
           "cup": "Rinse drinking glasses only if the city accepts them. Lids are usually landfill.",
-          "food container": "Rinse jars. Recycle clean metal lids separately from the glass.",
-          "aluminum can": "Empty the aluminum can before recycling. Check local recycling guidelines.",
-          "soda can": "Empty the soda can and recycle it under the aluminum beverage container bin."
+          "food container": "Rinse jars. Recycle clean metal lids separately from the glass."
     }
   },
     "landfill": {
@@ -65,8 +63,7 @@
         "bin_type": "gray",
         "tip": "Wrappers, chip bags, and styrofoam cannot be recycled.",
         "locations": {
-        "berkeley": "When Berkeley does not list the item, use the gray landfill cart.",
-        "snack wrapper": "Place snack wrappers in the gray landfill bin."
+        "berkeley": "When Berkeley does not list the item, use the gray landfill cart."
       },
         "items": {
           "bottle": "Soft plastic bottles and foam bottles go to landfill.",
@@ -75,7 +72,8 @@
           "wrapper": "Place snack wrappers in gray landfill bin.",
           "chip bag": "Most chip bags are not accepted in recycling and should go to landfill.",
           "greasy wrapper": "Food-contaminated wrappers should go in the landfill.",
-         "foil": "Foil-lined snack packaging should be disposed in the landfill. Clean aluminum foil can be recycled if accepted by the city."
+         "foil": "Foil-lined snack packaging should be disposed in the landfill. Clean aluminum foil can be recycled if accepted by the city.",
+         "snack wrapper": "Place snack wrappers in the gray landfill bin."
       }
     }
   }
