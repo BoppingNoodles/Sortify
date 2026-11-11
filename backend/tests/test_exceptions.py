@@ -158,6 +158,7 @@ def test_validation_and_missing_routes_use_safe_envelope():
             "PAYLOAD_TOO_LARGE",
         ),
     ],
+    ids=["unsupported-media", "corrupt-jpeg", "oversized-jpeg"],
 )
 def test_bad_uploads_return_uniform_errors_and_health_stays_available(
     payload, mime, status, code
