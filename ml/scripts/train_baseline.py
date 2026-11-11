@@ -58,11 +58,20 @@ def build_model() -> nn.Module:
     return model
 
 
-def set_train_mode(model: nn.Module) -> None:
+def set_train_mode(model: nn.Module, head: nn.Module | None = None) -> None:
     # Frozen BatchNorm layers must keep their ImageNet running stats, so only the
-    # new head is put in train mode.
+    # new head is put in train mode. `head` lets MobileNet train its linear layer
+    # without a second copy of this helper.
     model.eval()
-    model.fc.train()
+    trainable = model.fc if head is None else head
+    trainable.train()
+
+
+def require_best_checkpoint(best_state: dict | None) -> dict:
+    """Refuse to call load_state_dict when training never produced a checkpoint."""
+    if best_state is None:
+        raise RuntimeError("Training finished without any valid evaluation epochs.")
+    return best_state
 
 
 def load_baseline_checkpoint(
@@ -74,10 +83,10 @@ def load_baseline_checkpoint(
     return model, checkpoint
 
 
-def run_epoch(model, loader, criterion, device, optimizer=None):
+def run_epoch(model, loader, criterion, device, optimizer=None, head=None):
     training = optimizer is not None
     if training:
-        set_train_mode(model)
+        set_train_mode(model, head)
     else:
         model.eval()
 
@@ -217,8 +226,7 @@ def main() -> None:
             best_val_acc, best_epoch = val_acc, epoch
             best_state = copy.deepcopy(model.state_dict())
 
-    if best_state is None:
-        raise RuntimeError("Training finished without any valid evaluation epochs.")
+    best_state = require_best_checkpoint(best_state)
     model.load_state_dict(best_state)
     print(f"Best val accuracy {best_val_acc:.2%} at epoch {best_epoch}")
 

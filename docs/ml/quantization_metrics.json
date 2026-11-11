@@ -1,0 +1,39 @@
+{
+  "architecture": "mobilenet_v2",
+  "class_names": [
+    "compost",
+    "glass",
+    "landfill",
+    "paper",
+    "plastic"
+  ],
+  "quantization": "dynamic_qint8_linear",
+  "engine": "qnnpack",
+  "torch_version": "2.14.0",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "cpu_threads": 1,
+  "checkpoint_sha256": "54df0a06150bd004608dd39431b092348da17954b40a3fc3d7ec488406762d0e",
+  "validation_images": 454,
+  "fp32_correct": 404,
+  "int8_correct": 404,
+  "fp32_accuracy": 0.8898678414096917,
+  "int8_accuracy": 0.8898678414096917,
+  "accuracy_loss_pp": 0.0,
+  "accuracy_loss_under_1pp": true,
+  "fp32_bytes": 9154379,
+  "int8_bytes": 9146459,
+  "size_reduction_percent": 0.08651597230134866,
+  "size_reduction_over_60_percent": false,
+  "latency_input_shape": [
+    1,
+    3,
+    224,
+    224
+  ],
+  "latency_passes": 50,
+  "warmup_passes": 5,
+  "fp32_mean_ms": 14.256865829229355,
+  "int8_mean_ms": 14.223659997805953,
+  "speedup": 1.0023345490140037
+}

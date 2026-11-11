@@ -1,0 +1,177 @@
+[
+  {
+    "path": "data/campus_test/compost/compost01.jpg",
+    "true": "compost",
+    "pred": "paper",
+    "confidence": 0.2754168212413788,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/compost/compost02.jpg",
+    "true": "compost",
+    "pred": "landfill",
+    "confidence": 0.3099912703037262,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/compost/compost03.jpg",
+    "true": "compost",
+    "pred": "landfill",
+    "confidence": 0.24885734915733337,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/compost/compost04.jpg",
+    "true": "compost",
+    "pred": "landfill",
+    "confidence": 0.33846375346183777,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/compost/compost05.jpg",
+    "true": "compost",
+    "pred": "landfill",
+    "confidence": 0.29926809668540955,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/glass/glass01.jpg",
+    "true": "glass",
+    "pred": "landfill",
+    "confidence": 0.2988256812095642,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/glass/glass02.jpg",
+    "true": "glass",
+    "pred": "plastic",
+    "confidence": 0.3361431658267975,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill01.jpg",
+    "true": "landfill",
+    "pred": "plastic",
+    "confidence": 0.26442256569862366,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill02.png",
+    "true": "landfill",
+    "pred": "landfill",
+    "confidence": 0.36301320791244507,
+    "correct": true
+  },
+  {
+    "path": "data/campus_test/landfill/landfill03.jpg",
+    "true": "landfill",
+    "pred": "compost",
+    "confidence": 0.313554972410202,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill04.jpg",
+    "true": "landfill",
+    "pred": "plastic",
+    "confidence": 0.2657788097858429,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill05.jpg",
+    "true": "landfill",
+    "pred": "compost",
+    "confidence": 0.30348533391952515,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill06.jpg",
+    "true": "landfill",
+    "pred": "landfill",
+    "confidence": 0.2996762990951538,
+    "correct": true
+  },
+  {
+    "path": "data/campus_test/landfill/landfill07.jpg",
+    "true": "landfill",
+    "pred": "compost",
+    "confidence": 0.24486573040485382,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/landfill/landfill08.jpg",
+    "true": "landfill",
+    "pred": "compost",
+    "confidence": 0.27377215027809143,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/paper/paper01.jpg",
+    "true": "paper",
+    "pred": "landfill",
+    "confidence": 0.2338983416557312,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/paper/paper02.jpg",
+    "true": "paper",
+    "pred": "landfill",
+    "confidence": 0.2230609655380249,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/paper/paper03.jpg",
+    "true": "paper",
+    "pred": "landfill",
+    "confidence": 0.26705673336982727,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/paper/paper04HEIC.jpg",
+    "true": "paper",
+    "pred": "landfill",
+    "confidence": 0.3210710883140564,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/paper/paper05.jpg",
+    "true": "paper",
+    "pred": "landfill",
+    "confidence": 0.3014850318431854,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/plastic/plastic01.jpg",
+    "true": "plastic",
+    "pred": "landfill",
+    "confidence": 0.26042813062667847,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/plastic/plastic02.jpg",
+    "true": "plastic",
+    "pred": "landfill",
+    "confidence": 0.3089085817337036,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/plastic/plastic03.jpg",
+    "true": "plastic",
+    "pred": "landfill",
+    "confidence": 0.3441949486732483,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/plastic/plastic04.jpg",
+    "true": "plastic",
+    "pred": "landfill",
+    "confidence": 0.3059883415699005,
+    "correct": false
+  },
+  {
+    "path": "data/campus_test/plastic/plastic05.jpg",
+    "true": "plastic",
+    "pred": "landfill",
+    "confidence": 0.40226325392723083,
+    "correct": false
+  }
+]

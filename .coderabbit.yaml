@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+
+reviews:
+  # Completely disable automated and incremental reviews
+  auto_review:
+    enabled: false
+    auto_incremental_review: false
+    drafts: false
+
+  # Suppress all review comments, summaries, status updates, and walkthroughs
+  high_level_summary: false
+  poem: false
+  review_status: false
+  collapse_walkthrough: false
+  changed_files_summary: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  review_info: false
+  review_details: false
+  review_progress: false
+
+  # Exclude all repository files from review
+  path_filters:
+    - "!**"
+
+chat:
+  auto_reply: false
