@@ -17,7 +17,6 @@ from backend.app.services.tips_service import (
 client = TestClient(app)
 
 
-
 def test_item_subtips_differ_for_bottle_cup_and_food_container():
     bottle = get_disposal_tip("plastic", "Plastic Water Bottle")
     cup = get_disposal_tip("plastic", "Iced coffee cup")
@@ -55,6 +54,7 @@ def test_longest_item_key_wins():
     assert "certified compostable" in guidance["item_tip"]
     assert "food-soiled" in guidance["item_tip"]
 
+
 @pytest.mark.parametrize(
     ("item_name", "expected_text"),
     [
@@ -81,6 +81,7 @@ def test_wrapper_items_match_landfill_tips(item_name):
 
     assert guidance["item_tip"] is not None
     assert "landfill" in guidance["item_tip"].lower()
+
 
 def test_classify_response_includes_compost_tip_for_the_mock_carton():
     image = io.BytesIO()
@@ -119,6 +120,7 @@ def test_broken_tips_file_raises(tmp_path, monkeypatch):
             get_disposal_tip("plastic", "bottle")
     finally:
         load_tips.cache_clear()
+
 
 def test_classify_response_uses_client_item_name_hint(monkeypatch):
     from backend.app.services.inference import ModelService

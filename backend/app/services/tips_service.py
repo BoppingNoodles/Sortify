@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 
 _TIPS_PATH = Path(__file__).resolve().parent.parent / "data" / "tips.json"
+_EXACT_ITEM_ALIASES = frozenset({"can", "foil"})
 
 
 class TipsDataError(Exception):
@@ -32,14 +33,27 @@ def _location_key(location: str | None) -> str:
 def _match_item(items: dict, item_name: str | None) -> str | None:
     if not item_name or not isinstance(items, dict):
         return None
+
     haystack = item_name.strip().lower()
     if not haystack:
         return None
-    matches = [key for key in items if isinstance(key, str) and key.lower() in haystack]
+
+    matches = []
+    for key in items:
+        if not isinstance(key, str):
+            continue
+
+        normalized_key = key.lower()
+        if normalized_key in _EXACT_ITEM_ALIASES:
+            if normalized_key == haystack:
+                matches.append(key)
+        elif normalized_key in haystack:
+            matches.append(key)
+
     if not matches:
         return None
-    best = max(matches, key=len)
-    tip = items[best]
+
+    tip = items[max(matches, key=len)]
     return tip if isinstance(tip, str) and tip.strip() else None
 
 

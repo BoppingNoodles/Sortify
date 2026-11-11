@@ -3,7 +3,7 @@
 import io
 
 import pytest
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, params
 from fastapi.testclient import TestClient
 from PIL import Image
 from starlette.datastructures import Headers
@@ -182,8 +182,7 @@ def test_query_cannot_override_server_upload_limit(monkeypatch):
     params = client.get("/openapi.json").json()["paths"]["/api/classify"]["post"][
         "parameters"
     ]
-    assert {param["name"] for param in params} == {"location"}
-
+    assert {param["name"] for param in params} == {"location", "item_name"}
 
 @pytest.mark.anyio
 async def test_rejected_upload_is_closed():

@@ -45,6 +45,14 @@ LABEL_TO_CATEGORY = {
     "organic": "compost",
 }
 
+ITEM_HINTS_BY_CATEGORY = {
+    "plastic": frozenset({"can", "aluminum can", "soda can"}),
+    "compost": frozenset({"compostable food container"}),
+    "landfill": frozenset(
+        {"wrapper", "snack wrapper", "chip bag", "greasy wrapper", "foil"}
+    ),
+}
+
 
 def get_model_service() -> ModelService:
     """Dependency provider returning the singleton ModelService."""
@@ -57,7 +65,6 @@ async def classify_item(
     item_name: str | None = Query(default=None),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
-
 ) -> ClassifyResponse:
     """Ingest image upload, run model inference with timeout resilience, and return classification."""
     # 1. Read uploaded image bytes and immediately release file descriptor
@@ -119,16 +126,21 @@ async def classify_item(
         ) from None
 
     # 3. Post-inference defensive processing
+    # 3. Post-inference defensive processing
     try:
         label = str(prediction.get("category", "")).strip().lower()
+        category = LABEL_TO_CATEGORY.get(label, "landfill")
+        inferred_item_name = prediction.get("item_name") or label.title()
+        hint = (item_name or "").strip().lower()
+
         resolved_item_name = (
-            item_name.strip()
-            if item_name and item_name.strip()
-            else prediction.get("item_name") or label.title()
+            hint
+            if hint in ITEM_HINTS_BY_CATEGORY.get(category, ())
+            else inferred_item_name
         )
 
-        category = LABEL_TO_CATEGORY.get(label, "landfill")
         guidance = get_disposal_guidance(category, resolved_item_name, location)
+
         notes = guidance.get("notes", "")
         city_rule = get_category_rule(category, location)
         if city_rule:
