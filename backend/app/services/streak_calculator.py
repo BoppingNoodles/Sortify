@@ -1,33 +1,38 @@
-from datetime import datetime, timezone
+"""Calculates daily active streaks using localized calendar dates."""
+
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 
-def calculate_streak(timestamps: list[str]) -> int:
-    if not timestamps:
-        return 0
+def calculate_streak(
+    timestamps: list[str | None],
+    user_tz: str = "America/Los_Angeles",
+) -> int:
+    """Computes active consecutive day sorting streak based on local timezone."""
+    tz = ZoneInfo(user_tz)
+    today = datetime.now(tz).date()
+    active_dates = set()
 
-    # 1. Use set comprehension directly for dates
-    dates = sorted(
-        {datetime.fromisoformat(ts.replace("Z", "+00:00")).date() for ts in timestamps},
-        reverse=True,
-    )
+    for timestamp in timestamps:
+        if not isinstance(timestamp, str):
+            continue
 
-    if not dates:
-        return 0
+        try:
+            parsed = datetime.fromisoformat(timestamp)
+        except ValueError:
+            continue
 
-    # 2. Use timezone-aware 'now' to avoid DTZ005 errors
-    today = datetime.now(timezone.utc).date()
-    if (today - dates[0]).days > 1:
-        return 0
+        if parsed.utcoffset() is None:
+            continue
 
-    # 3. Calculate streak
+        active_dates.add(parsed.astimezone(tz).date())
+
+    one_day = timedelta(days=1)
+    day = today if today in active_dates else today - one_day
     streak = 0
-    current_date = dates[0]
 
-    for date in dates:
-        if (current_date - date).days <= 1:
-            streak += 1
-            current_date = date
-        else:
-            break
+    while day in active_dates:
+        streak += 1
+        day -= one_day
 
     return streak

@@ -1,10 +1,13 @@
-from collections import Counter
+"""Stats router for user eco-impact and scan history aggregation."""
 
-from fastapi import APIRouter, Depends
+from collections import Counter
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend.app.routers.history import get_history_service
 from backend.app.schemas.stats import UserStatsResponse
-from backend.app.services.history_service import HistoryService
+from backend.app.services.history_service import HistoryService, HistoryServiceError
 from backend.app.services.streak_calculator import calculate_streak
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
@@ -12,31 +15,37 @@ router = APIRouter(prefix="/stats", tags=["Stats"])
 
 @router.get("/{user_id}", response_model=UserStatsResponse)
 def get_user_stats(
-    user_id: str,
+    user_id: UUID,
     service: HistoryService = Depends(get_history_service),  # noqa: B008
-):
-    history = service.get_user_history(user_id, limit=100)
-    scans = history.get("scans") or history.get("items") or []
+) -> UserStatsResponse:
+    """Calculates lifetime eco-impact statistics for a user/device UUID."""
+    total = 0
+    category_counts: Counter[str] = Counter()
+    timestamps: list[str | None] = []
+    cursor = None
 
-    total = len(scans)
-    points = total * 10
+    while True:
+        try:
+            page = service.get_user_history(user_id, limit=100, cursor=cursor)
+        except HistoryServiceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Scan history storage is unavailable",
+            ) from exc
 
-    counts = Counter(
-        scan.get("category") or scan.get("predicted_category") or "other"
-        for scan in scans
-    )
+        scans = page["scans"]
+        total += len(scans)
+        category_counts.update(scan["category"] for scan in scans)
+        timestamps.extend(scan["timestamp"] for scan in scans)
 
-    timestamps = [str(scan["timestamp"]) for scan in scans if scan.get("timestamp")]
-
-    try:
-        streak = calculate_streak(timestamps)
-    except (ValueError, TypeError):
-        streak = 0
+        cursor = page["next_cursor"]
+        if cursor is None:
+            break
 
     return UserStatsResponse(
-        user_id=user_id,
+        user_id=str(user_id),
         total_scans=total,
-        eco_points=points,
-        current_streak=streak,
-        category_counts=dict(counts),
+        eco_points=total * 10,
+        current_streak=calculate_streak(timestamps),
+        category_counts=dict(category_counts),
     )
