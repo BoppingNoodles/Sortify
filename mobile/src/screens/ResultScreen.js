@@ -9,11 +9,18 @@ export default function ResultScreen({ route, navigation }) {
     category = 'compost', 
     confidence = 0.94,
     tip = 'Compostable in Berkeley if certified BPI or lining is plant-based.',
-    photoUri = null,
+    photoUri = null, //Includes photo thumbnail of the scanned object.
   } = route?.params || {};
 
-  const binColor = COLORS.bins[category.toLowerCase()] || COLORS.bins.landfill;
-  const confidencePercent = Math.round(confidence * 100);
+  const binColor = COLORS.bins[category.toLowerCase()] || COLORS.bins.landfill; //Displays category badge with official colors: Green (Compost), Blue (Recycling), Gray/Black (Landfill).
+  const confidencePercent = Math.round( Math.max(0, Math.min(1, Number(confidence) || 0)) * 100); //Renders visual progress bar showing AI confidence percentage (0–100%).
+  //Displays target bin name (e.g., "Green Compost Bin") and specific municipal disposal advice
+  const BIN_NAMES = {
+    compost: 'Green Compost Bin',
+    recycling: 'Blue Recycling Bin',
+    landfill: 'Gray/Black Landfill Bin',
+  };
+  const binName = BIN_NAMES[category.toLowerCase()] || 'Check Local Guidelines';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -42,13 +49,16 @@ export default function ResultScreen({ route, navigation }) {
       {/* Disposal Recommendation Card */}
       <View style={styles.tipCard}>
         <Text style={styles.tipTitle}>Disposal Guideline (Berkeley 📍)</Text>
+        <Text style={[styles.binName, { color: binColor }]}>
+          {binName}
+        </Text>
         <Text style={styles.tipBody}>{tip}</Text>
       </View>
 
-      {/* Action Buttons */}
+      {/* Action Buttons */} //"Scan Another Item" button dismisses modal and returns to viewfinder.
       <TouchableOpacity 
         style={[styles.primaryButton, { backgroundColor: binColor }]}
-        onPress={() => navigation.goBack()}
+        onPress={() => navigation.goBack()} //When the user presses the button, the app returns to the previous screen and closes the Result Modal. When the user presses the button, the app returns to the previous screen and closes the Result modal. In `AppNavigator.js`, the `Result` screen is defined as a modal; setting `presentation: 'modal'` means that the `Result` screen opens as a modal. Calling `navigation.goBack()` will close this modal.
         activeOpacity={0.8}
       >
         <Text style={styles.primaryButtonText}>Scan Another Item</Text>
@@ -75,4 +85,5 @@ const styles = StyleSheet.create({
   tipBody: { ...TYPOGRAPHY.body, color: COLORS.text.secondary, lineHeight: 22 },
   primaryButton: { width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
   primaryButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 16 },
+  binName: {fontSize: 18, fontWeight: '700', marginBottom: 8,},
 });
