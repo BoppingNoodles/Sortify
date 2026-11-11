@@ -1,10 +1,12 @@
 """Exercise public errors, private failures, and recovery through HTTP."""
 
+import io
 import logging
 
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from backend.app.core.exceptions import (
     INTERNAL_MESSAGE,
@@ -17,6 +19,7 @@ from backend.app.core.exceptions import (
 )
 from backend.app.main import app
 from backend.app.middleware.telemetry import TelemetryMiddleware
+from backend.app.services.model_service import ModelService
 
 
 @pytest.mark.parametrize(
@@ -81,6 +84,30 @@ def test_unhandled_failures_are_logged_privately_and_server_recovers(source, cap
     assert any(record.exc_info for record in caplog.records)
     assert "private credential" in caplog.text
     assert "private credential" not in response.text
+
+
+def test_unhandled_classification_failure_preserves_cors_headers(monkeypatch):
+    def fail_prediction(self, image_bytes):
+        raise ZeroDivisionError("private inference details")
+
+    monkeypatch.setattr(ModelService, "predict", fail_prediction)
+    image = io.BytesIO()
+    Image.new("RGB", (16, 16)).save(image, format="JPEG")
+    origin = "http://localhost:8081"
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post(
+            "/api/classify",
+            files={"file": ("photo.jpg", image.getvalue(), "image/jpeg")},
+            headers={"Origin": origin},
+        )
+    assert response.status_code == 500
+    assert response.json() == {
+        "error": True,
+        "code": "INTERNAL_SERVER_ERROR",
+        "message": INTERNAL_MESSAGE,
+    }
+    assert response.headers.get("access-control-allow-origin") in {origin, "*"}
+    assert response.headers["access-control-allow-credentials"] == "true"
 
 
 @pytest.mark.parametrize("status", [500, 503, 504])
