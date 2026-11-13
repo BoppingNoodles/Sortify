@@ -93,8 +93,17 @@ export default function ScanScreen({ navigation }) {
     try {
       const result = await classifyImage(capturedPhoto.uri);
 
-      if (!result || typeof result !== 'object') {
-        throw new Error('The server returned an invalid response.');
+      if (
+        !result ||
+        typeof result.item_name !== 'string' ||
+        typeof result.category !== 'string' ||
+        !Object.hasOwn(COLORS.bins, result.category) ||
+        typeof result.disposal_tip !== 'string' ||
+        !Number.isFinite(result.confidence) ||
+        result.confidence < 0 ||
+        result.confidence > 1
+      ) {
+        throw new Error('The server returned an invalid classification result.');
       }
 
       const photoUri = capturedPhoto.uri;
