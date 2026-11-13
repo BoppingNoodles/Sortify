@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.core.config import settings
 from backend.app.middleware.telemetry import TelemetryMiddleware
-from backend.app.routers import auth, classify, history, rules, uploads
+from backend.app.routers import auth, classify, history, rules, stats, uploads
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -34,6 +34,7 @@ app.include_router(classify.router, prefix="/api", tags=["Classification"])
 app.include_router(rules.router, prefix="/api", tags=["Rules"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(history.router, prefix="/api", tags=["History"])
+app.include_router(stats.router, prefix="/api", tags=["Stats"])
 
 
 @app.get("/health")
