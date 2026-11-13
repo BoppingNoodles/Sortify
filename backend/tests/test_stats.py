@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app.main import app
+from backend.app.main import app, fastapi_app
 from backend.app.routers.history import get_history_service
 from backend.app.services import streak_calculator
 from backend.app.services.history_service import HistoryService, HistoryServiceError
@@ -21,7 +21,9 @@ class FrozenDatetime(datetime):
 @pytest.fixture
 def stats_client(monkeypatch):
     history = HistoryService()
-    monkeypatch.setitem(app.dependency_overrides, get_history_service, lambda: history)
+    monkeypatch.setitem(
+        fastapi_app.dependency_overrides, get_history_service, lambda: history
+    )
     monkeypatch.setattr(streak_calculator, "datetime", FrozenDatetime)
 
     with TestClient(app) as client:
@@ -113,7 +115,11 @@ def test_later_page_failure_returns_503(stats_client, monkeypatch):
     response = client.get(f"/api/stats/{uuid4()}")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Scan history storage is unavailable"}
+    assert response.json() == {
+        "error": True,
+        "code": "SERVICE_UNAVAILABLE",
+        "message": "Service temporarily unavailable. Please try again.",
+    }
 
 
 def test_stats_openapi_contract(stats_client):
