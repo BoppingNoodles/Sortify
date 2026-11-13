@@ -45,6 +45,14 @@ LABEL_TO_CATEGORY = {
     "organic": "compost",
 }
 
+ITEM_HINTS_BY_CATEGORY = {
+    "plastic": frozenset({"can", "aluminum can", "soda can"}),
+    "compost": frozenset({"compostable food container"}),
+    "landfill": frozenset(
+        {"wrapper", "snack wrapper", "chip bag", "greasy wrapper", "foil"}
+    ),
+}
+
 
 def get_model_service() -> ModelService:
     """Dependency provider returning the singleton ModelService."""
@@ -54,6 +62,7 @@ def get_model_service() -> ModelService:
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
     location: str = Query("berkeley", description="Municipality name"),
+    item_name: str | None = Query(default=None),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
 ) -> ClassifyResponse:
@@ -117,11 +126,21 @@ async def classify_item(
         ) from None
 
     # 3. Post-inference defensive processing
+    # 3. Post-inference defensive processing
     try:
         label = str(prediction.get("category", "")).strip().lower()
-        item_name = prediction.get("item_name") or label.title()
         category = LABEL_TO_CATEGORY.get(label, "landfill")
-        guidance = get_disposal_guidance(category, item_name, location)
+        inferred_item_name = prediction.get("item_name") or label.title()
+        hint = (item_name or "").strip().lower()
+
+        resolved_item_name = (
+            hint
+            if hint in ITEM_HINTS_BY_CATEGORY.get(category, ())
+            else inferred_item_name
+        )
+
+        guidance = get_disposal_guidance(category, resolved_item_name, location)
+
         notes = guidance.get("notes", "")
         city_rule = get_category_rule(category, location)
         if city_rule:
@@ -161,11 +180,11 @@ async def classify_item(
 
         # 5. Build validated response payload
         return ClassifyResponse(
-            item_name=item_name,
+            item_name=resolved_item_name,
             category=category,
             confidence=round(primary_conf, 4),
             location=location.lower(),
-            disposal_tip=get_disposal_tip(category, item_name, location),
+            disposal_tip=get_disposal_tip(category, resolved_item_name, location),
             bin_color=bin_color,
             bin=f"{bin_color} {category.capitalize()} Bin",
             disposal_tips=DisposalTip(

@@ -11,59 +11,69 @@
       "items": {
         "bottle": "Empty the bottle, rinse it, and put the cap back on before recycling.",
         "cup": "Rinse plastic cups. Compost certified compostable cups instead of recycling them.",
-        "food container": "Scrape out food and rinse the container. Recycle only rigid plastic."
-      }
+        "food container": "Scrape out food and rinse the container. Recycle only rigid plastic.",
+        "can": "Empty the aluminum can and recycle it in the blue bin.",
+        "aluminum can": "Empty the aluminum can before recycling. Check local recycling guidelines.",
+        "soda can": "Empty the soda can and recycle it under the aluminum beverage container bin."}
+      
     },
+    
     "compost": {
-      "action": "Compost",
-      "bin_type": "green",
-      "tip": "Food scraps, soiled napkins, and BPI-certified compostable packaging only.",
-      "locations": {
-        "berkeley": "Berkeley organics include food scraps and certified compostable packaging."
-      },
-      "items": {
-        "bottle": "Do not compost plastic bottles.",
-        "cup": "Certified compostable cups can go in the green bin. Plastic cups cannot.",
-        "food container": "Compost food-soiled containers only when they are certified compostable.",
-        "carton": "Empty the carton. Compost it only when the package is certified compostable."
+        "action": "Compost",
+        "bin_type": "green",
+        "tip": "Food scraps, soiled napkins, and BPI-certified compostable packaging only.",
+        "locations": {
+          "berkeley": "Berkeley organics include food scraps and certified compostable packaging."
+        },
+        "items": {
+         "bottle": "Do not compost plastic bottles.",
+          "cup": "Certified compostable cups can go in the green bin. Plastic cups cannot.",
+         "food container": "Compost food-soiled containers only when they are certified compostable.",
+          "carton": "Empty the carton. Compost it only when the package is certified compostable.",
+          "compostable food container": "food-soiled containers must be certified compostable before going into the compost bin."
       }
     },
     "paper": {
-      "action": "Recycle",
-      "bin_type": "brown",
-      "tip": "Keep clean and dry. Flatten cardboard boxes.",
-      "locations": {
-        "berkeley": "Berkeley recycling takes clean paper and flattened cardboard."
+        "action": "Recycle",
+        "bin_type": "brown",
+        "tip": "Keep clean and dry. Flatten cardboard boxes.",
+        "locations": {
+          "berkeley": "Berkeley recycling takes clean paper and flattened cardboard."
       },
-      "items": {
-        "cup": "Paper cups with a plastic lining usually belong in landfill unless the city accepts them.",
-        "food container": "Flatten clean paperboard. Food-soiled paper goes to compost."
+        "items": {
+          "cup": "Paper cups with a plastic lining usually belong in landfill unless the city accepts them.",
+          "food container": "Flatten clean paperboard. Food-soiled paper goes to compost."
       }
     },
     "glass": {
-      "action": "Recycle",
-      "bin_type": "teal",
-      "tip": "Rinse jar clean. Metal lids should be separated.",
-      "locations": {
-        "berkeley": "Berkeley accepts empty glass bottles and jars in recycling."
+        "action": "Recycle",
+        "bin_type": "teal",
+        "tip": "Rinse jar clean. Metal lids should be separated.",
+        "locations": {
+          "berkeley": "Berkeley accepts empty glass bottles and jars in recycling."
       },
-      "items": {
-        "bottle": "Rinse the bottle. Recycle the glass and keep non-metal caps out of the bottle.",
-        "cup": "Rinse drinking glasses only if the city accepts them. Lids are usually landfill.",
-        "food container": "Rinse jars. Recycle clean metal lids separately from the glass."
-      }
-    },
+        "items": {
+          "bottle": "Rinse the bottle. Recycle the glass and keep non-metal caps out of the bottle.",
+          "cup": "Rinse drinking glasses only if the city accepts them. Lids are usually landfill.",
+          "food container": "Rinse jars. Recycle clean metal lids separately from the glass."
+    }
+  },
     "landfill": {
-      "action": "Landfill",
-      "bin_type": "gray",
-      "tip": "Wrappers, chip bags, and styrofoam cannot be recycled.",
-      "locations": {
+        "action": "Landfill",
+        "bin_type": "gray",
+        "tip": "Wrappers, chip bags, and styrofoam cannot be recycled.",
+        "locations": {
         "berkeley": "When Berkeley does not list the item, use the gray landfill cart."
       },
-      "items": {
-        "bottle": "Soft plastic bottles and foam bottles go to landfill.",
-        "cup": "Plastic-lined and styrofoam cups go to landfill.",
-        "food container": "Chip bags and greasy wrappers go to landfill."
+        "items": {
+          "bottle": "Soft plastic bottles and foam bottles go to landfill.",
+          "cup": "Plastic-lined and styrofoam cups go to landfill.",
+          "food container": "Chip bags and greasy wrappers go to landfill.",
+          "wrapper": "Place snack wrappers in gray landfill bin.",
+          "chip bag": "Most chip bags are not accepted in recycling and should go to landfill.",
+          "greasy wrapper": "Food-contaminated wrappers should go in the landfill.",
+         "foil": "Foil-lined snack packaging should be disposed in the landfill. Clean aluminum foil can be recycled if accepted by the city.",
+         "snack wrapper": "Place snack wrappers in the gray landfill bin."
       }
     }
   }

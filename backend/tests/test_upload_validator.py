@@ -182,7 +182,7 @@ def test_query_cannot_override_server_upload_limit(monkeypatch):
     params = client.get("/openapi.json").json()["paths"]["/api/classify"]["post"][
         "parameters"
     ]
-    assert {param["name"] for param in params} == {"location"}
+    assert {param["name"] for param in params} == {"location", "item_name"}
 
 
 @pytest.mark.anyio
