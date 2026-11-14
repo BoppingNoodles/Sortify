@@ -5,10 +5,8 @@ import statistics
 from pathlib import Path
 
 import torch
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torchvision.transforms as transforms
 from PIL import Image
+from torchvision import datasets, models, transforms
 
 MODEL_PATHS = (
     Path("ml/models/sortify_v2.pth"),
@@ -39,7 +37,9 @@ def find_checkpoint():
 
 def load_model(checkpoint, class_names):
     model = models.mobilenet_v2(weights=None)
-    model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, len(class_names))
+    model.classifier[1] = torch.nn.Linear(
+        model.classifier[1].in_features, len(class_names)
+    )
 
     state = torch.load(checkpoint, map_location="cpu")
     saved_classes = None
@@ -145,7 +145,9 @@ def select_threshold(summary):
 
 def image_confidences(model, folder):
     paths = sorted(
-        p for p in folder.rglob("*") if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
+        p
+        for p in folder.rglob("*")
+        if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
     )
     confidences = []
     with torch.no_grad():
@@ -161,14 +163,18 @@ def verify(model, threshold, clear_dir, blurry_dir):
     blurry = image_confidences(model, blurry_dir)
     result = {
         "clear_n": len(clear),
-        "clear_pass_rate": sum(c >= threshold for c in clear) / len(clear) * 100 if clear else None,
+        "clear_pass_rate": sum(c >= threshold for c in clear) / len(clear) * 100
+        if clear
+        else None,
         "blurry_n": len(blurry),
         "blurry_uncertain_rate": (
             sum(c < threshold for c in blurry) / len(blurry) * 100 if blurry else None
         ),
     }
     print(f"\n--- Verification at cutoff {threshold:.2f} ---")
-    print(f"Clear images passing:         {fmt(result['clear_pass_rate'])} of {result['clear_n']}")
+    print(
+        f"Clear images passing:         {fmt(result['clear_pass_rate'])} of {result['clear_n']}"
+    )
     print(
         f"Blurry images flagged uncertain: {fmt(result['blurry_uncertain_rate'])} "
         f"of {result['blurry_n']}"
@@ -212,18 +218,24 @@ def write_report(summary, distribution, chosen, verification, checkpoint):
             )
     lines += [
         "",
-        f"**Selected threshold:** `{chosen['threshold']:.2f}` "
-        f"(lowest cutoff with precision >= {TARGET_PRECISION:.0f}%, else highest precision).",
+        (
+            f"**Selected threshold:** `{chosen['threshold']:.2f}` "
+            f"(lowest cutoff with precision >= {TARGET_PRECISION:.0f}%, else highest precision)."
+        ),
         "",
         "## Verification",
         "",
     ]
     if verification:
         lines += [
-            f"- Clear images passing: {fmt(verification['clear_pass_rate'])} "
-            f"of {verification['clear_n']}",
-            f"- Blurry/ambiguous images flagged uncertain: "
-            f"{fmt(verification['blurry_uncertain_rate'])} of {verification['blurry_n']}",
+            (
+                f"- Clear images passing: {fmt(verification['clear_pass_rate'])} "
+                f"of {verification['clear_n']}"
+            ),
+            (
+                "- Blurry/ambiguous images flagged uncertain: "
+                f"{fmt(verification['blurry_uncertain_rate'])} of {verification['blurry_n']}"
+            ),
         ]
     else:
         lines.append("Not run (no `--clear-dir` / `--blurry-dir` provided).")
@@ -233,8 +245,10 @@ def write_report(summary, distribution, chosen, verification, checkpoint):
         "",
         f"`CONFIDENCE_THRESHOLD = {chosen['threshold']:.2f}`",
         "",
-        "In `POST /api/classify`, if the top softmax probability is below the threshold, "
-        'return `"uncertain": true` with advice to check physical bin signs.',
+        (
+            "In `POST /api/classify`, if the top softmax probability is below the threshold, "
+            'return `"uncertain": true` with advice to check physical bin signs.'
+        ),
         "",
     ]
     REPORT_PATH.write_text("\n".join(lines))
@@ -243,12 +257,18 @@ def write_report(summary, distribution, chosen, verification, checkpoint):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--clear-dir", type=Path, help="Folder of clear, high-quality images.")
-    parser.add_argument("--blurry-dir", type=Path, help="Folder of blurry/ambiguous images.")
+    parser.add_argument(
+        "--clear-dir", type=Path, help="Folder of clear, high-quality images."
+    )
+    parser.add_argument(
+        "--blurry-dir", type=Path, help="Folder of blurry/ambiguous images."
+    )
     args = parser.parse_args()
 
     if not TEST_DIR.exists():
-        print(f"[!] Test directory not found at {TEST_DIR}. Please run dataset split first.")
+        print(
+            f"[!] Test directory not found at {TEST_DIR}. Please run dataset split first."
+        )
         return
 
     checkpoint = find_checkpoint()
@@ -266,7 +286,9 @@ def main():
 
     verification = None
     if args.clear_dir and args.blurry_dir:
-        verification = verify(model, chosen["threshold"], args.clear_dir, args.blurry_dir)
+        verification = verify(
+            model, chosen["threshold"], args.clear_dir, args.blurry_dir
+        )
     else:
         print("[!] Verification skipped: pass both --clear-dir and --blurry-dir.")
 
