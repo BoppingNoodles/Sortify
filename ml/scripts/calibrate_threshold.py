@@ -1,7 +1,9 @@
 """Evaluates precision and rejection rates across different confidence cutoffs."""
 
 import argparse
+import json
 import statistics
+from hashlib import file_digest
 from pathlib import Path
 
 import torch
@@ -15,7 +17,7 @@ MODEL_PATHS = (
 TEST_DIR = Path("data/processed_v2/test")
 REPORT_PATH = Path("docs/ml/threshold_calibration_results.md")
 THRESHOLDS = [0.40, 0.50, 0.60]
-TARGET_PRECISION = 90.0  # percent; used to pick the optimal threshold
+TARGET_PRECISION = 90.0  # percent; a cutoff must reach this to be eligible
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 transform = transforms.Compose(
@@ -35,29 +37,38 @@ def find_checkpoint():
     return None
 
 
-def load_model(checkpoint, class_names):
+def load_model(checkpoint, class_names, checkpoint_classes_path=None):
+    state = torch.load(checkpoint, map_location="cpu")
+    saved_classes = None
+    if isinstance(state, dict) and "model_state_dict" in state:
+        saved_classes = state.get("class_names")
+        state = state["model_state_dict"]
+
+    if saved_classes is None and checkpoint_classes_path is not None:
+        saved_classes = json.loads(checkpoint_classes_path.read_text(encoding="utf-8"))
+
+    if saved_classes is None:
+        raise ValueError(
+            "Checkpoint class order is missing. Pass --checkpoint-classes "
+            "with the verified labels in model output order."
+        )
+
+    if not isinstance(saved_classes, (list, tuple)):
+        raise TypeError("Checkpoint class order must be a list of class labels.")
+
+    if list(saved_classes) != list(class_names):
+        raise ValueError(
+            f"Checkpoint class order {list(saved_classes)!r} differs from "
+            f"test dataset class order {list(class_names)!r}."
+        )
+
     model = models.mobilenet_v2(weights=None)
     model.classifier[1] = torch.nn.Linear(
         model.classifier[1].in_features, len(class_names)
     )
-
-    state = torch.load(checkpoint, map_location="cpu")
-    saved_classes = None
-    if isinstance(state, dict) and "model_state_dict" in state:
-        # Training checkpoint: weights plus metadata (class_names, best_epoch, ...).
-        saved_classes = state.get("class_names")
-        state = state["model_state_dict"]
     model.load_state_dict(state)
     model.eval()
     print(f"[*] Loaded model checkpoint from {checkpoint}")
-
-    if saved_classes is not None and list(saved_classes) != list(class_names):
-        print(
-            "[!] WARNING: class order in the checkpoint differs from the test folders.\n"
-            f"    checkpoint: {list(saved_classes)}\n"
-            f"    test dir:   {list(class_names)}\n"
-            "    Precision numbers are not valid unless these match."
-        )
     return model
 
 
@@ -135,14 +146,6 @@ def confidence_distribution(confidences, correct):
     return rows
 
 
-def select_threshold(summary):
-    """Lowest cutoff meeting TARGET_PRECISION; else the highest-precision cutoff."""
-    meeting = [s for s in summary if s["precision"] >= TARGET_PRECISION]
-    if meeting:
-        return min(meeting, key=lambda s: s["threshold"])
-    return max(summary, key=lambda s: s["precision"])
-
-
 def image_confidences(model, folder):
     paths = sorted(
         p
@@ -157,36 +160,69 @@ def image_confidences(model, folder):
     return confidences
 
 
-def verify(model, threshold, clear_dir, blurry_dir):
-    """Clear images should pass; ambiguous/blurry ones should return uncertain."""
+def verify_cutoffs(model, summary, clear_dir, blurry_dir):
+    """Score the clear and blurry images once, then evaluate every cutoff."""
     clear = image_confidences(model, clear_dir)
     blurry = image_confidences(model, blurry_dir)
-    result = {
-        "clear_n": len(clear),
-        "clear_pass_rate": sum(c >= threshold for c in clear) / len(clear) * 100
-        if clear
-        else None,
-        "blurry_n": len(blurry),
-        "blurry_uncertain_rate": (
-            sum(c < threshold for c in blurry) / len(blurry) * 100 if blurry else None
+    if not clear or not blurry:
+        raise ValueError("Both verification folders must contain images.")
+
+    rows = []
+    for row in summary:
+        cutoff = row["threshold"]
+        rows.append(
+            {
+                **row,
+                "clear_pass_rate": 100 * sum(c >= cutoff for c in clear) / len(clear),
+                "blurry_uncertain_rate": 100
+                * sum(c < cutoff for c in blurry)
+                / len(blurry),
+            }
+        )
+    return rows
+
+
+def select_verified_threshold(rows, min_clear_pass, min_blurry_uncertain):
+    eligible = [
+        row
+        for row in rows
+        if row["precision"] >= TARGET_PRECISION
+        and row["clear_pass_rate"] >= min_clear_pass
+        and row["blurry_uncertain_rate"] >= min_blurry_uncertain
+    ]
+    return min(eligible, key=lambda row: row["threshold"], default=None)
+
+
+def backend_handoff_lines(chosen, checkpoint):
+    lines = ["## Backend handoff", ""]
+    if chosen is None:
+        return lines + [
+            (
+                "No cutoff passed the configured verification criteria, "
+                "or verification was skipped."
+            )
+        ]
+
+    with checkpoint.open("rb") as weights:
+        checkpoint_sha256 = file_digest(weights, "sha256").hexdigest()
+
+    return lines + [
+        f"- Candidate cutoff: `{chosen['threshold']:.2f}`",
+        f"- Checkpoint: `{checkpoint}`",
+        f"- Checkpoint SHA-256: `{checkpoint_sha256}`",
+        (
+            "- Calibration inputs: RGB conversion, `Resize(256)`, "
+            "`CenterCrop(224)`, and ImageNet normalization."
         ),
-    }
-    print(f"\n--- Verification at cutoff {threshold:.2f} ---")
-    print(
-        f"Clear images passing:         {fmt(result['clear_pass_rate'])} of {result['clear_n']}"
-    )
-    print(
-        f"Blurry images flagged uncertain: {fmt(result['blurry_uncertain_rate'])} "
-        f"of {result['blurry_n']}"
-    )
-    return result
+        (
+            "- Before enabling this cutoff in `/api/classify`, rerun the "
+            "cutoff comparison and clear/blurry verification using the "
+            "checkpoint and preprocessing configured for that endpoint."
+        ),
+    ]
 
 
-def fmt(value):
-    return "n/a" if value is None else f"{value:.1f}%"
-
-
-def write_report(summary, distribution, chosen, verification, checkpoint):
+def write_report(summary, distribution, rows, chosen, checkpoint):
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         "# Confidence Threshold Calibration Results",
@@ -216,41 +252,22 @@ def write_report(summary, distribution, chosen, verification, checkpoint):
                 f"| {d['group']} | {d['count']} | {d['mean']:.3f} | "
                 f"{d['median']:.3f} | {d['min']:.3f} | {d['max']:.3f} |"
             )
-    lines += [
-        "",
-        (
-            f"**Selected threshold:** `{chosen['threshold']:.2f}` "
-            f"(lowest cutoff with precision >= {TARGET_PRECISION:.0f}%, else highest precision)."
-        ),
-        "",
-        "## Verification",
-        "",
-    ]
-    if verification:
+    if rows:
         lines += [
-            (
-                f"- Clear images passing: {fmt(verification['clear_pass_rate'])} "
-                f"of {verification['clear_n']}"
-            ),
-            (
-                "- Blurry/ambiguous images flagged uncertain: "
-                f"{fmt(verification['blurry_uncertain_rate'])} of {verification['blurry_n']}"
-            ),
+            "",
+            "## Verification",
+            "",
+            "| Cutoff | Precision | Clear accepted | Blurry flagged uncertain |",
+            "|--------|-----------|----------------|--------------------------|",
         ]
-    else:
-        lines.append("Not run (no `--clear-dir` / `--blurry-dir` provided).")
-    lines += [
-        "",
-        "## Backend handoff",
-        "",
-        f"`CONFIDENCE_THRESHOLD = {chosen['threshold']:.2f}`",
-        "",
-        (
-            "In `POST /api/classify`, if the top softmax probability is below the threshold, "
-            'return `"uncertain": true` with advice to check physical bin signs.'
-        ),
-        "",
-    ]
+        for row in rows:
+            lines.append(
+                f"| {row['threshold']:.2f} | {row['precision']:.2f}% | "
+                f"{row['clear_pass_rate']:.1f}% | {row['blurry_uncertain_rate']:.1f}% |"
+            )
+    lines.append("")
+    lines += backend_handoff_lines(chosen, checkpoint)
+    lines.append("")
     REPORT_PATH.write_text("\n".join(lines))
     print(f"[*] Wrote report to {REPORT_PATH}")
 
@@ -263,7 +280,35 @@ def main():
     parser.add_argument(
         "--blurry-dir", type=Path, help="Folder of blurry/ambiguous images."
     )
+    parser.add_argument(
+        "--min-clear-pass-rate",
+        type=float,
+        help="Minimum percent of clear images a cutoff must accept.",
+    )
+    parser.add_argument(
+        "--min-blurry-uncertain-rate",
+        type=float,
+        help="Minimum percent of blurry images a cutoff must flag uncertain.",
+    )
+    parser.add_argument(
+        "--checkpoint-classes",
+        type=Path,
+        help="JSON array of class labels in model output order (weights-only checkpoints).",
+    )
     args = parser.parse_args()
+
+    verification_options = (
+        args.clear_dir,
+        args.blurry_dir,
+        args.min_clear_pass_rate,
+        args.min_blurry_uncertain_rate,
+    )
+    verify = any(value is not None for value in verification_options)
+    if verify:
+        if any(value is None for value in verification_options):
+            parser.error("Verification requires both folders and both minimum rates.")
+        if not all(0 <= rate <= 100 for rate in verification_options[2:]):
+            parser.error("Minimum rates must be percentages between 0 and 100.")
 
     if not TEST_DIR.exists():
         print(
@@ -277,22 +322,22 @@ def main():
         return
 
     dataset = datasets.ImageFolder(TEST_DIR, transform=transform)
-    model = load_model(checkpoint, dataset.classes)
+    model = load_model(checkpoint, dataset.classes, args.checkpoint_classes)
 
     summary, confidences, correct = evaluate_thresholds(model, dataset)
     distribution = confidence_distribution(confidences, correct)
-    chosen = select_threshold(summary)
-    print(f"\n[*] Selected threshold: {chosen['threshold']:.2f}")
 
-    verification = None
-    if args.clear_dir and args.blurry_dir:
-        verification = verify(
-            model, chosen["threshold"], args.clear_dir, args.blurry_dir
+    rows = None
+    chosen = None
+    if verify:
+        rows = verify_cutoffs(model, summary, args.clear_dir, args.blurry_dir)
+        chosen = select_verified_threshold(
+            rows, args.min_clear_pass_rate, args.min_blurry_uncertain_rate
         )
     else:
-        print("[!] Verification skipped: pass both --clear-dir and --blurry-dir.")
+        print("[!] Verification skipped: pass both folders and both minimum rates.")
 
-    write_report(summary, distribution, chosen, verification, checkpoint)
+    write_report(summary, distribution, rows, chosen, checkpoint)
 
 
 if __name__ == "__main__":
