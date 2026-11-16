@@ -13,7 +13,6 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
-import { saveScanRecord } from '../services/storage';
 
 const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
 
@@ -93,7 +92,6 @@ export default function ScanScreen({ navigation }) {
         throw new Error('Classification server returned an invalid response.');
       }
 
-      const savedRecord = await saveScanRecord(result);
       const resultParams = {
         itemName: result.item_name,
         category: result.category,
@@ -105,7 +103,6 @@ export default function ScanScreen({ navigation }) {
         location: result.location || selectedCity,
         alternatives: result.alternatives || [],
         photoUri: capturedPhoto.uri,
-        historySaved: savedRecord !== null,
       };
 
       navigation.navigate('ResultModal', resultParams);
