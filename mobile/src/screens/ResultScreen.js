@@ -13,6 +13,7 @@ export default function ResultScreen({ route, navigation }) {
     disposalTip = null,
     location = 'berkeley',
     photoUri = null,
+    historySaved,
   } = route?.params || {};
 
   const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
@@ -57,6 +58,12 @@ export default function ResultScreen({ route, navigation }) {
         <Text style={styles.tipBody}>{effectiveTip}</Text>
       </View>
 
+      {historySaved === false && (
+        <Text accessibilityRole="alert" style={styles.historyWarning}>
+          {'This scan couldn’t be saved to History.'}
+        </Text>
+      )}
+
       {/* Action Buttons */}
       <TouchableOpacity 
         style={[styles.primaryButton, { backgroundColor: binColor }]}
@@ -86,6 +93,7 @@ const styles = StyleSheet.create({
   tipCard: { backgroundColor: COLORS.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: '#E2E8F0' },
   tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: COLORS.accent.berkeleyBlue },
   tipBody: { ...TYPOGRAPHY.body, color: COLORS.text.secondary, lineHeight: 22 },
+  historyWarning: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary, marginBottom: SPACING.md },
   primaryButton: { width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
   primaryButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 16 },
 });
