@@ -1,20 +1,22 @@
-
 // src/services/api.js
 
 import { Platform } from 'react-native';
 
-// 1. API URL configuration
-const FALLBACK_API_URL = 'http://10.45.153.115:8000';
+// Emulator and localhost defaults. Physical devices use EXPO_PUBLIC_API_URL.
+const DEV_API_URL = Platform.select({
+  android: 'http://10.0.2.2:8000',
+  ios: 'http://localhost:8000',
+  default: 'http://127.0.0.1:8000',
+});
 
-const API_BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL || FALLBACK_API_URL
+export const API_BASE_URL = (
+  process.env.EXPO_PUBLIC_API_URL || DEV_API_URL
 ).replace(/\/+$/, '');
 
-const TIMEOUT_MS = 10000;
+const TIMEOUT_MS = 12000;
 const MAX_RETRIES = 2;
 const INITIAL_RETRY_DELAY_MS = 500;
 
-// 2. Custom API error
 class ApiError extends Error {
   constructor(message, status) {
     super(message);
@@ -23,30 +25,53 @@ class ApiError extends Error {
   }
 }
 
-// 3. Convert HTTP errors into friendly messages
-function getHttpErrorMessage(status) {
-  switch (status) {
+async function getHttpErrorMessage(response) {
+  const body = await response.json().catch(() => null);
+  if (
+    body?.error === true &&
+    typeof body.code === 'string' &&
+    typeof body.message === 'string' &&
+    body.message.trim()
+  ) {
+    return body.message.trim();
+  }
+
+  const detail = body?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((entry) => typeof entry?.msg === 'string' ? entry.msg.trim() : '')
+      .filter(Boolean)
+      .join(' ');
+    if (messages) return messages;
+  }
+
+  switch (response.status) {
     case 413:
       return 'Image is too large. Please try a smaller photo.';
 
     case 415:
       return 'Unsupported image format. Please try another photo.';
 
+    case 422:
+      return 'Unprocessable image. Please take another clear photo of the waste item.';
+
     default:
-      return `Server returned HTTP ${status}. Please try again.`;
+      return `Server returned HTTP ${response.status}. Please try again.`;
   }
 }
 
-// 4. Reusable request helper with exponential backoff
-async function requestWithRetry(url, createOptions, timeoutMs = TIMEOUT_MS) {
+async function requestWithRetry(url, createOptions, maxRetries = MAX_RETRIES) {
   let lastError;
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
 
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, timeoutMs);
+    }, TIMEOUT_MS);
 
     try {
       const options = createOptions();
@@ -58,7 +83,7 @@ async function requestWithRetry(url, createOptions, timeoutMs = TIMEOUT_MS) {
 
       if (!response.ok) {
         throw new ApiError(
-          getHttpErrorMessage(response.status),
+          await getHttpErrorMessage(response),
           response.status
         );
       }
@@ -73,18 +98,16 @@ async function requestWithRetry(url, createOptions, timeoutMs = TIMEOUT_MS) {
 
       lastError = error;
 
-      if (attempt === MAX_RETRIES) {
+      if (attempt === maxRetries) {
         break;
       }
-
-      // Retry network errors, timeouts and server errors.
-      const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-
     } finally {
       clearTimeout(timeoutId);
     }
+
+    // Retry network errors, timeouts and server errors.
+    const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
   if (lastError?.name === 'AbortError') {
@@ -99,9 +122,8 @@ async function requestWithRetry(url, createOptions, timeoutMs = TIMEOUT_MS) {
   );
 }
 
-// 5. Classify an image
-export async function classifyImage(imageUri, location = 'berkeley') {
-  const filename = imageUri.split('/').pop() || 'photo.jpg';
+export async function classifyImage(imageUri, location = 'berkeley', maxRetries = MAX_RETRIES) {
+  let filename = imageUri.split('/').pop() || 'photo.jpg';
   const extension = filename.split('.').pop()?.toLowerCase();
 
   const mimeTypes = {
@@ -116,17 +138,28 @@ export async function classifyImage(imageUri, location = 'berkeley') {
 
   const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
 
-  // Browsers need a real Blob, not a React Native URI descriptor.
   let webBlob = null;
 
   if (Platform.OS === 'web') {
-    const imageResponse = await fetch(imageUri);
-
-    if (!imageResponse.ok) {
-      throw new Error('Unable to read the captured image.');
+    try {
+      const imageResponse = await fetch(imageUri);
+      if (!imageResponse.ok) throw new Error('Photo could not be read.');
+      webBlob = await imageResponse.blob();
+    } catch {
+      throw new Error('Could not read captured photo. Please retake it and try again.');
     }
 
-    webBlob = await imageResponse.blob();
+    const extensions = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    if (!webBlob.size || !Object.hasOwn(extensions, webBlob.type)) {
+      throw new Error('Could not read captured photo. Please retake a JPEG, PNG, or WebP photo.');
+    }
+
+    // Data URIs can be much larger than the backend's multipart header limit.
+    filename = `photo.${extensions[webBlob.type]}`;
   }
 
   return requestWithRetry(url, () => {
@@ -151,10 +184,9 @@ export async function classifyImage(imageUri, location = 'berkeley') {
         Accept: 'application/json',
       },
     };
-  });
+  }, maxRetries);
 }
 
-// 6. Fetch municipal disposal rules
 export async function fetchLocationRules(location = 'berkeley') {
   const url = `${API_BASE_URL}/api/rules/${encodeURIComponent(location)}`;
 

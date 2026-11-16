@@ -81,6 +81,7 @@ jobs:
             else
               echo "No lint script defined in mobile/package.json yet."
             fi
+            npm test
           else
             echo "mobile/package.json not created yet — skipping frontend check for now."
           fi
