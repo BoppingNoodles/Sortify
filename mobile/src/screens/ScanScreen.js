@@ -74,28 +74,39 @@ export default function ScanScreen({ navigation }) {
     try {
       const result = await classifyImage(capturedPhoto.uri, selectedCity);
 
-      if (!result || typeof result !== 'object') {
+      if (
+        !result ||
+        typeof result.item_name !== 'string' ||
+        !result.item_name.trim() ||
+        typeof result.category !== 'string' ||
+        !Object.hasOwn(COLORS.bins, result.category) ||
+        !Number.isFinite(result.confidence) ||
+        result.confidence < 0 ||
+        result.confidence > 1 ||
+        typeof result.disposal_tip !== 'string' ||
+        !result.disposal_tip.trim() ||
+        (result.bin != null && typeof result.bin !== 'string') ||
+        (result.bin_color != null && typeof result.bin_color !== 'string') ||
+        (result.location != null && typeof result.location !== 'string')
+      ) {
         throw new Error('Classification server returned an invalid response.');
       }
 
-      const photoUri = capturedPhoto.uri;
-
-      // Clear captured photo so camera preview resets cleanly when returning from result modal
-      setCapturedPhoto(null);
-
-      // Navigate to ResultModal with live prediction fields
-      navigation.navigate('ResultModal', {
-        itemName: result.item_name || result.itemName || 'Detected Waste Item',
-        category: (result.category || 'landfill').toLowerCase(),
-        confidence: typeof result.confidence === 'number' ? result.confidence : 0.0,
-        bin: result.bin || result.bin_color || 'Landfill Bin',
+      const resultParams = {
+        itemName: result.item_name,
+        category: result.category,
+        confidence: result.confidence,
+        bin: result.bin || result.bin_color || null,
         binColor: result.bin_color || null,
-        disposalTip: result.disposal_tip || result.tip || 'Place in designated waste receptacle.',
-        tip: result.disposal_tip || result.tip || 'Place in designated waste receptacle.',
+        disposalTip: result.disposal_tip,
+        tip: result.disposal_tip,
         location: result.location || selectedCity,
         alternatives: result.alternatives || [],
-        photoUri,
-      });
+        photoUri: capturedPhoto.uri,
+      };
+
+      navigation.navigate('ResultModal', resultParams);
+      setCapturedPhoto(null);
     } catch (error) {
       console.error('Classification request failed:', error);
       Alert.alert(

@@ -7,6 +7,7 @@ from PIL import UnidentifiedImageError
 from PIL.Image import DecompressionBombError
 
 from backend.app.core.config import settings
+from backend.app.core.exceptions import InvalidImageError, ModelInferenceError
 from backend.app.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
@@ -45,6 +46,14 @@ LABEL_TO_CATEGORY = {
     "organic": "compost",
 }
 
+ITEM_HINTS_BY_CATEGORY = {
+    "plastic": frozenset({"can", "aluminum can", "soda can"}),
+    "compost": frozenset({"compostable food container"}),
+    "landfill": frozenset(
+        {"wrapper", "snack wrapper", "chip bag", "greasy wrapper", "foil"}
+    ),
+}
+
 
 def get_model_service() -> ModelService:
     """Dependency provider returning the singleton ModelService."""
@@ -54,6 +63,7 @@ def get_model_service() -> ModelService:
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
     location: str = Query("berkeley", description="Municipality name"),
+    item_name: str | None = Query(default=None),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
 ) -> ClassifyResponse:
@@ -96,32 +106,26 @@ async def classify_item(
             detail=f"Inference request timed out after {timeout_seconds:.1f}s.",
         ) from exc
     except IMAGE_DECODE_ERRORS as exc:
-        logger.warning("Invalid or corrupted image payload: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Could not read the image. The file may be corrupted, oversized, or has an invalid format.",
-        ) from exc
+        raise InvalidImageError() from exc
     except (RuntimeError, MemoryError) as exc:
-        logger.error("Model inference runtime execution failure: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Inference engine temporarily unavailable or execution failed.",
-        ) from exc
-    except HTTPException:
-        raise
-    except Exception:
-        logger.exception("Unexpected classification pipeline error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Inference pipeline encountered an unexpected error.",
-        ) from None
+        raise ModelInferenceError() from exc
 
+    # 3. Post-inference defensive processing
     # 3. Post-inference defensive processing
     try:
         label = str(prediction.get("category", "")).strip().lower()
-        item_name = prediction.get("item_name") or label.title()
         category = LABEL_TO_CATEGORY.get(label, "landfill")
-        guidance = get_disposal_guidance(category, item_name, location)
+        inferred_item_name = prediction.get("item_name") or label.title()
+        hint = (item_name or "").strip().lower()
+
+        resolved_item_name = (
+            hint
+            if hint in ITEM_HINTS_BY_CATEGORY.get(category, ())
+            else inferred_item_name
+        )
+
+        guidance = get_disposal_guidance(category, resolved_item_name, location)
+
         notes = guidance.get("notes", "")
         city_rule = get_category_rule(category, location)
         if city_rule:
@@ -161,11 +165,11 @@ async def classify_item(
 
         # 5. Build validated response payload
         return ClassifyResponse(
-            item_name=item_name,
+            item_name=resolved_item_name,
             category=category,
             confidence=round(primary_conf, 4),
             location=location.lower(),
-            disposal_tip=get_disposal_tip(category, item_name, location),
+            disposal_tip=get_disposal_tip(category, resolved_item_name, location),
             bin_color=bin_color,
             bin=f"{bin_color} {category.capitalize()} Bin",
             disposal_tips=DisposalTip(
@@ -175,9 +179,5 @@ async def classify_item(
             ),
             alternatives=alternatives,
         )
-    except Exception:
-        logger.exception("Failed to build classification response payload")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error constructing classification response.",
-        ) from None
+    except Exception as exc:
+        raise ModelInferenceError() from exc

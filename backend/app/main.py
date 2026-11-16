@@ -4,8 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.core.config import settings
+from backend.app.core.exceptions import ERROR_RESPONSES, register_exception_handlers
 from backend.app.middleware.telemetry import TelemetryMiddleware
-from backend.app.routers import auth, classify, history, rules, uploads
+from backend.app.routers import auth, classify, history, rules, stats, uploads
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -13,17 +14,11 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    responses=ERROR_RESPONSES,
 )
+register_exception_handlers(app)
 
-# Configure CORS for Expo dev servers, mobile test devices, and local clients
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# Added last so this timer wraps CORS and the routers.
+# Log routed requests and errors inside the outer CORS wrapper.
 app.add_middleware(TelemetryMiddleware)
 
 # Week 1 learning route stays at /upload-image, outside the /api prefix.
@@ -34,9 +29,21 @@ app.include_router(classify.router, prefix="/api", tags=["Classification"])
 app.include_router(rules.router, prefix="/api", tags=["Rules"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(history.router, prefix="/api", tags=["History"])
+app.include_router(stats.router, prefix="/api", tags=["Stats"])
 
 
 @app.get("/health")
 def health_check():
     """Service health check endpoint confirming server availability."""
     return {"status": "ok"}
+
+
+# Wrap the error handler too so unexpected failures carry CORS headers.
+fastapi_app = app
+app = CORSMiddleware(
+    fastapi_app,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

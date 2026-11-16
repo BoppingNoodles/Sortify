@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+data/raw/
+data/raw_expanded/
+ml/models/*.pth
+!ml/models/sortify_mvp_v1.pth
+node_modules/
+.expo/

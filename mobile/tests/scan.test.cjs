@@ -46,6 +46,7 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   const requests = [];
   const app = await scan(t, (...args) => { requests.push(args); return prediction.promise; },
     () => { captures++; return photo.promise; });
+  await act(async () => { app.handler('handleCycleCity')(); });
   const capture = app.handler('handleCapture');
   let captureTask;
   await act(async () => { captureTask = capture(); await capture(); });
@@ -55,11 +56,11 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   let analyzeTask;
   await act(async () => { analyzeTask = analyze(); await analyze(); });
   assert.equal(requests.length, 1);
-  assert.deepEqual(requests[0], ['file:///photo.jpg', 'berkeley']);
+  assert.deepEqual(requests[0], ['file:///photo.jpg', 'san-francisco']);
   assert.equal(app.renderer.root.findAllByType('ActivityIndicator').length, 1);
   await act(async () => {
     prediction.resolve({ item_name: 'Bottle', category: 'plastic', confidence: 0.91,
-      bin: 'Blue Plastic Bin', bin_color: 'Blue', disposal_tip: 'Empty and rinse.', location: 'berkeley' });
+      bin: 'Blue Plastic Bin', bin_color: 'Blue', disposal_tip: 'Empty and rinse.', location: 'san-francisco' });
     await analyzeTask;
   });
   assert.equal(app.destinations.length, 1);
@@ -69,7 +70,41 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   assert.equal(params.disposalTip, 'Empty and rinse.');
   assert.equal(params.confidence, 0.91);
   assert.equal(params.bin, 'Blue Plastic Bin');
+  assert.equal(params.location, 'san-francisco');
   assert.equal(params.photoUri, 'file:///photo.jpg');
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+});
+
+test('invalid classification responses retain the photo for a successful retry', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const valid = {
+    item_name: 'Bottle', category: 'plastic', confidence: 0.91,
+    disposal_tip: 'Empty and rinse.', location: 'berkeley',
+  };
+  const invalid = [
+    {},
+    { ...valid, category: 123 },
+    { ...valid, category: 'toString' },
+    { ...valid, confidence: 1.1 },
+    { ...valid, location: 123 },
+    { ...valid, bin: {} },
+  ];
+  const responses = [...invalid, valid];
+  const app = await scan(t, async () => responses.shift());
+  await act(async () => { await app.handler('handleCapture')(); });
+  let analyze = app.handler('handleAnalyze');
+
+  for (let index = 0; index < invalid.length; index++) {
+    await act(async () => { await analyze(); });
+    assert.equal(app.destinations.length, 0);
+    assert.equal(app.renderer.root.findByType('Image').props.source.uri, 'file:///photo.jpg');
+    assert.equal(app.alerts[index][1], 'Classification server returned an invalid response.');
+    analyze = app.alerts[index][2].find((button) => button.text === 'Try Again').onPress;
+  }
+
+  await act(async () => { await analyze(); });
+  assert.equal(app.destinations[0][1].category, 'plastic');
+  assert.equal(app.destinations[0][1].bin, null);
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
 });
 

@@ -74,22 +74,55 @@ test('native upload retries transient errors using fresh multipart bodies', asyn
 });
 
 test('4xx errors are readable and never retried', async () => {
-  for (const [status, detail, message] of [
-    [413, 'Too large', /Too large/],
-    [415, undefined, /Unsupported image format/],
-    [422, [{ msg: 'Expected an image file' }], /Expected an image file/],
-    [422, { reason: 'invalid' }, /Unprocessable image/],
+  for (const [status, body, message] of [
+    [413, { detail: 'Too large' }, /Too large/],
+    [415, { error: true, code: 'INVALID_IMAGE_FORMAT', message: 'Unsupported or corrupted image file.' },
+      /Unsupported or corrupted image file/],
+    [415, null, /Unsupported image format/],
+    [422, { detail: [{ msg: 'Expected an image file' }] }, /Expected an image file/],
+    [422, { detail: { reason: 'invalid' } }, /Unprocessable image/],
   ]) {
     let requests = 0;
     const { classifyImage } = client('android', {
       fetch: async () => {
         requests++;
-        return Response.json({ detail }, { status });
+        return Response.json(body, { status });
       },
     });
     await assert.rejects(classifyImage('file:///photo.jpg'), message);
     assert.equal(requests, 1);
   }
+});
+
+test('the last backend message survives exhausted 5xx retries', async () => {
+  let requests = 0;
+  const message = 'Service temporarily unavailable. Please try again.';
+  const { classifyImage } = client('android', {
+    setTimeout: fastTimers,
+    clearTimeout() {},
+    fetch: async () => {
+      requests++;
+      return Response.json({ error: true, code: 'SERVICE_UNAVAILABLE', message }, { status: 503 });
+    },
+  });
+  await assert.rejects(classifyImage('file:///photo.jpg'), { message });
+  assert.equal(requests, 3);
+});
+
+test('municipal rules retain the shared retry handling', async () => {
+  let requests = 0;
+  const { fetchLocationRules } = client('android', {
+    setTimeout: fastTimers,
+    clearTimeout() {},
+    fetch: async (url, options) => {
+      assert.equal(url, 'http://test-api:8000/api/rules/san-francisco');
+      assert.equal(options.method, 'GET');
+      if (++requests === 1) return new Response('Temporarily unavailable', { status: 503 });
+      return Response.json({ city: 'san-francisco', rules: {} });
+    },
+  });
+  assert.deepEqual(await fetchLocationRules('san-francisco'), { city: 'san-francisco', rules: {} });
+  assert.equal(requests, 2);
 });
 
 test('aborted requests exhaust retries with a friendly timeout error', async () => {

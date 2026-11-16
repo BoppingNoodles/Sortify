@@ -1,9 +1,8 @@
 // src/services/api.js
+
 import { Platform } from 'react-native';
 
-// Fallback host resolution for local development:
-// - Android Emulator routes host machine through 10.0.2.2
-// - iOS Simulator and web run directly against localhost
+// Emulator and localhost defaults. Physical devices use EXPO_PUBLIC_API_URL.
 const DEV_API_URL = Platform.select({
   android: 'http://10.0.2.2:8000',
   ios: 'http://localhost:8000',
@@ -26,125 +25,73 @@ class ApiError extends Error {
   }
 }
 
-/**
- * Maps common image file extensions to standard MIME types.
- */
-function resolveMimeType(filename) {
-  const extension = filename.split('.').pop()?.toLowerCase();
-  const mimeTypes = {
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
-    webp: 'image/webp',
-    heic: 'image/heic',
-  };
-  return mimeTypes[extension] || 'image/jpeg';
-}
-
-/**
- * Dispatches an image file to POST /api/classify with retry capability and timeout handling.
- *
- * @param {string} imageUri - Local URI or blob URL of captured photo
- * @param {string} location - Municipality slug (e.g. 'berkeley', 'san-francisco')
- * @param {number} maxRetries - Number of retry attempts on network/server errors
- * @returns {Promise<Object>} Backend classification response
- */
-export async function classifyImage(imageUri, location = 'berkeley', maxRetries = MAX_RETRIES) {
-  let filename = imageUri.split('/').pop() || 'photo.jpg';
-  const type = resolveMimeType(filename);
-  const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
-
-  // For Expo Web environments, convert camera data/blob URI to a Blob object
-  let webBlob = null;
-  if (Platform.OS === 'web') {
-    try {
-      const blobResponse = await fetch(imageUri);
-      if (!blobResponse.ok) {
-        throw new Error('Could not read captured photo.');
-      }
-      webBlob = await blobResponse.blob();
-      const extension = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-      }[webBlob.type];
-      if (!extension || !webBlob.size) {
-        throw new Error('Captured photo must be a non-empty JPEG, PNG, or WebP image.');
-      }
-      // A data URI contains image bytes, not a safe multipart filename.
-      filename = `photo.${extension}`;
-    } catch {
-      throw new Error('Could not read captured photo. Please retake it and try again.');
-    }
+async function getHttpErrorMessage(response) {
+  const body = await response.json().catch(() => null);
+  if (
+    body?.error === true &&
+    typeof body.code === 'string' &&
+    typeof body.message === 'string' &&
+    body.message.trim()
+  ) {
+    return body.message.trim();
   }
 
-  let lastError = null;
+  const detail = body?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((entry) => typeof entry?.msg === 'string' ? entry.msg.trim() : '')
+      .filter(Boolean)
+      .join(' ');
+    if (messages) return messages;
+  }
+
+  switch (response.status) {
+    case 413:
+      return 'Image is too large. Please try a smaller photo.';
+
+    case 415:
+      return 'Unsupported image format. Please try another photo.';
+
+    case 422:
+      return 'Unprocessable image. Please take another clear photo of the waste item.';
+
+    default:
+      return `Server returned HTTP ${response.status}. Please try again.`;
+  }
+}
+
+async function requestWithRetry(url, createOptions, maxRetries = MAX_RETRIES) {
+  let lastError;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, TIMEOUT_MS);
 
     try {
-      // Re-instantiate fresh FormData on each retry attempt
-      const formData = new FormData();
-
-      if (Platform.OS === 'web' && webBlob) {
-        formData.append('file', webBlob, filename);
-      } else {
-        const nativeUri = Platform.OS === 'android' ? imageUri : imageUri.replace('file://', '');
-        formData.append('file', {
-          uri: nativeUri,
-          name: filename,
-          type,
-        });
-      }
+      const options = createOptions();
 
       const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Accept: 'application/json',
-          // Note: Leave Content-Type unset so fetch sets multipart boundary automatically
-        },
+        ...options,
         signal: controller.signal,
       });
 
       if (!response.ok) {
-        let errorDetail = '';
-        try {
-          const errorJson = await response.json();
-          const detail = errorJson.detail;
-          if (typeof detail === 'string') {
-            errorDetail = detail;
-          } else if (Array.isArray(detail)) {
-            errorDetail = detail
-              .map((entry) => typeof entry?.msg === 'string' ? entry.msg : '')
-              .filter(Boolean)
-              .join(' ');
-          }
-        } catch {
-          // Response body was not JSON
-        }
-
-        let message = errorDetail;
-        if (!message) {
-          if (response.status === 413) {
-            message = 'Image is too large (exceeds 10MB limit). Please try a smaller photo.';
-          } else if (response.status === 415) {
-            message = 'Unsupported image format. Please capture a valid JPEG or PNG photo.';
-          } else if (response.status === 422) {
-            message = 'Unprocessable image. Please take another clear photo of the waste item.';
-          } else {
-            message = `Classification server returned HTTP ${response.status}.`;
-          }
-        }
-
-        throw new ApiError(message, response.status);
+        throw new ApiError(
+          await getHttpErrorMessage(response),
+          response.status
+        );
       }
 
       return await response.json();
+
     } catch (error) {
-      // Do not retry client 4xx errors (e.g. 400, 413, 415, 422)
+      // Do not retry client errors such as 413 or 415.
       if (error instanceof ApiError && error.status < 500) {
         throw error;
       }
@@ -154,47 +101,99 @@ export async function classifyImage(imageUri, location = 'berkeley', maxRetries 
       if (attempt === maxRetries) {
         break;
       }
-
-      // Exponential backoff for network/5xx server errors
-      const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
-      await new Promise((resolve) => setTimeout(resolve, delay));
     } finally {
       clearTimeout(timeoutId);
     }
+
+    // Retry network errors, timeouts and server errors.
+    const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
   if (lastError?.name === 'AbortError') {
-    throw new Error('Classification request timed out. Please check your network connection.');
+    throw new Error(
+      'Request timed out after multiple attempts. Please check your connection.'
+    );
   }
 
   throw new Error(
-    lastError?.message || 'Failed to connect to classification service. Ensure backend is running.'
+    lastError?.message ||
+    'Network request failed. Please check your internet connection.'
   );
 }
 
-/**
- * Fetches municipality waste sorting rules for a given location.
- *
- * @param {string} location - Municipality slug (e.g. 'berkeley')
- * @returns {Promise<Object>} Municipality rules JSON
- */
-export async function fetchLocationRules(location = 'berkeley') {
-  const url = `${API_BASE_URL}/api/rules/${encodeURIComponent(location)}`;
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
+export async function classifyImage(imageUri, location = 'berkeley', maxRetries = MAX_RETRIES) {
+  let filename = imageUri.split('/').pop() || 'photo.jpg';
+  const extension = filename.split('.').pop()?.toLowerCase();
+
+  const mimeTypes = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    heic: 'image/heic',
+  };
+
+  const type = mimeTypes[extension] || 'image/jpeg';
+
+  const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
+
+  let webBlob = null;
+
+  if (Platform.OS === 'web') {
+    try {
+      const imageResponse = await fetch(imageUri);
+      if (!imageResponse.ok) throw new Error('Photo could not be read.');
+      webBlob = await imageResponse.blob();
+    } catch {
+      throw new Error('Could not read captured photo. Please retake it and try again.');
+    }
+
+    const extensions = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    if (!webBlob.size || !Object.hasOwn(extensions, webBlob.type)) {
+      throw new Error('Could not read captured photo. Please retake a JPEG, PNG, or WebP photo.');
+    }
+
+    // Data URIs can be much larger than the backend's multipart header limit.
+    filename = `photo.${extensions[webBlob.type]}`;
+  }
+
+  return requestWithRetry(url, () => {
+    // Create fresh FormData for every retry.
+    const formData = new FormData();
+
+    if (Platform.OS === 'web') {
+      formData.append('file', webBlob, filename);
+    } else {
+      // Native iOS and Android image upload.
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      });
+    }
+
+    return {
+      method: 'POST',
+      body: formData,
       headers: {
         Accept: 'application/json',
       },
-    });
+    };
+  }, maxRetries);
+}
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch rules for ${location} (HTTP ${response.status})`);
-    }
+export async function fetchLocationRules(location = 'berkeley') {
+  const url = `${API_BASE_URL}/api/rules/${encodeURIComponent(location)}`;
 
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching rules for ${location}:`, error);
-    throw error;
-  }
+  return requestWithRetry(url, () => ({
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  }));
 }
