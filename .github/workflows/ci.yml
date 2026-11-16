@@ -70,18 +70,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Smart Frontend Lint
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Check frontend syntax and run tests
+        working-directory: mobile
         run: |
-          if [ -f "mobile/package.json" ]; then
-            echo "mobile/package.json found! Setting up Node and running checks..."
-            cd mobile
-            npm install
-            if npm run | grep -q "lint"; then
-              npm run lint
-            else
-              echo "No lint script defined in mobile/package.json yet."
-            fi
-            npm test
-          else
-            echo "mobile/package.json not created yet — skipping frontend check for now."
-          fi
+          npm ci
+          npm run lint --if-present
+          npm test
