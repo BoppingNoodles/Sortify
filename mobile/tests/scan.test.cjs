@@ -117,6 +117,44 @@ test('permanent denial opens Settings, reports a failure, and refreshes on retur
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
 });
 
+test('late Settings failure does not overwrite a newer foreground permission state', async (t) => {
+  const settings = deferred();
+  let permission = { granted: false, canAskAgain: false };
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission: async () => permission,
+    openSettings: () => settings.promise,
+  });
+  let open;
+  await act(async () => { open = app.handler('handlePermission')(); });
+  await app.setAppState('background');
+  permission = { granted: false, canAskAgain: true };
+  await app.setAppState('active');
+  await act(async () => { settings.reject(new Error('old Settings failure')); await open; });
+  const button = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(button.findByType('Text').props.children, 'Grant Permission');
+  assert.equal(app.renderer.root.findAllByProps({ accessibilityRole: 'alert' }).length, 0);
+});
+
+test('returning during a native request waits for the permanent-denial decision', async (t) => {
+  const request = deferred();
+  let permission = { granted: false, canAskAgain: true };
+  const readPermission = t.mock.fn(async () => permission);
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission,
+    requestPermission: () => request.promise,
+  });
+  let pending;
+  await act(async () => { pending = app.handler('handlePermission')(); });
+  await app.setAppState('background');
+  await app.setAppState('active');
+  assert.equal(readPermission.mock.callCount(), 1);
+  assert.equal(app.renderer.root.findAllByType('TouchableOpacity').length, 0);
+  permission = { granted: false, canAskAgain: false };
+  await act(async () => { request.resolve(permission); await pending; });
+  const button = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(button.findByType('Text').props.children, 'Open Settings');
+});
+
 test('blur releases the camera and discards the old capture after refocus', async (t) => {
   const photo = deferred();
   const takePictureAsync = t.mock.fn(() => photo.promise);

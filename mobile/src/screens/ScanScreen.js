@@ -36,6 +36,12 @@ export default function ScanScreen({ navigation }) {
   const mounted = useRef(false);
   const screen = useRef({ focused: false, active: isActive, generation: 0 });
   const operation = useRef(null);
+  const permissionRequest = useRef(null);
+
+  const isCurrent = useCallback((generation) => (
+    mounted.current && screen.current.focused && screen.current.active &&
+    screen.current.generation === generation
+  ), []);
 
   useLayoutEffect(() => {
     mounted.current = true;
@@ -81,38 +87,49 @@ export default function ScanScreen({ navigation }) {
     let current = true;
     setPermissionError(null);
     setCheckedGeneration(null);
-    getCameraPermissionsAsync().then((status) => {
-      if (current && generation === screen.current.generation) {
+    const readPermission = async () => {
+      // Android can resume before Expo records the permission prompt's result.
+      const pending = permissionRequest.current;
+      if (pending) await pending.catch(() => {});
+      if (!current || !isCurrent(generation)) return;
+
+      try {
+        const status = await getCameraPermissionsAsync();
+        if (!current || !isCurrent(generation)) return;
         setPermission(status);
         setCheckedGeneration(generation);
+      } catch {
+        if (current && isCurrent(generation)) {
+          setPermissionError('Could not check camera access. Please try again.');
+        }
       }
-    }).catch(() => {
-      if (current) setPermissionError('Could not check camera access. Please try again.');
-    });
+    };
+    readPermission();
     return () => { current = false; };
-  }, [generation, isFocused, isActive, permissionCheck]);
+  }, [generation, isFocused, isActive, isCurrent, permissionCheck]);
 
   const handlePermission = async () => {
+    if (!isCurrent(generation) || permissionRequest.current) return;
+    const needsSettings = permission.canAskAgain === false;
     setPermissionError(null);
     try {
-      if (permission.canAskAgain === false) {
+      if (needsSettings) {
         await Linking.openSettings();
       } else {
-        const status = await requestCameraPermissionsAsync();
+        const pending = requestCameraPermissionsAsync();
+        permissionRequest.current = pending;
+        const status = await pending;
         if (isCurrent(generation)) setPermission(status);
       }
     } catch {
-      if (!mounted.current || !screen.current.focused) return;
-      setPermissionError(permission.canAskAgain === false
+      if (!isCurrent(generation)) return;
+      setPermissionError(needsSettings
         ? 'Could not open Settings. Open it manually and allow camera access for Sortify.'
         : 'Could not request camera access. Please try again.');
+    } finally {
+      if (!needsSettings) permissionRequest.current = null;
     }
   };
-
-  const isCurrent = (generation) => (
-    mounted.current && screen.current.focused && screen.current.active &&
-    screen.current.generation === generation
-  );
 
   const beginOperation = () => {
     const { generation } = screen.current;
