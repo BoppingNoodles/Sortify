@@ -6,11 +6,10 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Student Profile</Text>
+      <Text style={styles.title}>Profile</Text>
       <View style={styles.card}>
         <Text style={styles.avatar}>🐻</Text>
-        <Text style={styles.name}>Cal Bear Eco Champion</Text>
-        <Text style={styles.email}>student@berkeley.edu</Text>
+        <Text style={styles.name}>Guest</Text>
         <View style={styles.divider} />
         <View style={styles.statRow}>
           <View style={styles.statItem}>
@@ -33,7 +32,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: COLORS.background.card, borderRadius: 16, padding: SPACING.lg, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
   avatar: { fontSize: 48, marginBottom: 8 },
   name: { ...TYPOGRAPHY.subtitle, fontSize: 18, color: COLORS.text.primary },
-  email: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary, marginTop: 2 },
   divider: { height: 1, width: '100%', backgroundColor: '#E2E8F0', marginVertical: 16 },
   statRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-around' },
   statItem: { alignItems: 'center' },
