@@ -31,6 +31,9 @@ const predictionFixture = {
 async function scan(t, classifyImage, {
   takePictureAsync = async () => ({ uri: 'file:///photo.jpg' }),
   saveScanRecord = async () => ({ id: 'saved' }),
+  readPermission = async () => ({ granted: true }),
+  requestPermission = readPermission,
+  openSettings = async () => {},
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -45,13 +48,15 @@ async function scan(t, classifyImage, {
     },
   };
   const Screen = loadSource('src/screens/ScanScreen.js', {
-    'react-native': { ...native, AppState: appState, Alert: { alert: (...args) => alerts.push(args) } },
+    'react-native': { ...native, AppState: appState, Linking: { openSettings },
+      Alert: { alert: (...args) => alerts.push(args) } },
     '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(() => {
       focusEffect = effect;
       leave = effect();
       return () => leave?.();
     }, [effect]) },
-    'expo-camera': { CameraView: 'CameraView', useCameraPermissions: () => [{ granted: true }, () => {}] },
+    'expo-camera': { CameraView: 'CameraView', getCameraPermissionsAsync: readPermission,
+      requestCameraPermissionsAsync: requestPermission },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
     '../services/storage': { saveScanRecord },
@@ -75,6 +80,42 @@ async function scan(t, classifyImage, {
     }),
   };
 }
+
+test('requestable denial can grant access from the scan screen', async (t) => {
+  const requestPermission = t.mock.fn(async () => ({ granted: true }));
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission: async () => ({ granted: false, canAskAgain: true }),
+    requestPermission,
+  });
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
+  const grant = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(grant.findByType('Text').props.children, 'Grant Permission');
+  await act(async () => { await grant.props.onPress(); });
+  assert.equal(requestPermission.mock.callCount(), 1);
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+});
+
+test('permanent denial opens Settings, reports a failure, and refreshes on return', async (t) => {
+  let permission = { granted: false, canAskAgain: false };
+  const requestPermission = t.mock.fn();
+  const openSettings = t.mock.fn(async () => {});
+  openSettings.mock.mockImplementationOnce(async () => { throw new Error('unavailable'); });
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission: async () => permission, requestPermission, openSettings,
+  });
+  const button = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(button.findByType('Text').props.children, 'Open Settings');
+  await act(async () => { await button.props.onPress(); });
+  assert.match(app.renderer.root.findByProps({ accessibilityRole: 'alert' }).props.children, /manually/);
+  await act(async () => { await button.props.onPress(); });
+  assert.equal(openSettings.mock.callCount(), 2);
+  assert.equal(requestPermission.mock.callCount(), 0);
+
+  await app.setAppState('background');
+  permission = { granted: true };
+  await app.setAppState('active');
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+});
 
 test('blur releases the camera and discards the old capture after refocus', async (t) => {
   const photo = deferred();

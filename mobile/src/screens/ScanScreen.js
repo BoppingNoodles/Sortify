@@ -10,8 +10,9 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  Linking,
 } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, getCameraPermissionsAsync, requestCameraPermissionsAsync } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
@@ -20,7 +21,11 @@ import { saveScanRecord } from '../services/storage';
 const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
 
 export default function ScanScreen({ navigation }) {
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, setPermission] = useState(null);
+  const [permissionError, setPermissionError] = useState(null);
+  const [permissionCheck, setPermissionCheck] = useState(0);
+  const [checkedGeneration, setCheckedGeneration] = useState(null);
+  const [generation, setGeneration] = useState(0);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -40,6 +45,7 @@ export default function ScanScreen({ navigation }) {
   const invalidate = useCallback(() => {
     screen.current.generation += 1;
     if (!mounted.current) return;
+    setGeneration(screen.current.generation);
     setIsAnalyzing(false);
     // A scan whose save has started must not be submitted again on return.
     if (operation.current?.saving) setCapturedPhoto(null);
@@ -70,6 +76,39 @@ export default function ScanScreen({ navigation }) {
     return () => subscription.remove();
   }, [invalidate]);
 
+  useEffect(() => {
+    if (!isFocused || !isActive) return;
+    let current = true;
+    setPermissionError(null);
+    setCheckedGeneration(null);
+    getCameraPermissionsAsync().then((status) => {
+      if (current && generation === screen.current.generation) {
+        setPermission(status);
+        setCheckedGeneration(generation);
+      }
+    }).catch(() => {
+      if (current) setPermissionError('Could not check camera access. Please try again.');
+    });
+    return () => { current = false; };
+  }, [generation, isFocused, isActive, permissionCheck]);
+
+  const handlePermission = async () => {
+    setPermissionError(null);
+    try {
+      if (permission.canAskAgain === false) {
+        await Linking.openSettings();
+      } else {
+        const status = await requestCameraPermissionsAsync();
+        if (isCurrent(generation)) setPermission(status);
+      }
+    } catch {
+      if (!mounted.current || !screen.current.focused) return;
+      setPermissionError(permission.canAskAgain === false
+        ? 'Could not open Settings. Open it manually and allow camera access for Sortify.'
+        : 'Could not request camera access. Please try again.');
+    }
+  };
+
   const isCurrent = (generation) => (
     mounted.current && screen.current.focused && screen.current.active &&
     screen.current.generation === generation
@@ -92,24 +131,43 @@ export default function ScanScreen({ navigation }) {
     if (isCurrent(pending.generation)) setIsAnalyzing(false);
   };
 
-  if (!permission) {
+  if (!permission || checkedGeneration !== generation) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
-        <Text style={styles.statusText}>Requesting camera permission...</Text>
+        {permissionError ? (
+          <>
+            <Text style={styles.permissionBody} accessibilityRole="alert">{permissionError}</Text>
+            <TouchableOpacity style={styles.primaryButton} accessibilityRole="button"
+              onPress={() => setPermissionCheck((previous) => previous + 1)}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+            <Text style={styles.statusText}>Checking camera access…</Text>
+          </>
+        )}
       </View>
     );
   }
 
   if (!permission.granted) {
+    const needsSettings = permission.canAskAgain === false;
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.permissionTitle}>Camera Access Required</Text>
         <Text style={styles.permissionBody}>
-          Sortify requires camera access to scan and classify waste items in real time.
+          {needsSettings
+            ? 'Allow camera access in system Settings to scan waste items.'
+            : 'Allow camera access to take a photo and identify its bin.'}
         </Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission} activeOpacity={0.8}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+        {permissionError && (
+          <Text style={styles.permissionBody} accessibilityRole="alert">{permissionError}</Text>
+        )}
+        <TouchableOpacity style={styles.primaryButton} onPress={handlePermission}
+          accessibilityRole="button" activeOpacity={0.8}>
+          <Text style={styles.buttonText}>{needsSettings ? 'Open Settings' : 'Grant Permission'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
