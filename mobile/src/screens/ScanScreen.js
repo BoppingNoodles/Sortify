@@ -6,7 +6,7 @@ import {
   View,
   TouchableOpacity,
   Image,
-  SafeAreaView,
+  ScrollView,
   ActivityIndicator,
   Alert,
   AppState,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { CameraView, getCameraPermissionsAsync, requestCameraPermissionsAsync } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
@@ -133,7 +134,7 @@ export default function ScanScreen({ navigation }) {
 
   if (!permission || checkedGeneration !== generation) {
     return (
-      <View style={styles.centered}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.centered}>
         {permissionError ? (
           <>
             <Text style={styles.permissionBody} accessibilityRole="alert">{permissionError}</Text>
@@ -148,27 +149,29 @@ export default function ScanScreen({ navigation }) {
             <Text style={styles.statusText}>Checking camera access…</Text>
           </>
         )}
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!permission.granted) {
     const needsSettings = permission.canAskAgain === false;
     return (
-      <SafeAreaView style={styles.centered}>
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionBody}>
-          {needsSettings
-            ? 'Allow camera access in system Settings to scan waste items.'
-            : 'Allow camera access to take a photo and identify its bin.'}
-        </Text>
-        {permissionError && (
-          <Text style={styles.permissionBody} accessibilityRole="alert">{permissionError}</Text>
-        )}
-        <TouchableOpacity style={styles.primaryButton} onPress={handlePermission}
-          accessibilityRole="button" activeOpacity={0.8}>
-          <Text style={styles.buttonText}>{needsSettings ? 'Open Settings' : 'Grant Permission'}</Text>
-        </TouchableOpacity>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.permissionArea}>
+        <ScrollView contentContainerStyle={styles.centered}>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionBody}>
+            {needsSettings
+              ? 'Allow camera access in system Settings to scan waste items.'
+              : 'Allow camera access to take a photo and identify its bin.'}
+          </Text>
+          {permissionError && (
+            <Text style={styles.permissionBody} accessibilityRole="alert">{permissionError}</Text>
+          )}
+          <TouchableOpacity style={styles.primaryButton} onPress={handlePermission}
+            accessibilityRole="button" activeOpacity={0.8}>
+            <Text style={styles.buttonText}>{needsSettings ? 'Open Settings' : 'Grant Permission'}</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -288,34 +291,43 @@ export default function ScanScreen({ navigation }) {
               <Text style={styles.analyzingSubtext}>Checking {formattedCity} sorting rules</Text>
             </View>
           ) : (
-            <View style={styles.previewControls}>
-              <TouchableOpacity
-                style={styles.retakeButton}
-                onPress={handleRetake}
-                disabled={isBusy}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.retakeButtonText}>Retake</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.analyzeButton}
-                onPress={handleAnalyze}
-                disabled={isBusy}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.analyzeButtonText}>Identify Bin</Text>
-              </TouchableOpacity>
-            </View>
+            <SafeAreaView edges={['left', 'right']} style={styles.previewControls}>
+              <View style={styles.previewButtons}>
+                <TouchableOpacity
+                  style={styles.retakeButton}
+                  onPress={handleRetake}
+                  disabled={isBusy}
+                  accessibilityRole="button"
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.retakeButtonText}>Retake</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.analyzeButton}
+                  onPress={handleAnalyze}
+                  disabled={isBusy}
+                  accessibilityRole="button"
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.analyzeButtonText}>Identify Bin</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
           )}
         </View>
       ) : showCamera ? (
-        <CameraView style={styles.camera} ref={cameraRef}>
-          <SafeAreaView style={styles.cameraOverlay}>
+        <>
+          <CameraView style={styles.camera} ref={cameraRef} />
+          <SafeAreaView edges={['top', 'left', 'right']} style={styles.cameraOverlay}
+            pointerEvents="box-none">
             {/* Top Bar with Municipality Selector */}
             <View style={styles.topBar}>
               <TouchableOpacity
                 style={styles.cityPill}
                 onPress={handleCycleCity}
+                accessibilityRole="button"
+                accessibilityLabel={`Sorting city: ${formattedCity}`}
+                accessibilityHint="Switches to the next supported city"
                 activeOpacity={0.7}
               >
                 <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
@@ -334,13 +346,15 @@ export default function ScanScreen({ navigation }) {
                 style={styles.shutterButton}
                 onPress={handleCapture}
                 disabled={isBusy}
+                accessibilityRole="button"
+                accessibilityLabel="Take photo"
                 activeOpacity={0.7}
               >
                 <View style={styles.shutterInner} />
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        </CameraView>
+        </>
       ) : null}
     </View>
   );
@@ -352,10 +366,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
   centered: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
+    backgroundColor: COLORS.background.primary,
+  },
+  permissionArea: {
+    flex: 1,
     backgroundColor: COLORS.background.primary,
   },
   statusText: {
@@ -391,7 +409,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -399,9 +417,11 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 8,
   },
   cityPill: {
+    flexShrink: 1,
+    minHeight: 48,
+    justifyContent: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.72)',
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -414,12 +434,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   reticleContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   reticleBox: {
-    width: 250,
+    flexShrink: 1,
+    width: '80%',
+    maxWidth: 250,
     height: 250,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.75)',
@@ -432,10 +457,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
   bottomControls: {
     alignItems: 'center',
-    marginBottom: 24,
   },
   shutterButton: {
     width: 76,
@@ -483,19 +508,26 @@ const styles = StyleSheet.create({
   },
   previewControls: {
     position: 'absolute',
-    bottom: 36,
-    left: 20,
-    right: 20,
+    bottom: SPACING.md,
+    left: 0,
+    right: 0,
+    paddingHorizontal: SPACING.md,
+  },
+  previewButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: SPACING.sm,
   },
   retakeButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 110,
+    minHeight: 48,
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
@@ -503,17 +535,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 15,
+    textAlign: 'center',
   },
   analyzeButton: {
-    flex: 1.5,
+    flexGrow: 1,
+    flexBasis: 130,
+    minHeight: 48,
     backgroundColor: COLORS.accent.berkeleyBlue,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   analyzeButtonText: {
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 15,
+    textAlign: 'center',
   },
 });

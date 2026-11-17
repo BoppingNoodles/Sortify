@@ -57,6 +57,7 @@ async function scan(t, classifyImage, {
     }, [effect]) },
     'expo-camera': { CameraView: 'CameraView', getCameraPermissionsAsync: readPermission,
       requestCameraPermissionsAsync: requestPermission },
+    'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
     '../services/storage': { saveScanRecord },
@@ -80,6 +81,22 @@ async function scan(t, classifyImage, {
     }),
   };
 }
+
+test('camera and preview keep controls in safe-area overlays', async (t) => {
+  const app = await scan(t, async () => predictionFixture);
+  const camera = app.renderer.root.findByType('CameraView');
+  const overlay = app.renderer.root.findByType('SafeAreaView');
+  assert.equal(camera.parent, overlay.parent);
+  assert.equal(camera.children.length, 0);
+  assert.deepEqual(Array.from(overlay.props.edges), ['top', 'left', 'right']);
+  assert.ok(overlay.findByProps({ accessibilityLabel: 'Take photo' }));
+
+  await act(async () => { await app.handler('handleCapture')(); });
+  const preview = app.renderer.root.findByType('SafeAreaView');
+  assert.deepEqual(Array.from(preview.props.edges), ['left', 'right']);
+  assert.deepEqual(preview.findAllByType('Text').map(({ props }) => props.children),
+    ['Retake', 'Identify Bin']);
+});
 
 test('requestable denial can grant access from the scan screen', async (t) => {
   const requestPermission = t.mock.fn(async () => ({ granted: true }));
