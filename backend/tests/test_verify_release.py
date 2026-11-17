@@ -152,3 +152,28 @@ def test_observation_preserves_recorded_health(tmp_path, monkeypatch):
     assert report["uptime"]["complete"] is True
     assert report["uptime"]["elapsed_seconds"] == 300
     assert report["uptime"]["failure_count"] == 1
+
+
+def test_observation_marks_gaps_after_suspension(tmp_path, monkeypatch):
+    elapsed = 0
+
+    def suspend(seconds):
+        nonlocal elapsed
+        if seconds:
+            elapsed += seconds + 300
+
+    monkeypatch.setattr(verify_release.time, "sleep", suspend)
+    monkeypatch.setattr(verify_release.time, "monotonic", lambda: elapsed)
+    output = tmp_path / "release.json"
+    with httpx.Client(
+        transport=httpx.MockTransport(
+            lambda _request: httpx.Response(200, json={"status": "ok"})
+        ),
+        base_url="https://api.example",
+    ) as client:
+        verify_release.observe_health(client, {"ok": True}, output, 10)
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["ok"] is False
+    assert report["uptime"]["complete"] is False
+    assert report["uptime"]["missed_intervals"] == 1
+    assert len(report["uptime"]["samples"]) == 2

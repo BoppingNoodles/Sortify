@@ -254,17 +254,26 @@ def observe_health(client, report, output, minutes):
         "elapsed_seconds": 0,
         "complete": False,
         "failure_count": 0,
+        "missed_intervals": 0,
         "samples": [],
     }
     report["uptime"] = observation
     for offset in range(0, minutes * 60 + 1, UPTIME_INTERVAL_SECONDS):
         time.sleep(max(0, start + offset - time.monotonic()))
+        if time.monotonic() >= start + offset + UPTIME_INTERVAL_SECONDS:
+            observation["missed_intervals"] += 1
+            observation["elapsed_seconds"] = round(time.monotonic() - start, 3)
+            report["ok"] = False
+            write_report(output, report)
+            continue
         health, _ = measure(client, "GET", "/health", 200, validate_health)
         observation["samples"].append(health)
         observation["elapsed_seconds"] = round(time.monotonic() - start, 3)
         observation["failure_count"] += int(not health["ok"])
         report["ok"] = report["ok"] and health["ok"]
-        observation["complete"] = offset == minutes * 60
+        observation["complete"] = (
+            offset == minutes * 60 and not observation["missed_intervals"]
+        )
         write_report(output, report)
 
 
