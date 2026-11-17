@@ -1,9 +1,12 @@
 # Sortify API Specification
 
-> **Version:** 1.0.0  
+> **API version:** 0.1.0
+>
 > **Author:** Janice (Backend Subteam)  
 > **Status:** Active / Standardized Contract  
-> **Base URL:** `http://localhost:8000` (Local) / `https://api.sortify.app` (Production)
+> **Local base URL:** `http://127.0.0.1:8000`
+
+The deployment owner provides the staging and production URLs through [#60](https://github.com/BoppingNoodles/Sortify/issues/60). See the [generated OpenAPI schema](../backend/openapi.json) for the registered operations and response schemas.
 
 ---
 
@@ -28,7 +31,7 @@ The Sortify REST API decouples client applications (Expo / React Native mobile c
 ### Request Headers
 | Header | Type | Description | Required |
 |---|---|---|---|
-| `Authorization` | String | Firebase ID token in format `Bearer <token>` | Optional for guest endpoints (including `/api/history`), required for `/api/auth/me` |
+| `Authorization` | String | `Bearer <token>` header | Required by the `/api/auth/*` scaffold |
 | `Content-Type` | String | `application/json` for standard requests; `multipart/form-data` for image uploads | Required |
 | `Accept` | String | `application/json` | Recommended |
 
@@ -57,7 +60,7 @@ streaming starts; a failure after headers are sent cannot replace the response.
 
 ### 3.1 Health & Liveness Check
 * **Endpoint:** `GET /health`
-* **Description:** Verifies service availability, container readiness, and process health.
+* **Description:** Reports API process liveness. Model loading and storage need separate checks.
 * **Authentication:** None
 
 #### Response (HTTP 200 OK)
@@ -72,12 +75,13 @@ streaming starts; a failure after headers are sent cannot replace the response.
 ### 3.2 Waste Item Classification
 * **Endpoint:** `POST /api/classify`
 * **Description:** Ingests an image of a waste item, runs ML classification, evaluates municipal sorting rules, and returns bin destination recommendations.
-* **Authentication:** Optional
+* **Authentication:** None
 * **Content-Type:** `multipart/form-data`
 
 #### Request Parameters
 - **Query Parameters:**
   - `location` *(string, optional, default: `"berkeley"`)*: Municipality identifier for location-specific disposal rules.
+  - `item_name` *(string, optional)*: Item hint used when it matches the predicted category's supported hints.
 - **Form Data (Multipart):**
   - `file` *(binary upload, required)*: Waste item image (`JPEG`, `PNG`, `WEBP`). Maximum size: 10MB.
 
@@ -153,7 +157,7 @@ streaming starts; a failure after headers are sent cannot replace the response.
 ##### Response (HTTP 200 OK)
 ```json
 {
-  "supported_cities": ["berkeley", "san-francisco", "oakland", "los-angeles"],
+  "supported_cities": ["berkeley", "san-francisco", "oakland", "san-jose", "sunnyvale"],
   "default_city": "berkeley"
 }
 ```
@@ -202,7 +206,7 @@ putting personal information in guest scan records.
   a timezone; they are normalized to UTC.
 * The response contains `status: "created"`, `scan_id`, and the complete `scan`.
   Resending the complete record with the same scan UUID replaces it without
-  duplicating it. Stats/leaderboards are not modified by this endpoint.
+  duplicating it. Guest stats aggregate saved scans at read time.
 * Invalid fields/limits: **422**; malformed or other-device cursor: **400**;
   configured Firestore unavailable: **503** without exposing database details.
 
@@ -212,22 +216,24 @@ old mock Bearer/offset contract must migrate to the device UUID/cursor contract.
 
 ---
 
-### 3.5 User Profile & Gamification
-* **Endpoint:** `GET /api/auth/me`
-* **Description:** Retrieves the authenticated user's profile, eco-points, and current recycling streak.
-* **Authentication:** Required (`Bearer <token>`)
+### 3.5 Guest stats
+
+`GET /api/stats/{user_id}` aggregates the guest scan history by device UUID. Each saved scan contributes 10 eco-points. The current streak counts consecutive active days in `America/Los_Angeles`. An empty history returns zero totals and an empty `category_counts` object. Invalid UUIDs return 422, and unavailable history storage returns 503.
 
 #### Response (HTTP 200 OK)
 ```json
 {
-  "uid": "user_456",
-  "email": "user@berkeley.edu",
-  "display_name": "Janice Chen",
-  "current_streak": 5,
-  "total_scans": 28,
-  "points": 280
+  "user_id": "d993af39-f604-4426-abf7-fdd664918d15",
+  "total_scans": 2,
+  "eco_points": 20,
+  "current_streak": 1,
+  "category_counts": {"plastic": 1, "paper": 1}
 }
 ```
+
+### 3.6 Profile scaffold
+
+`GET /api/auth/me` and `POST /api/auth/verify` currently check the Bearer header format and return fixture responses. Use guest history and stats for the supported guest workflow.
 
 ---
 
@@ -237,12 +243,12 @@ old mock Bearer/offset contract must migrate to the device UUID/cursor contract.
 |---|---|---|
 | `200 OK` | Standard successful response | Successful GET or synchronous processing |
 | `201 Created` | Resource successfully created | Successful record log |
-| `400 Bad Request` | Invalid parameters or body | Validation failure or missing fields |
+| `400 Bad Request` | Malformed request syntax | Malformed request syntax or invalid client cursor |
 | `401 Unauthorized` | Missing or invalid auth token | Protected route accessed without credentials |
 | `404 Not Found` | Resource not located | Unsupported city or scan record not found |
 | `413 Payload Too Large` | Request entity too large | Uploaded image > 10MB |
 | `415 Unsupported Media Type` | Media type rejected | Non-image file uploaded |
-| `422 Unprocessable Entity` | Request validation failed | Missing file field or invalid guest UUID |
+| `422 Unprocessable Entity` | Request validation failed | Missing required fields, invalid parameters, or invalid guest UUID |
 | `500 Internal Server Error` | Unhandled server exception | Unexpected server failure |
 | `503 Service Unavailable` | Temporary capacity/storage failure | Busy inference workers or unavailable history store |
 | `504 Gateway Timeout` | Inference deadline exceeded | Model execution took too long |
