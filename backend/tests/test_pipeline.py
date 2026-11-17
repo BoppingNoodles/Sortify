@@ -19,6 +19,7 @@ GUEST = "7cd51b0a-153d-4183-8eac-3cbde188c1f9"
 OTHER_GUEST = "ad9737de-96af-4ee6-ad58-38122f4f561e"
 FIRST_SCAN = "a08949ce-7606-49fa-b8f0-fa6d23207398"
 SECOND_SCAN = "bc0bfd26-6ccc-40aa-af56-dc11c80b9d78"
+THIRD_SCAN = "ca0bfd26-6ccc-40aa-af56-dc11c80b9d78"
 
 
 class FrozenDatetime(datetime):
@@ -95,11 +96,14 @@ def test_classify_then_save_retry_page_and_aggregate(pipeline):
     assert response.json() == {"scans": [], "limit": 1, "next_cursor": None}
 
     first_record = record_from(first, FIRST_SCAN, "2026-11-15T21:00:00Z")
-    second_record = record_from(second, SECOND_SCAN, "2026-11-16T20:00:00Z")
+    newer_timestamp = "2026-11-16T20:00:00Z"
+    second_record = record_from(second, SECOND_SCAN, newer_timestamp)
+    third_record = record_from(second, THIRD_SCAN, newer_timestamp)
     for record in (
         first_record,
         {**first_record, "item_name": "Bottle"},
         second_record,
+        third_record,
     ):
         response = client.post("/api/history", json=record)
         assert response.status_code == 201, response.text
@@ -110,11 +114,20 @@ def test_classify_then_save_retry_page_and_aggregate(pipeline):
     response = client.get("/api/history", params=history_params)
     assert response.status_code == 200
     page = HistoryPage.model_validate(response.json())
-    assert [str(scan.scan_id) for scan in page.scans] == [SECOND_SCAN]
+    # The higher scan ID sorts first among scans with the same timestamp.
+    assert [str(scan.scan_id) for scan in page.scans] == [THIRD_SCAN]
     assert page.next_cursor
 
     response = client.get(
         "/api/history", params={**history_params, "cursor": page.next_cursor}
+    )
+    assert response.status_code == 200
+    middle_page = HistoryPage.model_validate(response.json())
+    assert [str(scan.scan_id) for scan in middle_page.scans] == [SECOND_SCAN]
+    assert middle_page.next_cursor
+
+    response = client.get(
+        "/api/history", params={**history_params, "cursor": middle_page.next_cursor}
     )
     assert response.status_code == 200
     last_page = HistoryPage.model_validate(response.json())
@@ -126,10 +139,10 @@ def test_classify_then_save_retry_page_and_aggregate(pipeline):
     assert response.status_code == 200
     assert response.json() == {
         "user_id": GUEST,
-        "total_scans": 2,
-        "eco_points": 20,
+        "total_scans": 3,
+        "eco_points": 30,
         "current_streak": 2,
-        "category_counts": {"plastic": 1, "paper": 1},
+        "category_counts": {"plastic": 1, "paper": 2},
     }
 
     response = client.get("/api/history", params={"user_id": OTHER_GUEST})
