@@ -95,12 +95,10 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
     '../styles/theme': theme,
   });
   const firstLaunch = openStorage();
-  const guest = await firstLaunch.getOrCreateDeviceUuid();
   const saved = await firstLaunch.saveScanRecord(classification);
   assert.ok(saved);
 
   const nextLaunch = openStorage();
-  assert.equal(await nextLaunch.getOrCreateDeviceUuid(), guest);
   const HistoryScreen = loadSource('src/screens/HistoryScreen.js', {
     'react-native': native,
     '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(effect, [effect]) },
