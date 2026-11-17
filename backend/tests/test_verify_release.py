@@ -177,3 +177,22 @@ def test_observation_marks_gaps_after_suspension(tmp_path, monkeypatch):
     assert report["uptime"]["complete"] is False
     assert report["uptime"]["missed_intervals"] == 1
     assert len(report["uptime"]["samples"]) == 2
+
+
+def test_health_failure_aborts_without_classification_calls(sample_image):
+    requests_made = []
+
+    def transport(request):
+        requests_made.append((request.method, request.url.path))
+        return httpx.Response(500, json={"status": "error"})
+
+    with httpx.Client(
+        transport=httpx.MockTransport(transport), base_url="https://api.example"
+    ) as client:
+        report = verify_release.run_release(client, sample_image, "oakland", 20)
+
+    assert requests_made == [("GET", "/health")]
+    assert report["ok"] is False
+    assert report["health"]["status"] == 500
+    assert report["first_classification"] is None
+    assert report["warm_requests"] == []
