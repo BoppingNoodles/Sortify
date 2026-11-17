@@ -7,8 +7,14 @@ from fastapi.concurrency import run_in_threadpool
 
 from backend.app.core.config import settings
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+EXTENSION_CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
+ALLOWED_TYPES = set(EXTENSION_CONTENT_TYPES.values())
+ALLOWED_EXTENSIONS = set(EXTENSION_CONTENT_TYPES)
 JPEG_MAGIC = b"\xff\xd8\xff"
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 WEBP_RIFF = b"RIFF"
@@ -35,6 +41,44 @@ def normalize_content_type(raw_type: str | None) -> str:
     if base_type == "image/jpg":
         return "image/jpeg"
     return base_type
+
+
+def validate_image_signature(
+    header: bytes, filename: str | None, content_type: str | None = None
+) -> str:
+    """Check the image signature against the filename and any declared MIME type."""
+    if header.startswith(JPEG_MAGIC):
+        image_type, format_name = "image/jpeg", "JPEG"
+    elif header.startswith(PNG_MAGIC):
+        image_type, format_name = "image/png", "PNG"
+    elif header.startswith(WEBP_RIFF) and header[8:12] == WEBP_MARKER:
+        image_type, format_name = "image/webp", "WebP"
+    else:
+        raise ValueError(
+            "File signature mismatch. Contents do not match a valid JPEG, PNG, or WebP image."
+        )
+
+    if content_type is not None and content_type != image_type:
+        raise ValueError(f"MIME type does not match {format_name} file signature.")
+
+    extension = Path(filename).suffix.lower() if filename else ""
+    if extension:
+        if extension not in ALLOWED_EXTENSIONS:
+            raise ValueError(
+                f"File extension '{extension}' is unsupported. Must be .jpg, .jpeg, .png, or .webp."
+            )
+        expected_type = EXTENSION_CONTENT_TYPES[extension]
+        if expected_type != image_type:
+            expected_format = {
+                "image/jpeg": "JPEG",
+                "image/png": "PNG",
+                "image/webp": "WebP",
+            }[expected_type]
+            raise ValueError(
+                f"File extension does not match {expected_format} content."
+            )
+
+    return image_type
 
 
 async def _reject(file: UploadFile, status_code: int, detail: str) -> None:
@@ -99,68 +143,10 @@ async def validate_image_payload(
     header = await file.read(12)
     await file.seek(0)
 
-    is_jpeg = header.startswith(JPEG_MAGIC)
-    is_png = header.startswith(PNG_MAGIC)
-    is_webp = (
-        header.startswith(WEBP_RIFF)
-        and len(header) >= 12
-        and header[8:12] == WEBP_MARKER
-    )
-
-    if not (is_jpeg or is_png or is_webp):
-        await _reject(
-            file,
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "File signature mismatch. Contents do not match a valid JPEG, PNG, or WebP image.",
-        )
-
-    # Prevent file extension / MIME type spoofing
-    if is_jpeg and content_type != "image/jpeg":
-        await _reject(
-            file,
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "MIME type does not match JPEG file signature.",
-        )
-    if is_png and content_type != "image/png":
-        await _reject(
-            file,
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "MIME type does not match PNG file signature.",
-        )
-    if is_webp and content_type != "image/webp":
-        await _reject(
-            file,
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "MIME type does not match WebP file signature.",
-        )
-
-    # 4. Prevent file extension spoofing if filename is provided
-    if file.filename:
-        ext = Path(file.filename).suffix.lower()
-        if ext and ext not in ALLOWED_EXTENSIONS:
-            await _reject(
-                file,
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                f"File extension '{ext}' is unsupported. Must be .jpg, .jpeg, .png, or .webp.",
-            )
-        if ext in {".jpg", ".jpeg"} and not is_jpeg:
-            await _reject(
-                file,
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                "File extension does not match JPEG content.",
-            )
-        if ext == ".png" and not is_png:
-            await _reject(
-                file,
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                "File extension does not match PNG content.",
-            )
-        if ext == ".webp" and not is_webp:
-            await _reject(
-                file,
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                "File extension does not match WebP content.",
-            )
+    try:
+        validate_image_signature(header, file.filename, content_type)
+    except ValueError as error:
+        await _reject(file, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(error))
 
     if return_bytes:
         contents = await file.read()

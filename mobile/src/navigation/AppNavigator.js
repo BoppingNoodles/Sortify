@@ -25,9 +25,6 @@ function MainTabs() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E2E8F0',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
         },
         tabBarIcon: ({ color, size, focused }) => {
           let iconName;

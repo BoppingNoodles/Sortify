@@ -17,21 +17,40 @@ class FakeQuery:
     def __init__(self, docs: list[FakeSnapshot]):
         self._docs = docs
         self._limit = None
+        self._ordering: list[tuple[str, bool]] = []
+        self._cursor = None
 
     def order_by(self, field: str, direction: str = "ASCENDING"):
-        reverse = str(direction).upper() == "DESCENDING"
-        self._docs.sort(
-            key=lambda doc: (doc.to_dict() or {}).get(field) or "",
-            reverse=reverse,
-        )
+        self._ordering.append((field, str(direction).upper() == "DESCENDING"))
         return self
+
+    def start_after(self, values):
+        self._cursor = tuple(getattr(value, "id", value) for value in values)
+        return self
+
+    @staticmethod
+    def _value(doc, field):
+        return doc.id if field == "__name__" else (doc.to_dict() or {}).get(field, "")
+
+    def _is_after_cursor(self, doc):
+        for (field, reverse), boundary in zip(
+            self._ordering, self._cursor, strict=True
+        ):
+            value = self._value(doc, field)
+            if value != boundary:
+                return value < boundary if reverse else value > boundary
+        return False
 
     def limit(self, count: int):
         self._limit = count
         return self
 
     def stream(self):
-        docs = self._docs
+        docs = list(self._docs)
+        for field, reverse in reversed(self._ordering):
+            docs.sort(key=lambda doc: self._value(doc, field), reverse=reverse)
+        if self._cursor is not None:
+            docs = [doc for doc in docs if self._is_after_cursor(doc)]
         if self._limit is not None:
             docs = docs[: self._limit]
         return iter(docs)

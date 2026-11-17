@@ -4,23 +4,33 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'rea
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function ResultScreen({ route, navigation }) {
-  const { 
-    itemName = 'Item Classified', 
-    category = 'compost', 
+  const {
+    itemName = 'Item Classified',
+    category = 'compost',
     confidence = 0.94,
-    tip = 'Compostable in Berkeley if certified BPI or lining is plant-based.',
-    photoUri = null, //Includes photo thumbnail of the scanned object.
+    bin = null,
+    tip = null,
+    disposalTip = null,
+    location = 'berkeley',
+    photoUri = null,
+    historySaved,
   } = route?.params || {};
 
-  const binColor = COLORS.bins[category.toLowerCase()] || COLORS.bins.landfill; //Displays category badge with official colors: Green (Compost), Blue (Recycling), Gray/Black (Landfill).
-  const confidencePercent = Math.round( Math.max(0, Math.min(1, Number(confidence) || 0)) * 100); //Renders visual progress bar showing AI confidence percentage (0–100%).
-  //Displays target bin name (e.g., "Green Compost Bin") and specific municipal disposal advice
-  const BIN_NAMES = {
-    compost: 'Green Compost Bin',
-    recycling: 'Blue Recycling Bin',
-    landfill: 'Gray/Black Landfill Bin',
-  };
-  const binName = BIN_NAMES[category.toLowerCase()] || 'Check Local Guidelines';
+  const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
+  // API bin_color values are display labels ("Green"), not native style colors.
+  const binColor = COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
+  const confidenceScore = typeof confidence === 'number' || typeof confidence === 'string'
+    ? Number(confidence)
+    : NaN;
+  const confidencePercent = Number.isFinite(confidenceScore)
+    ? Math.round(Math.max(0, Math.min(1, confidenceScore)) * 100)
+    : 0;
+  const locationLabel = location
+    ? location
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    : 'Berkeley';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -30,10 +40,11 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Top Category Banner */}
       <View style={[styles.badge, { backgroundColor: binColor }]}>
-        <Text style={styles.badgeText}>{category.toUpperCase()}</Text>
+        <Text style={styles.badgeText}>{(category || 'LANDFILL').toUpperCase()}</Text>
       </View>
 
       <Text style={styles.itemName}>{itemName}</Text>
+      {bin ? <Text style={styles.binName}>Target: {bin}</Text> : null}
 
       {/* Confidence Score Bar */}
       <View style={styles.confidenceContainer}>
@@ -48,17 +59,20 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Disposal Recommendation Card */}
       <View style={styles.tipCard}>
-        <Text style={styles.tipTitle}>Disposal Guideline (Berkeley 📍)</Text>
-        <Text style={[styles.binName, { color: binColor }]}>
-          {binName}
-        </Text>
-        <Text style={styles.tipBody}>{tip}</Text>
+        <Text style={styles.tipTitle}>Disposal Guideline ({locationLabel} 📍)</Text>
+        <Text style={styles.tipBody}>{effectiveTip}</Text>
       </View>
 
-      {/* Action Buttons */} //"Scan Another Item" button dismisses modal and returns to viewfinder.
+      {historySaved === false && (
+        <Text accessibilityRole="alert" style={styles.historyWarning}>
+          {'This scan couldn’t be saved to History.'}
+        </Text>
+      )}
+
+      {/* Action Buttons */}
       <TouchableOpacity 
         style={[styles.primaryButton, { backgroundColor: binColor }]}
-        onPress={() => navigation.goBack()} //When the user presses the button, the app returns to the previous screen and closes the Result Modal. When the user presses the button, the app returns to the previous screen and closes the Result modal. In `AppNavigator.js`, the `Result` screen is defined as a modal; setting `presentation: 'modal'` means that the `Result` screen opens as a modal. Calling `navigation.goBack()` will close this modal.
+        onPress={() => navigation.goBack()}
         activeOpacity={0.8}
       >
         <Text style={styles.primaryButtonText}>Scan Another Item</Text>
@@ -73,7 +87,8 @@ const styles = StyleSheet.create({
   thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: '#CBD5E1' },
   badge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
   badgeText: { color: COLORS.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
-  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 20 },
+  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 6 },
+  binName: { fontSize: 15, fontWeight: '600', color: COLORS.text.secondary, marginBottom: 18 },
   confidenceContainer: { width: '100%', marginBottom: 24 },
   confidenceHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   confidenceLabel: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary },
@@ -83,7 +98,7 @@ const styles = StyleSheet.create({
   tipCard: { backgroundColor: COLORS.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: '#E2E8F0' },
   tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: COLORS.accent.berkeleyBlue },
   tipBody: { ...TYPOGRAPHY.body, color: COLORS.text.secondary, lineHeight: 22 },
+  historyWarning: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary, marginBottom: SPACING.md },
   primaryButton: { width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
   primaryButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 16 },
-  binName: {fontSize: 18, fontWeight: '700', marginBottom: 8,},
 });

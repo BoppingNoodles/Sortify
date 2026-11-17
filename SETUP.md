@@ -10,7 +10,7 @@ Welcome to the **Sortify** team! This guide walks you through setting up everyth
 - [ ] **Step 2:** Install Git (macOS / Windows)
 - [ ] **Step 3:** Clone the Repository
 - [ ] **Step 4:** IDE Setup (VS Code or Antigravity + Extensions)
-- [ ] **Step 5:** Install Python 3.10+ (Backend & AI/ML)
+- [ ] **Step 5:** Install Python 3.11+ (Backend & AI/ML)
 - [ ] **Step 6:** Install Node.js LTS, Expo Go & Figma (Frontend & Mobile)
 - [ ] **Step 7:** Next Steps → Follow the README Quickstart
 
@@ -76,9 +76,9 @@ Once Caden adds your account to the repository:
 
 ---
 
-## Step 5: Install Python 3.10+ (Backend & AI/ML)
+## Step 5: Install Python 3.11+ (Backend & AI/ML)
 
-Backend and ML development requires Python 3.10, 3.11, or 3.12 installed on your system.
+CI uses Python 3.11. Use Python 3.11 or newer for backend and ML development.
 
 ### Windows
 
@@ -140,7 +140,7 @@ npm -v    # Should be v10.x or higher
 Now that all system programs, runtimes, and the repository are set up on your machine, follow the instructions in the main repository README:
 
 👉 **[README.md — Quickstart Guides](README.md#quickstart-guides)**
-* **Backend & AI/ML:** Setting up the shared `venv`, running `pip install -r requirements.txt`, and launching the FastAPI server.
+* **Backend & AI/ML:** Follow the [backend local setup](backend/README.md#local-setup) to install dependencies, launch FastAPI, and find the generated OpenAPI contract.
 * **Frontend:** Running `npm install` inside `mobile/` and launching `npx expo start`.
 * **Testing & CI:** Running `ruff check .` and `ruff format .` before pushing code.
 
