@@ -2,6 +2,10 @@
 
 **Release decision** Pending. The final app SHA, model checksum, HTTPS environment, operator, and presentation date still need confirmation. The implementation baseline is `6870e48b3d8a91964c8e0ba1e84f4da61bda19f7`. D denotes the presentation date. Keep Thanksgiving break free of required work and handoffs.
 
+## Local verification on November 16, 2026
+
+Combined review commit `eadf9beb4000f16099ccbd76a1bb71e1f5a256b2` passed 301 backend and ML tests and 29 mobile tests. Ruff lint and format checks, a clean locked install, the Expo dependency check, mobile lint, and Metro exports for Android and iOS also passed. The automated tests use controlled or fixture inference where applicable. Physical-device runs, selected-checkpoint acceptance, and deployment rehearsal are still required on the final candidate.
+
 ## Before break
 
 | Evidence or blocker | Status and owner |
