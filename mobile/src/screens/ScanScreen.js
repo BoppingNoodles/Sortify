@@ -1,5 +1,5 @@
 // src/screens/ScanScreen.js
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,21 +9,146 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  AppState,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 
 const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
 
+function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy }) {
+  const cameraRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  const handleReady = () => {
+    if (!cameraRef.current) return;
+    onPreviewReady(cameraRef.current);
+    setIsReady(true);
+  };
+
+  const handleCapture = () => {
+    if (!isReady || !cameraRef.current) return;
+    return onCapture(cameraRef.current);
+  };
+
+  return (
+    <CameraView style={styles.camera} ref={cameraRef} onCameraReady={handleReady}>
+      <SafeAreaView style={styles.cameraOverlay}>
+        {/* Top Bar with Municipality Selector */}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.cityPill}
+            onPress={onCycleCity}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Target Reticle Overlay */}
+        <View style={styles.reticleContainer}>
+          <View style={styles.reticleBox} />
+          <Text style={styles.reticleHint}>Center item inside frame</Text>
+        </View>
+
+        {/* Shutter Button Controls */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity
+            style={styles.shutterButton}
+            onPress={handleCapture}
+            disabled={!isReady || isBusy}
+            activeOpacity={0.7}
+          >
+            <View style={styles.shutterInner} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </CameraView>
+  );
+}
+
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isActive, setIsActive] = useState(AppState.currentState === 'active');
   const [selectedCity, setSelectedCity] = useState('berkeley');
-  const cameraRef = useRef(null);
-  const operationInProgress = useRef(false);
+  const mounted = useRef(false);
+  const screen = useRef({ focused: false, active: isActive, generation: 0 });
+  const operation = useRef(null);
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  const invalidate = useCallback(() => {
+    screen.current.generation += 1;
+    if (!mounted.current) return;
+    setIsAnalyzing(false);
+    // A scan whose save has started must not be submitted again on return.
+    if (operation.current?.saving) setCapturedPhoto(null);
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    screen.current.focused = true;
+    setIsFocused(true);
+    setIsBusy(Boolean(operation.current));
+    return () => {
+      screen.current.focused = false;
+      invalidate();
+      if (mounted.current) setIsFocused(false);
+    };
+  }, [invalidate]));
+
+  useEffect(() => {
+    const updateActivity = (state) => {
+      const active = state === 'active';
+      if (screen.current.active === active) return;
+      screen.current.active = active;
+      if (!active) invalidate();
+      else setIsBusy(Boolean(operation.current));
+      setIsActive(active);
+    };
+    const subscription = AppState.addEventListener('change', updateActivity);
+    updateActivity(AppState.currentState);
+    return () => subscription.remove();
+  }, [invalidate]);
+
+  const isCurrent = (generation) => (
+    mounted.current && screen.current.focused && screen.current.active &&
+    screen.current.generation === generation
+  );
+
+  const beginOperation = (camera = null) => {
+    const { generation } = screen.current;
+    if (!isCurrent(generation) || operation.current) return null;
+    const pending = { generation, saving: false, camera };
+    operation.current = pending;
+    setIsBusy(true);
+    return pending;
+  };
+
+  const finishOperation = (pending) => {
+    if (operation.current !== pending) return;
+    operation.current = null;
+    if (!mounted.current || !screen.current.focused || !screen.current.active) return;
+    setIsBusy(false);
+    if (isCurrent(pending.generation)) setIsAnalyzing(false);
+  };
+
+  const handlePreviewReady = (camera) => {
+    const pending = operation.current;
+    // Android can abandon the previous view's capture promise during teardown.
+    if (pending?.camera && pending.camera !== camera && !isCurrent(pending.generation)) {
+      finishOperation(pending);
+    }
+  };
 
   if (!permission) {
     return (
@@ -48,32 +173,35 @@ export default function ScanScreen({ navigation }) {
     );
   }
 
-  const handleCapture = async () => {
-    if (!cameraRef.current || operationInProgress.current) return;
-    operationInProgress.current = true;
+  const handleCapture = async (camera) => {
+    const pending = beginOperation(camera);
+    if (!pending) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({
+      const photo = await camera.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
       });
-      if (photo?.uri) {
+      if (photo?.uri && isCurrent(pending.generation)) {
         setCapturedPhoto(photo);
       }
     } catch (error) {
-      console.error('Failed to capture photo:', error);
-      Alert.alert('Camera Error', 'Could not capture photo. Please try again.');
+      if (isCurrent(pending.generation)) {
+        console.error('Failed to capture photo:', error);
+        Alert.alert('Camera Error', 'Could not capture photo. Please try again.');
+      }
     } finally {
-      operationInProgress.current = false;
+      finishOperation(pending);
     }
   };
 
   const handleAnalyze = async () => {
-    if (!capturedPhoto?.uri || operationInProgress.current) return;
-
-    operationInProgress.current = true;
+    if (!capturedPhoto?.uri) return;
+    const pending = beginOperation();
+    if (!pending) return;
     setIsAnalyzing(true);
     try {
       const result = await classifyImage(capturedPhoto.uri, selectedCity);
+      if (!isCurrent(pending.generation)) return;
 
       if (
         !result ||
@@ -93,7 +221,9 @@ export default function ScanScreen({ navigation }) {
         throw new Error('Classification server returned an invalid response.');
       }
 
+      pending.saving = true;
       const savedRecord = await saveScanRecord(result);
+      if (!isCurrent(pending.generation)) return;
       const resultParams = {
         itemName: result.item_name,
         category: result.category,
@@ -108,26 +238,30 @@ export default function ScanScreen({ navigation }) {
         historySaved: savedRecord !== null,
       };
 
-      navigation.navigate('ResultModal', resultParams);
       setCapturedPhoto(null);
+      navigation.navigate('ResultModal', resultParams);
     } catch (error) {
+      if (!isCurrent(pending.generation)) return;
       console.error('Classification request failed:', error);
       Alert.alert(
         'Scan Failed',
         error.message || 'Unable to analyze image. Please ensure your backend server is running.',
         [
-          { text: 'Retake', style: 'cancel', onPress: handleRetake },
-          { text: 'Try Again', onPress: handleAnalyze },
+          { text: 'Retake', style: 'cancel', onPress: () => {
+            if (isCurrent(pending.generation)) handleRetake();
+          } },
+          { text: 'Try Again', onPress: () => {
+            if (isCurrent(pending.generation)) return handleAnalyze();
+          } },
         ]
       );
     } finally {
-      operationInProgress.current = false;
-      setIsAnalyzing(false);
+      finishOperation(pending);
     }
   };
 
   const handleRetake = () => {
-    if (operationInProgress.current) return;
+    if (operation.current) return;
     setCapturedPhoto(null);
   };
 
@@ -138,6 +272,7 @@ export default function ScanScreen({ navigation }) {
   };
 
   const formattedCity = selectedCity.replace('-', ' ').toUpperCase();
+  const showCamera = isFocused && isActive && !capturedPhoto;
 
   return (
     <View style={styles.container}>
@@ -156,6 +291,7 @@ export default function ScanScreen({ navigation }) {
               <TouchableOpacity
                 style={styles.retakeButton}
                 onPress={handleRetake}
+                disabled={isBusy}
                 activeOpacity={0.8}
               >
                 <Text style={styles.retakeButtonText}>Retake</Text>
@@ -163,6 +299,7 @@ export default function ScanScreen({ navigation }) {
               <TouchableOpacity
                 style={styles.analyzeButton}
                 onPress={handleAnalyze}
+                disabled={isBusy}
                 activeOpacity={0.8}
               >
                 <Text style={styles.analyzeButtonText}>Identify Bin</Text>
@@ -170,39 +307,15 @@ export default function ScanScreen({ navigation }) {
             </View>
           )}
         </View>
-      ) : (
-        <CameraView style={styles.camera} ref={cameraRef}>
-          <SafeAreaView style={styles.cameraOverlay}>
-            {/* Top Bar with Municipality Selector */}
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                style={styles.cityPill}
-                onPress={handleCycleCity}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Target Reticle Overlay */}
-            <View style={styles.reticleContainer}>
-              <View style={styles.reticleBox} />
-              <Text style={styles.reticleHint}>Center item inside frame</Text>
-            </View>
-
-            {/* Shutter Button Controls */}
-            <View style={styles.bottomControls}>
-              <TouchableOpacity
-                style={styles.shutterButton}
-                onPress={handleCapture}
-                activeOpacity={0.7}
-              >
-                <View style={styles.shutterInner} />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </CameraView>
-      )}
+      ) : showCamera ? (
+        <CameraPreview
+          formattedCity={formattedCity}
+          onCycleCity={handleCycleCity}
+          onCapture={handleCapture}
+          onPreviewReady={handlePreviewReady}
+          isBusy={isBusy}
+        />
+      ) : null}
     </View>
   );
 }
