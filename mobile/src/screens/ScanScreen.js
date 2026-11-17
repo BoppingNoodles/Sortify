@@ -19,6 +19,57 @@ import { saveScanRecord } from '../services/storage';
 
 const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
 
+function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy }) {
+  const cameraRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  const handleReady = () => {
+    if (!cameraRef.current) return;
+    onPreviewReady(cameraRef.current);
+    setIsReady(true);
+  };
+
+  const handleCapture = () => {
+    if (!isReady || !cameraRef.current) return;
+    return onCapture(cameraRef.current);
+  };
+
+  return (
+    <CameraView style={styles.camera} ref={cameraRef} onCameraReady={handleReady}>
+      <SafeAreaView style={styles.cameraOverlay}>
+        {/* Top Bar with Municipality Selector */}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.cityPill}
+            onPress={onCycleCity}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Target Reticle Overlay */}
+        <View style={styles.reticleContainer}>
+          <View style={styles.reticleBox} />
+          <Text style={styles.reticleHint}>Center item inside frame</Text>
+        </View>
+
+        {/* Shutter Button Controls */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity
+            style={styles.shutterButton}
+            onPress={handleCapture}
+            disabled={!isReady || isBusy}
+            activeOpacity={0.7}
+          >
+            <View style={styles.shutterInner} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </CameraView>
+  );
+}
+
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState(null);
@@ -27,7 +78,6 @@ export default function ScanScreen({ navigation }) {
   const [isFocused, setIsFocused] = useState(false);
   const [isActive, setIsActive] = useState(AppState.currentState === 'active');
   const [selectedCity, setSelectedCity] = useState('berkeley');
-  const cameraRef = useRef(null);
   const mounted = useRef(false);
   const screen = useRef({ focused: false, active: isActive, generation: 0 });
   const operation = useRef(null);
@@ -75,10 +125,10 @@ export default function ScanScreen({ navigation }) {
     screen.current.generation === generation
   );
 
-  const beginOperation = () => {
+  const beginOperation = (camera = null) => {
     const { generation } = screen.current;
     if (!isCurrent(generation) || operation.current) return null;
-    const pending = { generation, saving: false };
+    const pending = { generation, saving: false, camera };
     operation.current = pending;
     setIsBusy(true);
     return pending;
@@ -90,6 +140,14 @@ export default function ScanScreen({ navigation }) {
     if (!mounted.current || !screen.current.focused || !screen.current.active) return;
     setIsBusy(false);
     if (isCurrent(pending.generation)) setIsAnalyzing(false);
+  };
+
+  const handlePreviewReady = (camera) => {
+    const pending = operation.current;
+    // Android can abandon the previous view's capture promise during teardown.
+    if (pending?.camera && pending.camera !== camera && !isCurrent(pending.generation)) {
+      finishOperation(pending);
+    }
   };
 
   if (!permission) {
@@ -115,12 +173,11 @@ export default function ScanScreen({ navigation }) {
     );
   }
 
-  const handleCapture = async () => {
-    if (!cameraRef.current) return;
-    const pending = beginOperation();
+  const handleCapture = async (camera) => {
+    const pending = beginOperation(camera);
     if (!pending) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({
+      const photo = await camera.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
       });
@@ -251,38 +308,13 @@ export default function ScanScreen({ navigation }) {
           )}
         </View>
       ) : showCamera ? (
-        <CameraView style={styles.camera} ref={cameraRef}>
-          <SafeAreaView style={styles.cameraOverlay}>
-            {/* Top Bar with Municipality Selector */}
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                style={styles.cityPill}
-                onPress={handleCycleCity}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cityPillText}>📍 {formattedCity}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Target Reticle Overlay */}
-            <View style={styles.reticleContainer}>
-              <View style={styles.reticleBox} />
-              <Text style={styles.reticleHint}>Center item inside frame</Text>
-            </View>
-
-            {/* Shutter Button Controls */}
-            <View style={styles.bottomControls}>
-              <TouchableOpacity
-                style={styles.shutterButton}
-                onPress={handleCapture}
-                disabled={isBusy}
-                activeOpacity={0.7}
-              >
-                <View style={styles.shutterInner} />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </CameraView>
+        <CameraPreview
+          formattedCity={formattedCity}
+          onCycleCity={handleCycleCity}
+          onCapture={handleCapture}
+          onPreviewReady={handlePreviewReady}
+          isBusy={isBusy}
+        />
       ) : null}
     </View>
   );
