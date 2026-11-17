@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
 const { test } = require('node:test');
 const React = require('react');
 const { create, act } = require('react-test-renderer');
@@ -80,4 +81,35 @@ test('History reloads on focus and ignores reads after leaving the tab', async (
   assert.equal(empty.data.length, 0);
   assert.equal(empty.ListEmptyComponent.props.children, 'No scans yet.');
   blur();
+});
+
+test('History displays saved scan metadata after a simulated app relaunch', async (t) => {
+  const persisted = new Map();
+  const asyncStorage = {
+    getItem: async (key) => persisted.get(key) ?? null,
+    setItem: async (key, value) => { persisted.set(key, value); },
+  };
+  const openStorage = () => loadSource('src/services/storage.js', {
+    '@react-native-async-storage/async-storage': asyncStorage,
+    'expo-crypto': { randomUUID },
+    '../styles/theme': theme,
+  });
+  const firstLaunch = openStorage();
+  const saved = await firstLaunch.saveScanRecord(classification);
+  assert.ok(saved);
+
+  const nextLaunch = openStorage();
+  const HistoryScreen = loadSource('src/screens/HistoryScreen.js', {
+    'react-native': native,
+    '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(effect, [effect]) },
+    '../styles/theme': theme,
+    '../services/storage': nextLaunch,
+  }).default;
+  const renderer = await mount(t, HistoryScreen);
+  const { data, renderItem } = renderer.root.findByType('FlatList').props;
+  assert.equal(data.length, 1);
+  assert.deepEqual({ ...data[0] }, { ...saved });
+  const row = await mount(t, () => renderItem({ item: data[0] }));
+  assert.ok(row.root.findAllByType('Text').some(({ props }) =>
+    props.children === classification.item_name));
 });
