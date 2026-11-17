@@ -146,8 +146,10 @@ def predict_release(checkpoint, manifest, samples, data_dir):
 
     with checkpoint.open("rb") as source:
         digest = hashlib.file_digest(source, "sha256").hexdigest()
-    if digest != manifest["sha256"]:
+    manifest_sha = str(manifest.get("sha256", "")).strip().lower()
+    if not manifest_sha or digest.lower() != manifest_sha:
         raise ValueError("Checkpoint SHA-256 does not match the release manifest")
+    manifest["sha256"] = manifest_sha
     ModelService.reset_instance()
     try:
         service = ModelService(model_path=checkpoint.resolve(), device="cpu")

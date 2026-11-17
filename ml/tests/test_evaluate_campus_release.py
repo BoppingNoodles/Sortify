@@ -29,7 +29,7 @@ def test_release_evaluation_reports_checkpoint_dataset_and_failures(
     manifest.write_text(
         json.dumps(
             {
-                "sha256": digest,
+                "sha256": f"  {digest.upper()}  ",
                 "class_names": labels,
                 "source_commit": "a" * 40,
                 "architecture": "mobilenet_v2",
