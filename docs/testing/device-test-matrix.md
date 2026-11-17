@@ -1,6 +1,8 @@
 # Physical device acceptance
 
-Baseline inspected on November 16, 2026: `6870e48b3d8a91964c8e0ba1e84f4da61bda19f7`. On Windows with Node 24.14.0, `npm ci`, mobile lint, and all 22 baseline Node tests passed. Expo's dependency check expected Expo `~57.0.33` and `expo-camera` `~57.0.6` within SDK 57. The [iPhone launch report](https://github.com/BoppingNoodles/Sortify/pull/72) still needs reproduction with the exact client and OS.
+Baseline inspected on November 16, 2026 was `6870e48b3d8a91964c8e0ba1e84f4da61bda19f7`. On Windows with Node 24.14.0, `npm ci`, mobile lint, and all 22 baseline Node tests passed. Expo's dependency check expected Expo `~57.0.33` and `expo-camera` `~57.0.6` within SDK 57. The [iPhone launch report](https://github.com/BoppingNoodles/Sortify/pull/72) describes an SDK 57/58 mismatch. Reproduction still needs the exact client and iOS versions.
+
+Commit `228432d` aligned the two SDK 57 dependencies. On combined review commit `eadf9beb4000f16099ccbd76a1bb71e1f5a256b2`, a clean install, Expo dependency check, mobile lint, all 29 mobile tests, and Android and iOS JavaScript bundle exports passed. Physical launch, permissions and results remain pending.
 
 ## Set up each device
 
