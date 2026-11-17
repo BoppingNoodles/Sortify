@@ -12,8 +12,11 @@
 #       --out-dir docs/ml/campus-evaluation-report
 
 import argparse
+import hashlib
 import json
+import math
 import pickle
+import re
 from pathlib import Path
 
 import matplotlib
@@ -111,7 +114,7 @@ def collect_samples(data_dir):
             print(f"[warn] missing folder: {cls_dir}")
             continue
         for p in sorted(cls_dir.iterdir()):
-            if p.suffix.lower() in IMG_EXTS:
+            if p.is_file() and p.suffix.lower() in IMG_EXTS:
                 samples.append((p, label_idx))
     return samples
 
@@ -137,6 +140,68 @@ def predict(model, samples, transform, device):
     return results
 
 
+def predict_release(checkpoint, manifest, samples, data_dir):
+    from backend.app.routers.classify import LABEL_TO_CATEGORY
+    from backend.app.services.inference import ModelService
+
+    with checkpoint.open("rb") as source:
+        digest = hashlib.file_digest(source, "sha256").hexdigest()
+    manifest_sha = str(manifest.get("sha256", "")).strip().lower()
+    if not manifest_sha or digest.lower() != manifest_sha:
+        raise ValueError("Checkpoint SHA-256 does not match the release manifest")
+    manifest["sha256"] = manifest_sha
+    ModelService.reset_instance()
+    try:
+        service = ModelService(model_path=checkpoint.resolve(), device="cpu")
+        if service.model is None or service.class_names != manifest["class_names"]:
+            raise ValueError(
+                "The API runtime could not load the manifest's checkpoint and labels"
+            )
+        results, failures, inputs = [], [], []
+        applied_transform = repr(service.transform)
+        for path, true_idx in samples:
+            relative_path = path.relative_to(data_dir).as_posix()
+            sample = {"path": relative_path, "true": CLASSES[true_idx], "sha256": None}
+            try:
+                data = path.read_bytes()
+                sample["sha256"] = hashlib.sha256(data).hexdigest()
+                prediction = service.predict(data)
+                category = LABEL_TO_CATEGORY.get(prediction["category"].strip().lower())
+                score = prediction["confidence"]
+                if (
+                    prediction["is_mock"]
+                    or category not in CLASSES
+                    or not math.isfinite(score)
+                    or not 0 <= score <= 1
+                ):
+                    raise ValueError("Invalid release inference result")
+            except (
+                OSError,
+                ValueError,
+                RuntimeError,
+                SyntaxError,
+                Image.DecompressionBombError,
+            ) as error:
+                failures.append(
+                    {**sample, "error": str(error).replace(str(path), relative_path)}
+                )
+            else:
+                results.append(
+                    {
+                        **sample,
+                        "pred": category,
+                        "confidence": score,
+                        "correct": category == sample["true"],
+                        "_true_idx": true_idx,
+                        "_pred_idx": CLASSES.index(category),
+                    }
+                )
+            inputs.append(sample)
+    finally:
+        ModelService.reset_instance()
+    return results, failures, inputs, applied_transform
+
+
 def confusion(results):
     n = len(CLASSES)
     cm = np.zeros((n, n), dtype=int)
@@ -145,7 +210,7 @@ def confusion(results):
     return cm
 
 
-def plot_confusion(cm, accuracy, out_path):
+def plot_confusion(cm, accuracy, out_path, title="Campus evaluation"):
     row_sums = cm.sum(axis=1, keepdims=True)
     norm = np.divide(
         cm, row_sums, out=np.zeros_like(cm, dtype=float), where=row_sums != 0
@@ -158,7 +223,7 @@ def plot_confusion(cm, accuracy, out_path):
     ax.set_xlabel("Predicted Label", fontweight="bold")
     ax.set_ylabel("True Label", fontweight="bold")
     ax.set_title(
-        f"Normalized Confusion Matrix (Overall Accuracy: {accuracy:.2%})",
+        f"{title}\nNormalized confusion matrix (accuracy {accuracy:.2%})",
         fontweight="bold",
     )
     for i in range(len(CLASSES)):
@@ -173,22 +238,30 @@ def plot_confusion(cm, accuracy, out_path):
             )
     fig.colorbar(im, ax=ax)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 
-def write_report(metrics, wrong, cm, out_dir):
+def write_report(metrics, wrong, out_dir):
     """Write a markdown report summarizing the evaluation."""
     n = metrics["n_images"]
     acc = metrics["campus_accuracy"]
     lab = metrics["lab_accuracy"]
 
     lines = ["# Campus Evaluation Report", ""]
+    provenance = metrics.get("release_provenance")
+    if provenance:
+        lines += [
+            f"Candidate `{provenance['candidate_sha']}` evaluated with the deployed API preprocessing on CPU.",
+            f"Dataset `{provenance['dataset_id']}` and checkpoint `{provenance['checkpoint_sha256']}`.",
+            f"{metrics['attempted_images']} attempted, {len(metrics['failures'])} failed. Accuracy uses successfully evaluated images.",
+            "See `metrics.json` and `predictions.json` for artifact, sample, and failure provenance.",
+        ]
+    else:
+        lines.append(
+            "Frozen MVP evaluated on real waste photos from UC Berkeley campus."
+        )
     lines += [
-        (
-            "Frozen MVP model (MobileNetV2) evaluated on real waste photos taken "
-            "around the UC Berkeley campus."
-        ),
         "",
         "## Summary",
         "",
@@ -211,9 +284,10 @@ def write_report(metrics, wrong, cm, out_dir):
         "|---|---|---|",
     ]
     ranked = metrics["most_reliable_classes"]
-    for cls in ranked:
+    for cls in CLASSES:
         m = metrics["per_class"][cls]
-        lines.append(f"| {cls} | {m['n']} | {m['accuracy']:.0%} |")
+        class_accuracy = "n/a" if m["accuracy"] is None else f"{m['accuracy']:.0%}"
+        lines.append(f"| {cls} | {m['n']} | {class_accuracy} |")
     if ranked:
         worst = metrics["per_class"][ranked[-1]]["accuracy"]
         bottom = [c for c in ranked if metrics["per_class"][c]["accuracy"] == worst]
@@ -271,7 +345,7 @@ def write_report(metrics, wrong, cm, out_dir):
             )
         lines.append("")
 
-    (out_dir / "README.md").write_text("\n".join(lines))
+    (out_dir / "README.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main():
@@ -284,20 +358,85 @@ def main():
         default=None,
         help="Accuracy on the lab test split (0-1) for comparison",
     )
-    ap.add_argument("--out-dir", default="docs/ml/campus-evaluation-report")
+    ap.add_argument("--out-dir", type=Path)
+    ap.add_argument(
+        "--release-manifest",
+        type=Path,
+        help="Use the release checkpoint and API preprocessing",
+    )
+    ap.add_argument(
+        "--candidate-sha", help="Full application SHA for the release evaluation"
+    )
+    ap.add_argument("--dataset-id", help="Identifier of the frozen labeled campus set")
     args = ap.parse_args()
 
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if args.release_manifest and (
+        not args.candidate_sha
+        or not re.fullmatch(r"[0-9a-fA-F]{40}", args.candidate_sha)
+        or not args.dataset_id
+        or args.out_dir is None
+        or args.lab_accuracy is not None
+    ):
+        ap.error(
+            "Release evaluation requires a candidate SHA, dataset ID, and explicit new output directory. Use the same campus set for model comparisons."
+        )
+    out_dir = args.out_dir or Path("docs/ml/campus-evaluation-report")
+    if args.release_manifest and out_dir.exists():
+        ap.error("Choose a new release report directory")
 
-    samples = collect_samples(Path(args.data_dir))
+    data_dir = Path(args.data_dir)
+    samples = collect_samples(data_dir)
     if not samples:
         raise SystemExit("No images found. Check --data-dir and folder names.")
     print(f"Found {len(samples)} images")
 
-    model = load_model(args.checkpoint, device)
-    results = predict(model, samples, build_transform(), device)
+    release_evidence = {}
+    if args.release_manifest:
+        try:
+            manifest = json.loads(args.release_manifest.read_text(encoding="utf-8"))
+            results, failures, inputs, applied_transform = predict_release(
+                Path(args.checkpoint), manifest, samples, data_dir
+            )
+            model_provenance = {
+                key: manifest[key]
+                for key in ("sha256", "source_commit", "architecture", "class_names")
+            }
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            ap.exit(1, f"Release evaluation failed: {error}\n")
+        release_evidence = {
+            "attempted_images": len(samples),
+            "attempted_class_counts": {
+                label: sum(row["true"] == label for row in inputs) for label in CLASSES
+            },
+            "failures": failures,
+            "release_provenance": {
+                "candidate_sha": args.candidate_sha,
+                "dataset_id": args.dataset_id,
+                "dataset_sha256": hashlib.sha256(
+                    json.dumps(inputs, sort_keys=True).encode()
+                ).hexdigest(),
+                "checkpoint_sha256": model_provenance["sha256"],
+                "model_source_commit": model_provenance["source_commit"],
+                "architecture": model_provenance["architecture"],
+                "class_names": model_provenance["class_names"],
+                "runtime_preprocessing": {
+                    "decode": "EXIF transpose, then RGB",
+                    "transform": applied_transform,
+                },
+                "device": "cpu",
+            },
+        }
+    else:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = load_model(args.checkpoint, device)
+        results = predict(model, samples, build_transform(), device)
+
+    out_dir.mkdir(parents=True, exist_ok=not args.release_manifest)
+    if not results:
+        (out_dir / "metrics.json").write_text(
+            json.dumps(release_evidence, indent=2), encoding="utf-8"
+        )
+        ap.exit(1, f"No images could be evaluated. See {out_dir / 'metrics.json'}\n")
 
     cm = confusion(results)
     accuracy = float(np.trace(cm) / cm.sum())
@@ -313,6 +452,7 @@ def main():
     pred_counts = {cls: int(cm[:, i].sum()) for i, cls in enumerate(CLASSES)}
 
     metrics = {
+        **release_evidence,
         "n_images": len(results),
         "campus_accuracy": accuracy,
         "lab_accuracy": args.lab_accuracy,
@@ -328,11 +468,20 @@ def main():
         ),
     }
 
-    plot_confusion(cm, accuracy, out_dir / "confusion_matrix.png")
-    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    title = (
+        "Release candidate campus evaluation"
+        if args.release_manifest
+        else "MVP campus evaluation"
+    )
+    plot_confusion(cm, accuracy, out_dir / "confusion_matrix.png", title)
+    (out_dir / "metrics.json").write_text(
+        json.dumps(metrics, indent=2), encoding="utf-8"
+    )
 
     clean = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results]
-    (out_dir / "predictions.json").write_text(json.dumps(clean, indent=2))
+    (out_dir / "predictions.json").write_text(
+        json.dumps(clean, indent=2), encoding="utf-8"
+    )
 
     # Misclassified, most confident first (the most informative failures)
     wrong = sorted(
@@ -340,13 +489,13 @@ def main():
         key=lambda r: r["confidence"],
         reverse=True,
     )
-    with open(out_dir / "misclassified.txt", "w") as f:
+    with open(out_dir / "misclassified.txt", "w", encoding="utf-8") as f:
         f.writelines(
             f"{r['confidence']:.2f}  true={r['true']:<9} pred={r['pred']:<9} {r['path']}\n"
             for r in wrong
         )
 
-    write_report(metrics, wrong, cm, out_dir)
+    write_report(metrics, wrong, out_dir)
 
     print(f"\nCampus accuracy: {accuracy:.2%}")
     if args.lab_accuracy is not None:
@@ -357,6 +506,11 @@ def main():
         print(f"  {cls:<9} {acc:>5}  (n={m['n']})")
     print("\nPrediction counts:", pred_counts)
     print(f"\nOutputs written to {out_dir}/")
+    if release_evidence.get("failures"):
+        ap.exit(
+            1,
+            "Some campus images could not be evaluated. Review the failure list before reporting.\n",
+        )
 
 
 if __name__ == "__main__":
