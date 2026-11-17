@@ -455,3 +455,34 @@ test('result styles use native-compatible category colors for every backend colo
     await act(async () => renderer.unmount());
   }
 });
+
+test('result bounds confidence and displays the backend disposal guidance', async () => {
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    'react-native': native,
+    '../styles/theme': theme,
+  }).default;
+  const params = {
+    category: 'paper',
+    bin: 'Blue Paper Bin',
+    location: 'san-francisco',
+    disposalTip: 'Keep paper dry.',
+  };
+  for (const [confidence, expected] of [[1.2, 100], [-0.2, 0], ['0.75', 75], ['invalid', 0]]) {
+    let renderer;
+    await act(async () => {
+      renderer = create(React.createElement(ResultScreen, {
+        route: { params: { ...params, confidence } },
+      }));
+    });
+    try {
+      const labels = renderer.root.findAllByType('Text')
+        .map(({ props }) => React.Children.toArray(props.children).join(''));
+      assert.ok(labels.includes(expected + '%'));
+      assert.ok(labels.includes('Target: Blue Paper Bin'));
+      assert.ok(labels.includes('Disposal Guideline (San Francisco 📍)'));
+      assert.ok(labels.includes('Keep paper dry.'));
+    } finally {
+      await act(async () => renderer.unmount());
+    }
+  }
+});

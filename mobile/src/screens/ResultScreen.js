@@ -19,7 +19,12 @@ export default function ResultScreen({ route, navigation }) {
   const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
   // API bin_color values are display labels ("Green"), not native style colors.
   const binColor = COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
-  const confidencePercent = Math.round((typeof confidence === 'number' ? confidence : 0.94) * 100);
+  const confidenceScore = typeof confidence === 'number' || typeof confidence === 'string'
+    ? Number(confidence)
+    : NaN;
+  const confidencePercent = Number.isFinite(confidenceScore)
+    ? Math.round(Math.max(0, Math.min(1, confidenceScore)) * 100)
+    : 0;
   const locationLabel = location
     ? location
         .split('-')
