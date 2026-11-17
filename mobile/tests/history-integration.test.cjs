@@ -83,7 +83,7 @@ test('History reloads on focus and ignores reads after leaving the tab', async (
   blur();
 });
 
-test('History displays saved scan metadata after an app relaunch', async (t) => {
+test('History displays saved scan metadata after a simulated app relaunch', async (t) => {
   const persisted = new Map();
   const asyncStorage = {
     getItem: async (key) => persisted.get(key) ?? null,
