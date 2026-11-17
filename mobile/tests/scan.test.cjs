@@ -34,8 +34,23 @@ async function scan(t, classifyImage, {
 } = {}) {
   const alerts = [];
   const destinations = [];
+  let focusEffect;
+  let leave;
+  let onAppStateChange;
+  const appState = {
+    currentState: 'active',
+    addEventListener: (_event, listener) => {
+      onAppStateChange = listener;
+      return { remove: () => { onAppStateChange = null; } };
+    },
+  };
   const Screen = loadSource('src/screens/ScanScreen.js', {
-    'react-native': { ...native, Alert: { alert: (...args) => alerts.push(args) } },
+    'react-native': { ...native, AppState: appState, Alert: { alert: (...args) => alerts.push(args) } },
+    '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(() => {
+      focusEffect = effect;
+      leave = effect();
+      return () => leave?.();
+    }, [effect]) },
     'expo-camera': { CameraView: 'CameraView', useCameraPermissions: () => [{ granted: true }, () => {}] },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
@@ -50,8 +65,86 @@ async function scan(t, classifyImage, {
   t.after(async () => { await act(async () => renderer.unmount()); });
   const handler = (name) => renderer.root.findAllByType('TouchableOpacity')
     .find((node) => node.props.onPress.name === name).props.onPress;
-  return { renderer, handler, alerts, destinations };
+  return {
+    renderer, handler, alerts, destinations,
+    focus: () => act(async () => { leave = focusEffect(); }),
+    blur: () => act(async () => { leave(); leave = null; }),
+    setAppState: (state) => act(async () => {
+      appState.currentState = state;
+      onAppStateChange(state);
+    }),
+  };
 }
+
+test('blur releases the camera and discards the old capture after refocus', async (t) => {
+  const photo = deferred();
+  const takePictureAsync = t.mock.fn(() => photo.promise);
+  const app = await scan(t, async () => predictionFixture, { takePictureAsync });
+  let capture;
+  await act(async () => { capture = app.handler('handleCapture')(); });
+
+  await app.blur();
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
+  await app.focus();
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+  await act(async () => { await app.handler('handleCapture')(); });
+  assert.equal(takePictureAsync.mock.callCount(), 1);
+
+  await act(async () => { photo.resolve({ uri: 'file:///obsolete.jpg' }); await capture; });
+  assert.equal(app.renderer.root.findAllByType('Image').length, 0);
+  await act(async () => { await app.handler('handleCapture')(); });
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+});
+
+test('backgrounding drops stale analysis, preserves the preview, and allows explicit retry', async (t) => {
+  const prediction = deferred();
+  const classifyImage = t.mock.fn(() => prediction.promise);
+  const saveScanRecord = t.mock.fn(async () => ({ id: 'saved' }));
+  const app = await scan(t, classifyImage, { saveScanRecord });
+
+  await app.setAppState('background');
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
+  await app.setAppState('active');
+  await act(async () => { await app.handler('handleCapture')(); });
+  let analyze;
+  await act(async () => { analyze = app.handler('handleAnalyze')(); });
+  await app.setAppState('inactive');
+  await app.setAppState('active');
+  assert.equal(app.renderer.root.findAllByType('ActivityIndicator').length, 0);
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(classifyImage.mock.callCount(), 1);
+
+  await act(async () => { prediction.resolve(predictionFixture); await analyze; });
+  assert.equal(app.destinations.length, 0);
+  assert.equal(saveScanRecord.mock.callCount(), 0);
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(saveScanRecord.mock.callCount(), 1);
+  assert.equal(app.destinations.length, 1);
+});
+
+test('leaving during an in-flight save suppresses the modal and ends that preview', async (t) => {
+  const pendingSave = deferred();
+  const saveStarted = deferred();
+  const saveScanRecord = t.mock.fn(() => {
+    saveStarted.resolve();
+    return pendingSave.promise;
+  });
+  const app = await scan(t, async () => predictionFixture, { saveScanRecord });
+  await act(async () => { await app.handler('handleCapture')(); });
+  let analyze;
+  await act(async () => { analyze = app.handler('handleAnalyze')(); await saveStarted.promise; });
+
+  await app.blur();
+  await act(async () => { pendingSave.resolve({ id: 'saved' }); await analyze; });
+  assert.equal(app.destinations.length, 0);
+  assert.equal(saveScanRecord.mock.callCount(), 1);
+  await app.focus();
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+  const shutter = app.renderer.root.findAllByType('TouchableOpacity')
+    .find(({ props }) => props.onPress.name === 'handleCapture');
+  assert.equal(shutter.props.disabled, false);
+});
 
 test('capture and live scan prevent overlap, map the API contract, and reset preview', async (t) => {
   const photo = deferred();
