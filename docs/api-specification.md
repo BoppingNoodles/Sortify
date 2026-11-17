@@ -243,12 +243,12 @@ old mock Bearer/offset contract must migrate to the device UUID/cursor contract.
 |---|---|---|
 | `200 OK` | Standard successful response | Successful GET or synchronous processing |
 | `201 Created` | Resource successfully created | Successful record log |
-| `400 Bad Request` | Invalid parameters or body | Validation failure or missing fields |
+| `400 Bad Request` | Malformed request syntax | Malformed request syntax or invalid client cursor |
 | `401 Unauthorized` | Missing or invalid auth token | Protected route accessed without credentials |
 | `404 Not Found` | Resource not located | Unsupported city or scan record not found |
 | `413 Payload Too Large` | Request entity too large | Uploaded image > 10MB |
 | `415 Unsupported Media Type` | Media type rejected | Non-image file uploaded |
-| `422 Unprocessable Entity` | Request validation failed | Missing file field or invalid guest UUID |
+| `422 Unprocessable Entity` | Request validation failed | Missing required fields, invalid parameters, or invalid guest UUID |
 | `500 Internal Server Error` | Unhandled server exception | Unexpected server failure |
 | `503 Service Unavailable` | Temporary capacity/storage failure | Busy inference workers or unavailable history store |
 | `504 Gateway Timeout` | Inference deadline exceeded | Model execution took too long |
