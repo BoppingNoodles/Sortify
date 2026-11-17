@@ -17,6 +17,10 @@ from backend.app.routers.classify import LABEL_TO_CATEGORY
 from backend.app.schemas import ClassificationAlternative
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES
 from backend.app.services.inference import ModelService, detect_architecture
+from backend.app.utils.upload_validator import (
+    get_max_upload_bytes,
+    validate_image_signature,
+)
 
 
 def file_sha256(path: Path) -> str:
@@ -44,8 +48,16 @@ def checkpoint_metadata(path: Path) -> tuple[str, list[str], list[str]]:
 
 def smoke_samples(service: ModelService, images: list[Path]) -> list[dict]:
     samples = []
+    upload_limit = get_max_upload_bytes()
     for image_path in images:
-        data = image_path.read_bytes()
+        with image_path.open("rb") as image:
+            data = image.read(upload_limit + 1)
+        if len(data) > upload_limit:
+            raise ValueError(f"{image_path.name} exceeds the API upload limit")
+        try:
+            content_type = validate_image_signature(data[:12], image_path.name)
+        except ValueError as error:
+            raise ValueError(f"{image_path.name}: {error}") from error
         first = service.predict(data)
         repeat = service.predict(data)
         if first["is_mock"] or repeat["is_mock"]:
@@ -68,6 +80,7 @@ def smoke_samples(service: ModelService, images: list[Path]) -> list[dict]:
         samples.append(
             {
                 "file": image_path.name,
+                "content_type": content_type,
                 "sha256": hashlib.sha256(data).hexdigest(),
                 **prediction.model_dump(),
                 "alternatives": alternatives,
@@ -85,6 +98,8 @@ def package_release(
     expected_sha256: str,
     images: list[Path],
 ) -> dict:
+    if not images:
+        raise ValueError("Provide at least one image for direct inference")
     if not checkpoint.is_file():
         raise FileNotFoundError(f"Checkpoint unavailable: {checkpoint}")
     if checkpoint.name.casefold() == "manifest.json":
@@ -172,7 +187,7 @@ def main() -> int:
     parser.add_argument(
         "--output", type=Path, required=True, help="New package directory"
     )
-    parser.add_argument("--image", type=Path, action="append", default=[])
+    parser.add_argument("--image", type=Path, action="append", required=True)
     args = parser.parse_args()
     try:
         manifest = package_release(
