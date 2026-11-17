@@ -34,6 +34,7 @@ async function scan(t, classifyImage, {
   readPermission = async () => ({ granted: true }),
   requestPermission = readPermission,
   openSettings = async () => {},
+  startReady = true,
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -69,10 +70,14 @@ async function scan(t, classifyImage, {
     }), { createNodeMock: (element) => element.type === 'CameraView' ? { takePictureAsync } : null });
   });
   t.after(async () => { await act(async () => renderer.unmount()); });
+  const cameraReady = () => act(async () => {
+    renderer.root.findAllByType('CameraView')[0]?.props.onCameraReady?.();
+  });
+  if (startReady) await cameraReady();
   const handler = (name) => renderer.root.findAllByType('TouchableOpacity')
     .find((node) => node.props.onPress.name === name).props.onPress;
   return {
-    renderer, handler, alerts, destinations,
+    renderer, handler, alerts, destinations, cameraReady,
     focus: () => act(async () => { leave = focusEffect(); }),
     blur: () => act(async () => { leave(); leave = null; }),
     setAppState: (state) => act(async () => {
@@ -134,24 +139,103 @@ test('permanent denial opens Settings, reports a failure, and refreshes on retur
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
 });
 
-test('blur releases the camera and discards the old capture after refocus', async (t) => {
-  const photo = deferred();
-  const takePictureAsync = t.mock.fn(() => photo.promise);
+test('late Settings failure does not overwrite a newer foreground permission state', async (t) => {
+  const settings = deferred();
+  let permission = { granted: false, canAskAgain: false };
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission: async () => permission,
+    openSettings: () => settings.promise,
+  });
+  let open;
+  await act(async () => { open = app.handler('handlePermission')(); });
+  await app.setAppState('background');
+  permission = { granted: false, canAskAgain: true };
+  await app.setAppState('active');
+  await act(async () => { settings.reject(new Error('old Settings failure')); await open; });
+  const button = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(button.findByType('Text').props.children, 'Grant Permission');
+  assert.equal(app.renderer.root.findAllByProps({ accessibilityRole: 'alert' }).length, 0);
+});
+
+test('returning during a native request waits for the permanent-denial decision', async (t) => {
+  const request = deferred();
+  let permission = { granted: false, canAskAgain: true };
+  const readPermission = t.mock.fn(async () => permission);
+  const app = await scan(t, async () => predictionFixture, {
+    readPermission,
+    requestPermission: () => request.promise,
+  });
+  let pending;
+  await act(async () => { pending = app.handler('handlePermission')(); });
+  await app.setAppState('background');
+  await app.setAppState('active');
+  assert.equal(readPermission.mock.callCount(), 1);
+  assert.equal(app.renderer.root.findAllByType('TouchableOpacity').length, 0);
+  permission = { granted: false, canAskAgain: false };
+  await act(async () => { request.resolve(permission); await pending; });
+  const button = app.renderer.root.findByType('TouchableOpacity');
+  assert.equal(button.findByType('Text').props.children, 'Open Settings');
+});
+
+test('capture waits for readiness from each new camera preview', async (t) => {
+  const takePictureAsync = t.mock.fn(async () => ({ uri: 'file:///photo.jpg' }));
+  const app = await scan(t, async () => predictionFixture, { takePictureAsync, startReady: false });
+  const shutter = () => app.renderer.root.findAllByType('TouchableOpacity')
+    .find(({ props }) => props.onPress.name === 'handleCapture').props;
+  const assertWaiting = async () => {
+    assert.equal(shutter().disabled, true);
+    await act(async () => { await shutter().onPress(); });
+    assert.equal(takePictureAsync.mock.callCount(), 0);
+  };
+
+  await assertWaiting();
+  const firstReady = app.renderer.root.findByType('CameraView').props.onCameraReady;
+  await app.cameraReady();
+  assert.equal(shutter().disabled, false);
+
+  await app.blur();
+  await app.focus();
+  await act(async () => { firstReady(); });
+  await assertWaiting();
+  await app.cameraReady();
+  assert.equal(shutter().disabled, false);
+
+  await app.setAppState('background');
+  await app.setAppState('active');
+  await assertWaiting();
+  await app.cameraReady();
+  await act(async () => { await shutter().onPress(); });
+  assert.equal(takePictureAsync.mock.callCount(), 1);
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+  await act(async () => { app.handler('handleRetake')(); });
+  assert.equal(shutter().disabled, true);
+});
+
+test('refocus can take a new photo while a detached camera capture remains pending', async (t) => {
+  const oldPhoto = deferred();
+  const newPhoto = deferred();
+  const captures = [oldPhoto.promise, newPhoto.promise];
+  const takePictureAsync = t.mock.fn(() => captures.shift());
   const app = await scan(t, async () => predictionFixture, { takePictureAsync });
-  let capture;
-  await act(async () => { capture = app.handler('handleCapture')(); });
+  let oldCapture;
+  await act(async () => { oldCapture = app.handler('handleCapture')(); });
 
   await app.blur();
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
   await app.focus();
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
-  await act(async () => { await app.handler('handleCapture')(); });
-  assert.equal(takePictureAsync.mock.callCount(), 1);
+  await app.cameraReady();
+  let newCapture;
+  await act(async () => { newCapture = app.handler('handleCapture')(); });
+  assert.equal(takePictureAsync.mock.callCount(), 2);
 
-  await act(async () => { photo.resolve({ uri: 'file:///obsolete.jpg' }); await capture; });
+  await act(async () => { oldPhoto.resolve({ uri: 'file:///obsolete.jpg' }); await oldCapture; });
   assert.equal(app.renderer.root.findAllByType('Image').length, 0);
   await act(async () => { await app.handler('handleCapture')(); });
-  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+  assert.equal(takePictureAsync.mock.callCount(), 2);
+
+  await act(async () => { newPhoto.resolve({ uri: 'file:///current.jpg' }); await newCapture; });
+  assert.equal(app.renderer.root.findByType('Image').props.source.uri, 'file:///current.jpg');
 });
 
 test('backgrounding drops stale analysis, preserves the preview, and allows explicit retry', async (t) => {
@@ -163,6 +247,7 @@ test('backgrounding drops stale analysis, preserves the preview, and allows expl
   await app.setAppState('background');
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
   await app.setAppState('active');
+  await app.cameraReady();
   await act(async () => { await app.handler('handleCapture')(); });
   let analyze;
   await act(async () => { analyze = app.handler('handleAnalyze')(); });
@@ -199,6 +284,7 @@ test('leaving during an in-flight save suppresses the modal and ends that previe
   assert.equal(saveScanRecord.mock.callCount(), 1);
   await app.focus();
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+  await app.cameraReady();
   const shutter = app.renderer.root.findAllByType('TouchableOpacity')
     .find(({ props }) => props.onPress.name === 'handleCapture');
   assert.equal(shutter.props.disabled, false);
