@@ -2,11 +2,23 @@
 
 Baseline inspected on November 16, 2026 was `6870e48b3d8a91964c8e0ba1e84f4da61bda19f7`. On Windows with Node 24.14.0, `npm ci`, mobile lint, and all 22 baseline Node tests passed. Expo's dependency check expected Expo `~57.0.33` and `expo-camera` `~57.0.6` within SDK 57. The [iPhone launch report](https://github.com/BoppingNoodles/Sortify/pull/72) describes an SDK 57/58 mismatch. Reproduction still needs the exact client and iOS versions.
 
-Commit `228432d` aligned the two SDK 57 dependencies. On combined review commit `eadf9beb4000f16099ccbd76a1bb71e1f5a256b2`, a clean install, Expo dependency check, mobile lint, all 29 mobile tests, and Android and iOS JavaScript bundle exports passed. Physical launch, permissions and results remain pending.
+Commit `228432d` aligned the two SDK 57 dependencies. In a local run on combined review commit `eadf9beb4000f16099ccbd76a1bb71e1f5a256b2`, a clean install, Expo dependency check, mobile lint, all 29 mobile tests, and Android and iOS JavaScript bundle exports passed. The integrated device run is pending publication of a branch or tag with its exact commit SHA.
+
+## Check out the published runtime smoke build
+
+From the repository root, fetch the runtime compatibility branch and check out the pinned commit:
+
+```sh
+git fetch origin refs/heads/fix/frontend/caden/device-runtime-compatibility
+git switch --detach 228432d3fb7b8d8fa71742a0ce6401a6f8ea3f4d
+git rev-parse HEAD
+```
+
+Use this checkout to reproduce DEVICE-01, run D01, and check initial camera permission grant and denial from D02. Record those permission observations as a partial D02 result. Run the full matrix, including permanent-denial recovery, when the integrated checkout is published.
 
 ## Set up each device
 
-1. Check out the candidate and record `git rev-parse HEAD`. In `mobile/`, run `npm ci`, `npx expo install --check`, `npm run lint`, and `npm test`.
+1. Record the checked-out SHA from `git rev-parse HEAD`. In `mobile/`, run `npm ci`, `npx expo install --check`, `npm run lint`, and `npm test`.
 2. Record the phone model, OS, and Expo Go or development-build version. Use an SDK 57-compatible client where available. Check [Expo Go downloads](https://expo.dev/go) for Android. On physical iOS, use the App Store client if it supports SDK 57 or have a team member with signing access install a matching [development build](https://docs.expo.dev/develop/development-builds/create-a-build/).
 3. Put the phone on the development host's network and set `EXPO_PUBLIC_API_URL` in `mobile/.env.local` to the assigned test endpoint. Use HTTPS for staging or the host LAN IP for a local smoke test. Confirm `/health` from the phone and record the model checksum from the deployment owner. Run `npx expo start --clear` and open the project in the matching client. Keep test data synthetic.
 
