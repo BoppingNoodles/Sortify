@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import {
   StyleSheet,
   Text,
+  Platform,
   View,
   TouchableOpacity,
   Image,
@@ -13,12 +14,25 @@ import {
   Linking,
 } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 import { MUNICIPALITIES } from '../services/municipalities';
+
+async function playHaptic(feedback) {
+  try {
+    await feedback();
+  } catch {
+    // Feedback is optional on devices and browsers without haptic support.
+  }
+}
+
+function playShutterHaptic() {
+  return playHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+}
 
 const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
 
@@ -90,6 +104,11 @@ export default function ScanScreen({ navigation }) {
   const screen = useRef({ focused: false, active: isActive, generation: 0 });
   const operation = useRef(null);
   const permissionRequest = useRef(null);
+
+  useEffect(() => {
+    // iOS suppresses haptics while the camera is running. Wait for the photo preview.
+    if (Platform.OS === 'ios' && capturedPhoto) void playShutterHaptic();
+  }, [capturedPhoto]);
 
   const isCurrent = useCallback((generation) => (
     mounted.current && screen.current.focused && screen.current.active &&
@@ -256,6 +275,7 @@ export default function ScanScreen({ navigation }) {
   const handleCapture = async (camera) => {
     const pending = beginOperation(camera);
     if (!pending) return;
+    if (Platform.OS !== 'ios') void playShutterHaptic();
     try {
       const photo = await camera.takePictureAsync({
         quality: 0.8,
@@ -320,6 +340,7 @@ export default function ScanScreen({ navigation }) {
 
       setCapturedPhoto(null);
       navigation.navigate('ResultModal', resultParams);
+      void playHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     } catch (error) {
       if (!isCurrent(pending.generation)) return;
       console.error('Classification request failed:', error);
