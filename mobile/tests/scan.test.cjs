@@ -35,6 +35,10 @@ async function scan(t, classifyImage, {
   requestPermission = readPermission,
   openSettings = async () => {},
   startReady = true,
+  platform = 'android',
+  impactAsync = async () => {},
+  notificationAsync = async () => {},
+  stopCamera = null,
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -49,8 +53,10 @@ async function scan(t, classifyImage, {
     },
   };
   const Screen = loadSource('src/screens/ScanScreen.js', {
-    'react-native': { ...native, AppState: appState, Linking: { openSettings },
+    'react-native': { ...native, Platform: { OS: platform }, AppState: appState, Linking: { openSettings },
+      findNodeHandle: (camera) => camera.nativeTag,
       Alert: { alert: (...args) => alerts.push(args) } },
+    expo: { requireOptionalNativeModule: () => stopCamera && { stop: stopCamera } },
     '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(() => {
       focusEffect = effect;
       leave = effect();
@@ -63,6 +69,12 @@ async function scan(t, classifyImage, {
         requestCameraPermissionsAsync: requestPermission,
       },
     },
+    'expo-haptics': {
+      impactAsync,
+      notificationAsync,
+      ImpactFeedbackStyle: { Medium: 'medium' },
+      NotificationFeedbackType: { Success: 'success' },
+    },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
@@ -73,7 +85,7 @@ async function scan(t, classifyImage, {
   await act(async () => {
     renderer = create(React.createElement(Screen, {
       navigation: { navigate: (...args) => destinations.push(args) },
-    }), { createNodeMock: (element) => element.type === 'CameraView' ? { takePictureAsync } : null });
+    }), { createNodeMock: (element) => element.type === 'CameraView' ? { takePictureAsync, nativeTag: 42 } : null });
   });
   t.after(async () => { await act(async () => renderer.unmount()); });
   const cameraReady = () => act(async () => {
@@ -107,6 +119,85 @@ test('camera and preview keep controls in safe-area overlays', async (t) => {
   assert.deepEqual(Array.from(preview.props.edges), ['left', 'right']);
   assert.deepEqual(preview.findAllByType('Text').map(({ props }) => props.children),
     ['Retake', 'Identify Bin']);
+});
+
+test('shutter feedback runs once per capture and result feedback follows a valid result', async (t) => {
+  const takingPhoto = deferred();
+  const impactAsync = t.mock.fn(async () => { throw new Error('Feedback unavailable'); });
+  const notificationAsync = t.mock.fn(async () => { throw new Error('Feedback unavailable'); });
+  const classifyImage = t.mock.fn(async () => predictionFixture);
+  classifyImage.mock.mockImplementationOnce(async () => null);
+  const app = await scan(t, classifyImage, {
+    impactAsync,
+    notificationAsync,
+    takePictureAsync: () => takingPhoto.promise,
+  });
+  const shutter = app.handler('handleCapture');
+  let capture;
+  await act(async () => {
+    capture = shutter();
+    await shutter();
+  });
+  assert.equal(impactAsync.mock.callCount(), 1);
+  assert.equal(impactAsync.mock.calls[0].arguments[0], 'medium');
+  assert.equal(notificationAsync.mock.callCount(), 0);
+  await act(async () => {
+    takingPhoto.resolve({ uri: 'file:///photo.jpg' });
+    await capture;
+  });
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(notificationAsync.mock.callCount(), 0);
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(notificationAsync.mock.callCount(), 1);
+  assert.equal(notificationAsync.mock.calls[0].arguments[0], 'success');
+  assert.equal(app.destinations.length, 1);
+});
+
+test('iOS plays shutter feedback only after native camera shutdown', async (t) => {
+  const stopping = deferred();
+  const stopCamera = t.mock.fn(() => stopping.promise);
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, {
+    platform: 'ios', impactAsync, stopCamera,
+  });
+  let capture;
+  await act(async () => { capture = app.handler('handleCapture')(); });
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+  assert.equal(stopCamera.mock.callCount(), 1);
+  assert.equal(stopCamera.mock.calls[0].arguments[0], 42);
+  assert.equal(impactAsync.mock.callCount(), 0);
+  await act(async () => {
+    stopping.resolve(true);
+    await capture;
+  });
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
+  assert.equal(impactAsync.mock.callCount(), 1);
+  assert.equal(impactAsync.mock.calls[0].arguments[0], 'medium');
+});
+
+test('iOS suppresses a pending shutter pulse after leaving Scan', async (t) => {
+  const stopping = deferred();
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, {
+    platform: 'ios', impactAsync, stopCamera: () => stopping.promise,
+  });
+  let capture;
+  await act(async () => { capture = app.handler('handleCapture')(); });
+  await app.blur();
+  await act(async () => {
+    stopping.resolve(true);
+    await capture;
+  });
+  assert.equal(impactAsync.mock.callCount(), 0);
+  assert.equal(app.renderer.root.findAllByType('Image').length, 0);
+});
+
+test('iOS opens the photo preview when native camera shutdown cannot be confirmed', async (t) => {
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, { platform: 'ios', impactAsync });
+  await act(async () => { await app.handler('handleCapture')(); });
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+  assert.equal(impactAsync.mock.callCount(), 0);
 });
 
 test('requestable denial can grant access from the scan screen', async (t) => {

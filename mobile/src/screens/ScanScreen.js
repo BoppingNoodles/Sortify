@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import {
   StyleSheet,
   Text,
+  Platform,
   View,
   TouchableOpacity,
   Image,
@@ -11,14 +12,44 @@ import {
   Alert,
   AppState,
   Linking,
+  findNodeHandle,
 } from 'react-native';
+import { requireOptionalNativeModule } from 'expo';
 import { Camera, CameraView } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 import { MUNICIPALITIES } from '../services/municipalities';
+
+async function playHaptic(feedback) {
+  try {
+    await feedback();
+  } catch {
+    // Feedback is optional on devices and browsers without haptic support.
+  }
+}
+
+function playShutterHaptic() {
+  return playHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+}
+
+const iosCameraSession = Platform.OS === 'ios'
+  ? requireOptionalNativeModule('SortifyCameraSession')
+  : null;
+
+async function stopCameraForShutter(camera) {
+  if (!iosCameraSession) return false;
+  try {
+    const viewTag = findNodeHandle(camera);
+    return viewTag != null && await iosCameraSession.stop(viewTag);
+  } catch {
+    // The photo is still usable if native shutter feedback is unavailable.
+    return false;
+  }
+}
 
 const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
 
@@ -256,14 +287,18 @@ export default function ScanScreen({ navigation }) {
   const handleCapture = async (camera) => {
     const pending = beginOperation(camera);
     if (!pending) return;
+    if (Platform.OS !== 'ios') void playShutterHaptic();
     try {
       const photo = await camera.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
       });
-      if (photo?.uri && isCurrent(pending.generation)) {
-        setCapturedPhoto(photo);
-      }
+      if (!photo?.uri || !isCurrent(pending.generation)) return;
+      // iOS can suppress haptics until the native capture session has stopped.
+      const stopped = Platform.OS === 'ios' && await stopCameraForShutter(camera);
+      if (!isCurrent(pending.generation)) return;
+      setCapturedPhoto(photo);
+      if (stopped) void playShutterHaptic();
     } catch (error) {
       if (isCurrent(pending.generation)) {
         console.error('Failed to capture photo:', error);
@@ -320,6 +355,7 @@ export default function ScanScreen({ navigation }) {
 
       setCapturedPhoto(null);
       navigation.navigate('ResultModal', resultParams);
+      void playHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     } catch (error) {
       if (!isCurrent(pending.generation)) return;
       console.error('Classification request failed:', error);

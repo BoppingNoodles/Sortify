@@ -48,3 +48,17 @@ On iPhone, sign in to Expo Go with the same Expo account you used in the termina
 5. If a step fails, record your phone model, OS version, and the exact step and error.
 
 If the backend reports mock inference, the test covers the camera, upload, results, and history flow. Testing classification accuracy requires a backend with the trained model loaded.
+
+## 5. Verify iPhone shutter haptics
+
+Use a native build from the branch containing the shutter fix. Expo Go can run the scan flow but skips the shutter pulse on iOS because it cannot load Sortify's camera-session module.
+
+On a Mac with Xcode and a connected iPhone, run these commands from that checkout. Use the backend's LAN address if you also want to verify the result pulse.
+
+```sh
+cd mobile
+npm ci
+EXPO_PUBLIC_API_URL=http://192.168.1.42:8000 npx expo run:ios --device
+```
+
+Enable system haptics and turn off Low Power Mode. On the Scan tab, take and retake several photos. Check for exactly one shutter pulse per successful capture as the captured photo appears. Tap **Identify Bin** and check for the success pulse when the result opens.
