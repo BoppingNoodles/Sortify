@@ -9,6 +9,7 @@ import ScanScreen from '../screens/ScanScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ResultScreen from '../screens/ResultScreen';
+import StatsScreen from '../screens/StatsScreen';
 import { COLORS } from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
@@ -65,6 +66,15 @@ export default function AppNavigator() {
           title: 'Classification Result',
           headerBackTitle: 'Done',
           headerTintColor: COLORS.accent.berkeleyBlue,
+        }} 
+      />
+      <Stack.Screen 
+        name="Stats" 
+        component={StatsScreen} 
+        options={{ 
+          title: 'Impact Dashboard',
+          headerTintColor: COLORS.accent.berkeleyBlue,
+          headerBackTitle: 'Back',
         }} 
       />
     </Stack.Navigator>

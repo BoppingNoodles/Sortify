@@ -14,7 +14,15 @@ const scanData = {
   location: 'berkeley',
 };
 
-function setup(t, data = new Map()) {
+const mediaMocks = {
+  'expo-file-system': { File: class File { delete() {} } },
+  'expo-image-manipulator': {
+    ImageManipulator: { manipulate() { throw new Error('unexpected thumbnail'); } },
+    SaveFormat: { JPEG: 'jpeg' },
+  },
+};
+
+function setup(t, data = new Map(), media = mediaMocks) {
   const storage = {
     getItem: t.mock.fn(async (key) => data.get(key) ?? null),
     setItem: t.mock.fn(async (key, value) => { data.set(key, value); }),
@@ -24,6 +32,7 @@ function setup(t, data = new Map()) {
   const service = loadSource('src/services/storage.js', {
     '@react-native-async-storage/async-storage': storage,
     'expo-crypto': { randomUUID: generateUuid },
+    ...media,
     '../styles/theme': loadSource('src/styles/theme.js'),
   }, { console: { warn() {} } });
   return { ...service, storage, data, generateUuid };
@@ -46,6 +55,62 @@ test('saves only scan metadata with a generated UUID and ISO timestamp', async (
   assert.deepEqual(JSON.parse(JSON.stringify(await app.loadSavedScans())), expected);
   assert.equal(await app.saveScanRecord({ ...scanData, category: 'invalid' }), null);
   assert.equal(app.storage.setItem.mock.callCount(), 1);
+});
+
+test('stores a resized jpeg thumbnail and strips malformed thumbnail data', async (t) => {
+  const deleted = [];
+  const thumbnail = 'abc+/def=';
+  const app = setup(t, new Map(), {
+    'expo-file-system': {
+      File: class File {
+        constructor(uri) { this.uri = uri; }
+        delete() { deleted.push(this.uri); }
+      },
+    },
+    'expo-image-manipulator': {
+      ImageManipulator: {
+        manipulate(uri) {
+          assert.equal(uri, 'file:///photo.jpg');
+          return {
+            resize(size) {
+              assert.equal(size.width, 96);
+              assert.equal(size.height, undefined);
+              return this;
+            },
+            async renderAsync() {
+              return {
+                uri: 'file://rendered.jpg',
+                release() {},
+                async saveAsync(options) {
+                  assert.equal(options.format, 'jpeg');
+                  assert.equal(options.compress, 0.6);
+                  assert.equal(options.base64, true);
+                  return { uri: 'file://saved.jpg', base64: thumbnail };
+                },
+              };
+            },
+            release() {},
+          };
+        },
+      },
+      SaveFormat: { JPEG: 'jpeg' },
+    },
+  });
+
+  const record = await app.saveScanRecord(scanData, {
+    uri: 'file:///photo.jpg',
+    width: 800,
+    height: 600,
+  });
+  assert.equal(record.thumbnail, thumbnail);
+  assert.deepEqual(deleted, ['file://saved.jpg', 'file://rendered.jpg']);
+
+  const stored = JSON.parse(app.data.get(SCANS_KEY));
+  stored[0].thumbnail = 'bad thumbnail!';
+  app.data.set(SCANS_KEY, JSON.stringify(stored));
+  const [loaded] = await app.loadSavedScans();
+  assert.equal(loaded.thumbnail, undefined);
+  assert.equal(loaded.item_name, scanData.item_name);
 });
 
 test('keeps exactly the newest 100 of 105 saves in insertion order', async (t) => {

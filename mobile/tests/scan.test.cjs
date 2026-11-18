@@ -56,8 +56,13 @@ async function scan(t, classifyImage, {
       leave = effect();
       return () => leave?.();
     }, [effect]) },
-    'expo-camera': { CameraView: 'CameraView', getCameraPermissionsAsync: readPermission,
-      requestCameraPermissionsAsync: requestPermission },
+    'expo-camera': {
+      CameraView: 'CameraView',
+      Camera: {
+        getCameraPermissionsAsync: readPermission,
+        requestCameraPermissionsAsync: requestPermission,
+      },
+    },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
