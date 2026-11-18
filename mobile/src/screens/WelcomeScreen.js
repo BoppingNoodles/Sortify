@@ -4,14 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/DesignPrimitives';
 import { COLORS } from '../styles/theme';
 
+import OnboardingScreen from './OnboardingScreen';
+
 export default function WelcomeScreen({ onContinue }) {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.title}>Welcome to Sortify</Text>
-          <Text style={styles.copy}>Sort items, build your streak, and keep track of your scans on this device.</Text>
-          <PrimaryButton onPress={onContinue}>Continue as guest</PrimaryButton>
+          <Text style={styles.title}>Sortify</Text>
+          <OnboardingScreen
+            descriptionStyle={styles.copy}
+            finishAction={<PrimaryButton onPress={onContinue}>Continue as guest</PrimaryButton>}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

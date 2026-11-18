@@ -39,9 +39,13 @@ function MainTabs() {
 }
 
 function GuestWelcome({ navigation }) {
+  const finishing = React.useRef(false);
+
   return (
-    <WelcomeScreen onContinue={() => {
-      void markWelcomeSeen();
+    <WelcomeScreen onContinue={async () => {
+      if (finishing.current) return;
+      finishing.current = true;
+      await markWelcomeSeen();
       navigation.replace('MainTabs');
     }} />
   );
