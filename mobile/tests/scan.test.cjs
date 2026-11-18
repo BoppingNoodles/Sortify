@@ -67,6 +67,7 @@ async function scan(t, classifyImage, {
     '../styles/theme': theme,
     '../services/api': { classifyImage },
     '../services/storage': { saveScanRecord },
+    '../services/municipalities': loadSource('src/services/municipalities.js'),
   }).default;
   let renderer;
   await act(async () => {
@@ -455,8 +456,10 @@ test('result styles use native-compatible category colors for every backend colo
         route: { params: { category, binColor } }, navigation: { goBack() {} },
       }));
     });
-    const button = renderer.root.findByType('TouchableOpacity');
-    assert.equal(button.props.style[1].backgroundColor, theme.COLORS.bins[category]);
+    const badge = renderer.root.findAllByType('Text')
+      .find(({ props }) => props.children === category.toUpperCase()).parent;
+    assert.equal(badge.props.style[1].backgroundColor, theme.COLORS.bins[category]);
+    assert.equal(renderer.root.findByType('TouchableOpacity').props.style.backgroundColor, theme.COLORS.design.green);
     await act(async () => renderer.unmount());
   }
 });

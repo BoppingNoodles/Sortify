@@ -18,8 +18,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
+import { MUNICIPALITIES } from '../services/municipalities';
 
-const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
+const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
 
 function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy }) {
   const cameraRef = useRef(null);
@@ -37,7 +38,7 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
   };
 
   return (
-    <>
+    <View style={styles.cameraFrame}>
       <CameraView style={styles.camera} ref={cameraRef} onCameraReady={handleReady} />
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.cameraOverlay}
         pointerEvents="box-none">
@@ -55,12 +56,6 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
           </TouchableOpacity>
         </View>
 
-        {/* Target Reticle Overlay */}
-        <View style={styles.reticleContainer}>
-          <View style={styles.reticleBox} />
-          <Text style={styles.reticleHint}>Center item inside frame</Text>
-        </View>
-
         {/* Shutter Button Controls */}
         <View style={styles.bottomControls}>
           <TouchableOpacity
@@ -75,7 +70,7 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </>
+    </View>
   );
 }
 
@@ -356,7 +351,7 @@ export default function ScanScreen({ navigation }) {
     setSelectedCity(nextCity);
   };
 
-  const formattedCity = selectedCity.replace('-', ' ').toUpperCase();
+  const formattedCity = MUNICIPALITIES[selectedCity].toUpperCase();
   const showCamera = isFocused && isActive && !capturedPhoto;
 
   return (
@@ -412,7 +407,8 @@ export default function ScanScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.background.card,
+    padding: SPACING.md,
   },
   centered: {
     flexGrow: 1,
@@ -444,15 +440,23 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   primaryButton: {
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: COLORS.design.green,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#173208',
     fontWeight: '700',
     fontSize: 15,
+  },
+  cameraFrame: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 20,
+    borderColor: COLORS.design.border,
+    borderWidth: 1,
+    backgroundColor: COLORS.background.surface,
   },
   camera: {
     flex: 1,
@@ -485,50 +489,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center',
   },
-  reticleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reticleBox: {
-    flexShrink: 1,
-    width: '80%',
-    maxWidth: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
-    borderRadius: 18,
-    borderStyle: 'dashed',
-  },
-  reticleHint: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: 14,
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-    textAlign: 'center',
-  },
   bottomControls: {
     alignItems: 'center',
   },
   shutterButton: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'transparent',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: COLORS.text.primary,
+    backgroundColor: COLORS.background.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
   shutterInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#FFFFFF',
   },
   previewContainer: {
     flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
     backgroundColor: '#0F172A',
   },
   previewImage: {
@@ -590,14 +573,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 130,
     minHeight: 48,
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: COLORS.design.green,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   analyzeButtonText: {
-    color: '#FFFFFF',
+    color: '#173208',
     fontWeight: '700',
     fontSize: 15,
     textAlign: 'center',

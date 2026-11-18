@@ -88,7 +88,7 @@ export default function HistoryScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Scan History</Text>
         {scans?.length > 0 && (
@@ -99,7 +99,7 @@ export default function HistoryScreen({ navigation }) {
             accessibilityLabel="View Impact Stats"
             activeOpacity={0.7}
           >
-            <Text style={styles.statsCtaText}>📊 Stats</Text>
+            <Text style={styles.statsCtaText}>Impact stats</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -148,19 +148,19 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     backgroundColor: COLORS.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: COLORS.design.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerTitle: { ...TYPOGRAPHY.header, color: COLORS.accent.berkeleyBlue },
   statsCtaButton: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: COLORS.design.blueTint,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: COLORS.design.border,
   },
   statsCtaText: { fontSize: 13, fontWeight: '700', color: COLORS.accent.berkeleyBlue },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.design.border,
   },
   cardImage: { width: 56, height: 56, borderRadius: 10, marginRight: SPACING.md },
   cardPlaceholder: {
@@ -216,10 +216,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   scanNowButton: {
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: COLORS.design.green,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
   },
-  scanNowButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 15 },
+  scanNowButtonText: { color: '#173208', fontWeight: '700', fontSize: 15 },
 });

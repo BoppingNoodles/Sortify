@@ -71,7 +71,7 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Action Buttons */}
       <TouchableOpacity 
-        style={[styles.primaryButton, { backgroundColor: binColor }]}
+        style={styles.primaryButton}
         onPress={() => navigation.goBack()}
         activeOpacity={0.8}
       >
@@ -83,7 +83,7 @@ export default function ResultScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background.primary },
-  content: { padding: SPACING.lg, alignItems: 'center' },
+  content: { padding: SPACING.lg, paddingBottom: SPACING.xl, alignItems: 'center' },
   thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: '#CBD5E1' },
   badge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
   badgeText: { color: COLORS.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
@@ -93,12 +93,12 @@ const styles = StyleSheet.create({
   confidenceHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   confidenceLabel: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary },
   confidenceValue: { fontWeight: '700', fontSize: 14 },
-  progressBarBackground: { height: 10, backgroundColor: '#E2E8F0', borderRadius: 5, overflow: 'hidden' },
+  progressBarBackground: { height: 10, backgroundColor: COLORS.design.border, borderRadius: 5, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 5 },
-  tipCard: { backgroundColor: COLORS.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: '#E2E8F0' },
+  tipCard: { backgroundColor: COLORS.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: COLORS.design.border },
   tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: COLORS.accent.berkeleyBlue },
   tipBody: { ...TYPOGRAPHY.body, color: COLORS.text.secondary, lineHeight: 22 },
   historyWarning: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary, marginBottom: SPACING.md },
-  primaryButton: { width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
-  primaryButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 16 },
+  primaryButton: { backgroundColor: COLORS.design.green, width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
+  primaryButtonText: { color: '#173208', fontWeight: '700', fontSize: 16 },
 });

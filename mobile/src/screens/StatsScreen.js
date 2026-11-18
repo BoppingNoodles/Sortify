@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   streakEmoji: { fontSize: 44, marginBottom: 8 },
-  streakCount: { fontSize: 22, fontWeight: '800', color: '#E65100' },
+  streakCount: { fontSize: 22, fontWeight: '800', color: COLORS.design.greenText },
   streakSubtext: { fontSize: 13, color: '#BF360C', marginTop: 4, textAlign: 'center' },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   statBox: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.design.border,
   },
   statNumber: { fontSize: 26, fontWeight: '800', color: COLORS.accent.berkeleyBlue },
   statLabel: { fontSize: 13, color: COLORS.text.secondary, marginTop: 4, fontWeight: '600' },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.design.border,
   },
   cardHeader: { fontSize: 16, fontWeight: '700', color: COLORS.text.primary, marginBottom: 14 },
   categoryRow: {

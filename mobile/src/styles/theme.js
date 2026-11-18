@@ -9,18 +9,26 @@ export const COLORS = {
     landfill: '#4B5563',   // Charcoal Gray
   },
   background: {
-    primary: '#F8FAFC',
+    primary: '#F4F8FA',
     card: '#FFFFFF',
-    surface: '#F1F5F9',
+    surface: '#F2F6F7',
   },
   text: {
-    primary: '#0F172A',
-    secondary: '#64748B',
-    muted: '#94A3B8',
+    primary: '#202E39',
+    secondary: '#566D7B',
+    muted: '#627988',
     inverse: '#FFFFFF',
   },
+  design: {
+    border: '#DDE6EA',
+    progress: '#E3EAED',
+    green: '#51C900',
+    greenText: '#2D7800',
+    greenTint: '#E6F7DC',
+    blueTint: '#E2F5FC',
+  },
   accent: {
-    berkeleyBlue: '#003262',
+    berkeleyBlue: '#006B91',
     californiaGold: '#FDB515',
   },
 };

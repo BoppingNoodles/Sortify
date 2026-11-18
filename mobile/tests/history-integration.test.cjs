@@ -8,7 +8,7 @@ const { loadSource } = require('./load-source.cjs');
 global.IS_REACT_ACT_ENVIRONMENT = true;
 const theme = loadSource('src/styles/theme.js');
 const native = Object.fromEntries([
-  'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'Text', 'TouchableOpacity', 'View',
+  'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'ScrollView', 'Text', 'TouchableOpacity', 'View',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles };
 const classification = {
@@ -134,6 +134,8 @@ test('Profile updates guest streak and points from saved scans on focus', async 
     '@react-navigation/native': { useFocusEffect: (effect) => { focus = effect; } },
     '../styles/theme': theme,
     '../services/scanStats': { summarizeScans },
+    'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
+    '../components/DesignPrimitives': { ProgressBar: 'ProgressBar' },
     '../services/storage': { loadSavedScans: async () => scans },
   }).default;
 
@@ -147,8 +149,8 @@ test('Profile updates guest streak and points from saved scans on focus', async 
   assert.ok(labels().includes('0'));
 
   scans = [
-    { ...classification, timestamp: new Date().toISOString() },
-    { ...classification, timestamp: new Date().toISOString() },
+    { ...classification, id: 'first', timestamp: new Date().toISOString() },
+    { ...classification, id: 'second', timestamp: new Date().toISOString() },
   ];
   await act(async () => { blur(); blur = focus(); });
   assert.ok(labels().includes('1 Day'));

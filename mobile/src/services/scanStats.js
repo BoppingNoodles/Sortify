@@ -5,6 +5,8 @@ function localDayOrdinal(date) {
 export function summarizeScans(scans, now = new Date()) {
   const breakdown = { compost: 0, plastic: 0, paper: 0, glass: 0, landfill: 0 };
   const days = new Set();
+  const today = localDayOrdinal(now);
+  let scansToday = 0;
 
   for (const scan of scans) {
     const category = (scan.category || '').toLowerCase();
@@ -12,10 +14,10 @@ export function summarizeScans(scans, now = new Date()) {
     if (scan.timestamp) {
       const day = localDayOrdinal(new Date(scan.timestamp));
       if (Number.isFinite(day)) days.add(day);
+      if (day === today) scansToday += 1;
     }
   }
 
-  const today = localDayOrdinal(now);
   let day = days.has(today) ? today : today - 1;
   let currentStreak = 0;
   while (days.has(day)) {
@@ -25,6 +27,7 @@ export function summarizeScans(scans, now = new Date()) {
 
   return {
     currentStreak,
+    scansToday,
     totalScans: scans.length,
     ecoPoints: scans.length * 10,
     breakdown,
