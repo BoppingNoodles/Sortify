@@ -12,7 +12,9 @@ import {
   Alert,
   AppState,
   Linking,
+  findNodeHandle,
 } from 'react-native';
+import { requireOptionalNativeModule } from 'expo';
 import { Camera, CameraView } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
@@ -32,6 +34,21 @@ async function playHaptic(feedback) {
 
 function playShutterHaptic() {
   return playHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+}
+
+const iosCameraSession = Platform.OS === 'ios'
+  ? requireOptionalNativeModule('SortifyCameraSession')
+  : null;
+
+async function stopCameraForShutter(camera) {
+  if (!iosCameraSession) return false;
+  try {
+    const viewTag = findNodeHandle(camera);
+    return viewTag != null && await iosCameraSession.stop(viewTag);
+  } catch {
+    // The photo is still usable if native shutter feedback is unavailable.
+    return false;
+  }
 }
 
 const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
@@ -104,11 +121,6 @@ export default function ScanScreen({ navigation }) {
   const screen = useRef({ focused: false, active: isActive, generation: 0 });
   const operation = useRef(null);
   const permissionRequest = useRef(null);
-
-  useEffect(() => {
-    // iOS suppresses haptics while the camera is running. Wait for the photo preview.
-    if (Platform.OS === 'ios' && capturedPhoto) void playShutterHaptic();
-  }, [capturedPhoto]);
 
   const isCurrent = useCallback((generation) => (
     mounted.current && screen.current.focused && screen.current.active &&
@@ -281,9 +293,12 @@ export default function ScanScreen({ navigation }) {
         quality: 0.8,
         skipProcessing: false,
       });
-      if (photo?.uri && isCurrent(pending.generation)) {
-        setCapturedPhoto(photo);
-      }
+      if (!photo?.uri || !isCurrent(pending.generation)) return;
+      // iOS can suppress haptics until the native capture session has stopped.
+      const stopped = Platform.OS === 'ios' && await stopCameraForShutter(camera);
+      if (!isCurrent(pending.generation)) return;
+      setCapturedPhoto(photo);
+      if (stopped) void playShutterHaptic();
     } catch (error) {
       if (isCurrent(pending.generation)) {
         console.error('Failed to capture photo:', error);
