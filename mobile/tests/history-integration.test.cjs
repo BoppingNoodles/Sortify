@@ -97,6 +97,11 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   const openStorage = () => loadSource('src/services/storage.js', {
     '@react-native-async-storage/async-storage': asyncStorage,
     'expo-crypto': { randomUUID },
+    'expo-file-system': { File: class File { delete() {} } },
+    'expo-image-manipulator': {
+      ImageManipulator: { manipulate() {} },
+      SaveFormat: { JPEG: 'jpeg' },
+    },
     '../styles/theme': theme,
   });
   const firstLaunch = openStorage();

@@ -12,7 +12,7 @@ import {
   AppState,
   Linking,
 } from 'react-native';
-import { CameraView, getCameraPermissionsAsync, requestCameraPermissionsAsync } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../styles/theme';
@@ -152,7 +152,7 @@ export default function ScanScreen({ navigation }) {
       if (!current || !isCurrent(generation)) return;
 
       try {
-        const status = await getCameraPermissionsAsync();
+        const status = await Camera.getCameraPermissionsAsync();
         if (!current || !isCurrent(generation)) return;
         setPermission(status);
         setCheckedGeneration(generation);
@@ -174,7 +174,7 @@ export default function ScanScreen({ navigation }) {
       if (needsSettings) {
         await Linking.openSettings();
       } else {
-        const pending = requestCameraPermissionsAsync();
+        const pending = Camera.requestCameraPermissionsAsync();
         permissionRequest.current = pending;
         const status = await pending;
         if (isCurrent(generation)) setPermission(status);
@@ -307,7 +307,7 @@ export default function ScanScreen({ navigation }) {
       }
 
       pending.saving = true;
-      const savedRecord = await saveScanRecord(result);
+      const savedRecord = await saveScanRecord(result, capturedPhoto);
       if (!isCurrent(pending.generation)) return;
       const resultParams = {
         itemName: result.item_name,

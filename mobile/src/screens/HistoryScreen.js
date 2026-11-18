@@ -16,40 +16,39 @@ import { loadSavedScans } from '../services/storage';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function HistoryScreen({ navigation }) {
-  const [scans, setScans] = useState(null);
+  const [scans, setScans] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const requestRef = useRef(0);
+  const requestVersion = useRef(0);
 
-  const readHistory = (request) => {
-    loadSavedScans()
-      .then((data) => {
-        if (request === requestRef.current) setScans(data ?? []);
-      })
-      .catch((err) => {
-        console.warn('Failed to load history:', err);
-        if (request === requestRef.current) setScans([]);
-      })
-      .finally(() => {
-        if (request === requestRef.current) setRefreshing(false);
-      });
-  };
+  const fetchHistory = useCallback(async () => {
+    const version = ++requestVersion.current;
+    try {
+      const data = await loadSavedScans();
+      if (version === requestVersion.current) setScans(data);
+    } catch (error) {
+      if (version === requestVersion.current) {
+        console.warn('Failed to load history:', error);
+        setScans([]);
+      }
+    } finally {
+      if (version === requestVersion.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const request = ++requestRef.current;
-      setScans(null);
-      setRefreshing(false);
-      readHistory(request);
-      return () => {
-        requestRef.current += 1;
-      };
-    }, [])
-  );
+  useFocusEffect(useCallback(() => {
+    setLoading(true);
+    setRefreshing(false);
+    fetchHistory();
+    return () => { requestVersion.current += 1; };
+  }, [fetchHistory]));
 
   const onRefresh = () => {
-    const request = ++requestRef.current;
     setRefreshing(true);
-    readHistory(request);
+    fetchHistory();
   };
 
   const renderItem = ({ item }) => {
@@ -62,8 +61,11 @@ export default function HistoryScreen({ navigation }) {
 
     return (
       <View style={styles.scanCard}>
-        {item.photoUri ? (
-          <Image source={{ uri: item.photoUri }} style={styles.cardImage} />
+        {item.thumbnail ? (
+          <Image
+            source={{ uri: 'data:image/jpeg;base64,' + item.thumbnail }}
+            style={styles.cardImage}
+          />
         ) : (
           <View style={[styles.cardPlaceholder, { borderColor: binColor }]}>
             <Text style={styles.placeholderEmoji}>♻️</Text>
@@ -102,7 +104,7 @@ export default function HistoryScreen({ navigation }) {
         )}
       </View>
 
-      {scans === null ? (
+      {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator
             accessibilityLabel="Loading scan history"

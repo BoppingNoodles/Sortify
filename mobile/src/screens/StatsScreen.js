@@ -10,50 +10,26 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadSavedScans } from '../services/storage';
+import { HISTORY_LIMIT, loadSavedScans } from '../services/storage';
 import { COLORS, SPACING } from '../styles/theme';
 
-function calculateStreak(timestamps) {
-  if (!Array.isArray(timestamps) || timestamps.length === 0) return 0;
+function localDayOrdinal(date) {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+}
 
-  const dates = [
-    ...new Set(
-      timestamps
-        .filter((ts) => typeof ts === 'string')
-        .map((ts) => {
-          try {
-            return new Date(ts).toISOString().split('T')[0];
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean)
-    ),
-  ].sort((a, b) => (a < b ? 1 : -1));
+export function calculateStreak(timestamps, now = new Date()) {
+  const days = new Set(timestamps
+    .map((timestamp) => localDayOrdinal(new Date(timestamp)))
+    .filter(Number.isFinite));
 
-  if (dates.length === 0) return 0;
-
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-  if (dates[0] !== today && dates[0] !== yesterday) {
-    return 0;
-  }
-
+  const today = localDayOrdinal(now);
+  let day = days.has(today) ? today : today - 1;
   let streak = 0;
-  let checkDate = new Date(dates[0]);
 
-  for (const dateStr of dates) {
-    const current = new Date(dateStr);
-    const diffDays = Math.round((checkDate - current) / 86400000);
-    if (diffDays <= 1) {
-      streak += 1;
-      checkDate = current;
-    } else {
-      break;
-    }
+  while (days.has(day)) {
+    streak += 1;
+    day -= 1;
   }
-
   return streak;
 }
 
@@ -124,7 +100,10 @@ export default function StatsScreen() {
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <Text style={styles.screenTitle}>Impact Dashboard</Text>
+          <Text style={styles.screenTitle}>Recent Scan Activity</Text>
+          <Text style={styles.scopeText}>
+            Based on your last {HISTORY_LIMIT} saved scans on this device.
+          </Text>
 
           {/* Streak Flame Card */}
           <View style={styles.streakCard}>
@@ -143,11 +122,11 @@ export default function StatsScreen() {
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{stats.totalScans}</Text>
-              <Text style={styles.statLabel}>Total Scans</Text>
+              <Text style={styles.statLabel}>Saved Scans</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{stats.ecoPoints}</Text>
-              <Text style={styles.statLabel}>Eco Points</Text>
+              <Text style={styles.statLabel}>Points from Saved Scans</Text>
             </View>
           </View>
 
@@ -179,7 +158,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background.primary },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 20 },
-  screenTitle: { fontSize: 24, fontWeight: '800', color: COLORS.accent.berkeleyBlue, marginBottom: 16 },
+  screenTitle: { fontSize: 24, fontWeight: '800', color: COLORS.accent.berkeleyBlue, marginBottom: 4 },
+  scopeText: { fontSize: 13, color: COLORS.text.secondary, lineHeight: 18, marginBottom: 16 },
   streakCard: {
     backgroundColor: '#FFF3E0',
     borderColor: '#FFE0B2',
