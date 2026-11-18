@@ -4,14 +4,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/DesignPrimitives';
 import { COLORS } from '../styles/theme';
 
-export default function WelcomeScreen({ onContinue }) {
+import OnboardingScreen from './OnboardingScreen';
+
+export default function WelcomeScreen({ onContinue, onContinueWithoutSaving, saving, saveFailed }) {
+  let continueLabel = saveFailed ? 'Try again' : 'Continue as guest';
+  if (saving) continueLabel = 'Saving…';
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.title}>Welcome to Sortify</Text>
-          <Text style={styles.copy}>Sort items, build your streak, and keep track of your scans on this device.</Text>
-          <PrimaryButton onPress={onContinue}>Continue as guest</PrimaryButton>
+          <Text style={styles.title}>Sortify</Text>
+          <OnboardingScreen
+            descriptionStyle={styles.copy}
+            finishAction={(
+              <>
+                {saveFailed && (
+                  <Text style={styles.copy} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                    Couldn’t save your progress. The walkthrough may appear again if you continue without saving.
+                  </Text>
+                )}
+                <PrimaryButton onPress={onContinue} disabled={saving}>
+                  {continueLabel}
+                </PrimaryButton>
+                {saveFailed && (
+                  <PrimaryButton onPress={onContinueWithoutSaving} subtle>
+                    Continue without saving
+                  </PrimaryButton>
+                )}
+              </>
+            )}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
