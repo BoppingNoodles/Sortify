@@ -71,3 +71,9 @@ def test_invalid_timestamp_types_are_ignored(monkeypatch):
     ]
 
     assert streak_calculator.calculate_streak(timestamps) == 1
+
+
+def test_unrepresentable_local_date_preserves_valid_streak(monkeypatch):
+    monkeypatch.setattr(streak_calculator, "datetime", FrozenDatetime)
+    timestamps = ["0001-01-01T00:00:00Z", "2026-11-10T22:00:00Z"]
+    assert streak_calculator.calculate_streak(timestamps) == 1

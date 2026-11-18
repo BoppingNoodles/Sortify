@@ -29,15 +29,11 @@ def calculate_streak(
 
         try:
             parsed = datetime.fromisoformat(timestamp)
+            if parsed.utcoffset() is None:
+                continue
+            active_dates.add(parsed.astimezone(tz).date())
         except (ValueError, TypeError, OverflowError):
             continue
-
-        # Ignore timestamps without timezone information.
-        if parsed.utcoffset() is None:
-            continue
-
-        # Convert timestamp into the user's local timezone.
-        active_dates.add(parsed.astimezone(tz).date())
 
     # Allow a one-day grace period.
     one_day = timedelta(days=1)
