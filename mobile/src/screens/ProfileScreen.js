@@ -1,9 +1,25 @@
 // src/screens/ProfileScreen.js
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { summarizeScans } from '../services/scanStats';
+import { loadSavedScans } from '../services/storage';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function ProfileScreen() {
+  const [{ currentStreak, ecoPoints }, setStats] = useState(() => summarizeScans([]));
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadSavedScans().then((scans) => {
+        if (active) setStats(summarizeScans(scans));
+      });
+      return () => { active = false; };
+    }, [])
+  );
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile</Text>
@@ -13,11 +29,11 @@ export default function ProfileScreen() {
         <View style={styles.divider} />
         <View style={styles.statRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statVal}>3 Days</Text>
+            <Text style={styles.statVal}>{currentStreak} Day{currentStreak === 1 ? '' : 's'}</Text>
             <Text style={styles.statLabel}>Current Streak</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statVal}>120</Text>
+            <Text style={styles.statVal}>{ecoPoints}</Text>
             <Text style={styles.statLabel}>Eco Points</Text>
           </View>
         </View>

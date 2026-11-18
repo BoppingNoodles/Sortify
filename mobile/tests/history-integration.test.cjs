@@ -124,3 +124,34 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   assert.ok(row.root.findAllByType('Text').some(({ props }) =>
     props.children === classification.item_name));
 });
+
+test('Profile updates guest streak and points from saved scans on focus', async (t) => {
+  const { summarizeScans } = loadSource('src/services/scanStats.js');
+  let scans = [];
+  let focus;
+  const ProfileScreen = loadSource('src/screens/ProfileScreen.js', {
+    'react-native': native,
+    '@react-navigation/native': { useFocusEffect: (effect) => { focus = effect; } },
+    '../styles/theme': theme,
+    '../services/scanStats': { summarizeScans },
+    '../services/storage': { loadSavedScans: async () => scans },
+  }).default;
+
+  const renderer = await mount(t, ProfileScreen);
+  const labels = () => renderer.root.findAllByType('Text')
+    .map(({ props }) => [].concat(props.children).join(''));
+
+  let blur;
+  await act(async () => { blur = focus(); });
+  assert.ok(labels().includes('0 Days'));
+  assert.ok(labels().includes('0'));
+
+  scans = [
+    { ...classification, timestamp: new Date().toISOString() },
+    { ...classification, timestamp: new Date().toISOString() },
+  ];
+  await act(async () => { blur(); blur = focus(); });
+  assert.ok(labels().includes('1 Day'));
+  assert.ok(labels().includes('20'));
+  blur();
+});

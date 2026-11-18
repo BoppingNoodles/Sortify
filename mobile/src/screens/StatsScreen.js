@@ -11,65 +11,17 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { HISTORY_LIMIT, loadSavedScans } from '../services/storage';
+import { summarizeScans } from '../services/scanStats';
 import { COLORS, SPACING } from '../styles/theme';
-
-function localDayOrdinal(date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
-}
-
-export function calculateStreak(timestamps, now = new Date()) {
-  const days = new Set(timestamps
-    .map((timestamp) => localDayOrdinal(new Date(timestamp)))
-    .filter(Number.isFinite));
-
-  const today = localDayOrdinal(now);
-  let day = days.has(today) ? today : today - 1;
-  let streak = 0;
-
-  while (days.has(day)) {
-    streak += 1;
-    day -= 1;
-  }
-  return streak;
-}
 
 export default function StatsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    currentStreak: 0,
-    totalScans: 0,
-    ecoPoints: 0,
-    breakdown: { compost: 0, plastic: 0, paper: 0, glass: 0, landfill: 0 },
-  });
+  const [stats, setStats] = useState(() => summarizeScans([]));
 
   const computeStats = async () => {
     try {
-      const scans = await loadSavedScans();
-      const total = scans.length;
-      const points = total * 10;
-
-      const counts = { compost: 0, plastic: 0, paper: 0, glass: 0, landfill: 0 };
-      const timestamps = [];
-
-      scans.forEach((scan) => {
-        const cat = (scan.category || '').toLowerCase();
-        if (Object.prototype.hasOwnProperty.call(counts, cat)) {
-          counts[cat] += 1;
-        } else {
-          counts.landfill += 1;
-        }
-        if (scan.timestamp) timestamps.push(scan.timestamp);
-      });
-
-      const streak = calculateStreak(timestamps);
-
-      setStats({
-        currentStreak: streak,
-        totalScans: total,
-        ecoPoints: points,
-        breakdown: counts,
-      });
+      setStats(summarizeScans(await loadSavedScans()));
     } catch (err) {
       console.warn('Failed to compute stats:', err);
     } finally {
