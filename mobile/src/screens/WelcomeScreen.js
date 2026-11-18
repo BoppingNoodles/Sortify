@@ -6,7 +6,10 @@ import { COLORS } from '../styles/theme';
 
 import OnboardingScreen from './OnboardingScreen';
 
-export default function WelcomeScreen({ onContinue }) {
+export default function WelcomeScreen({ onContinue, onContinueWithoutSaving, saving, saveFailed }) {
+  let continueLabel = saveFailed ? 'Try again' : 'Continue as guest';
+  if (saving) continueLabel = 'Saving…';
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -14,7 +17,23 @@ export default function WelcomeScreen({ onContinue }) {
           <Text style={styles.title}>Sortify</Text>
           <OnboardingScreen
             descriptionStyle={styles.copy}
-            finishAction={<PrimaryButton onPress={onContinue}>Continue as guest</PrimaryButton>}
+            finishAction={(
+              <>
+                {saveFailed && (
+                  <Text style={styles.copy} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                    Couldn’t save your progress. The walkthrough may appear again if you continue without saving.
+                  </Text>
+                )}
+                <PrimaryButton onPress={onContinue} disabled={saving}>
+                  {continueLabel}
+                </PrimaryButton>
+                {saveFailed && (
+                  <PrimaryButton onPress={onContinueWithoutSaving} subtle>
+                    Continue without saving
+                  </PrimaryButton>
+                )}
+              </>
+            )}
           />
         </View>
       </ScrollView>

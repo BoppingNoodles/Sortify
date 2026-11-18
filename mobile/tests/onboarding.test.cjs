@@ -6,12 +6,15 @@ const { loadSource } = require('./load-source.cjs');
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
-test('first launch offers three swipeable slides and remembers completion', async (t) => {
+async function renderOnboarding(t, beforeWrite = () => {}) {
   const values = new Map();
   const storage = loadSource('src/services/storage.js', {
     '@react-native-async-storage/async-storage': {
       getItem: async (key) => values.get(key) ?? null,
-      setItem: async (key, value) => { values.set(key, value); },
+      setItem: async (key, value) => {
+        await beforeWrite();
+        values.set(key, value);
+      },
     },
     'expo-crypto': {},
     'expo-file-system': {},
@@ -41,7 +44,7 @@ test('first launch offers three swipeable slides and remembers completion', asyn
   }).default;
   const replace = t.mock.fn((destination) => {
     assert.equal(destination, 'MainTabs');
-    assert.equal(values.get('@sortify_guest_welcome'), 'seen');
+    return values.get('@sortify_guest_welcome');
   });
   const AppNavigator = loadSource('src/navigation/AppNavigator.js', {
     'react-native': native,
@@ -69,7 +72,23 @@ test('first launch offers three swipeable slides and remembers completion', asyn
 
   let renderer;
   t.after(async () => { await act(async () => renderer.unmount()); });
-  await act(async () => { renderer = create(React.createElement(AppNavigator)); });
+  const app = React.createElement(AppNavigator);
+  await act(async () => { renderer = create(app); });
+  async function relaunch() {
+    await act(async () => { renderer.update(null); });
+    await act(async () => { renderer.update(app); });
+  }
+  return { renderer, replace, relaunch };
+}
+
+async function goToFinalSlide(renderer) {
+  for (let page = 0; page < 2; page += 1) {
+    await act(async () => { renderer.root.findByType('PrimaryButton').props.onPress(); });
+  }
+}
+
+test('first launch offers three swipeable slides and remembers completion', async (t) => {
+  const { renderer, replace, relaunch } = await renderOnboarding(t);
   const heading = () => renderer.root.findByProps({ accessibilityRole: 'header' }).props.children;
   assert.equal(heading(), 'Snap your waste');
   const gesture = renderer.root.findAllByType('View')
@@ -80,16 +99,45 @@ test('first launch offers three swipeable slides and remembers completion', asyn
   assert.equal(heading(), 'Get local guidance');
   await act(async () => { renderer.root.findByType('Pressable').props.onPress(); });
   assert.equal(heading(), 'Snap your waste');
-  for (let page = 0; page < 2; page += 1) {
-    await act(async () => { renderer.root.findByType('PrimaryButton').props.onPress(); });
-  }
+  await goToFinalSlide(renderer);
   assert.equal(heading(), 'Build sorting streaks');
   const finish = renderer.root.findByType('PrimaryButton').props.onPress;
   await act(async () => { await Promise.all([finish(), finish()]); });
   assert.equal(replace.mock.callCount(), 1);
-  await act(async () => {
-    renderer.unmount();
-    renderer = create(React.createElement(AppNavigator));
-  });
+  assert.equal(replace.mock.calls[0].result, 'seen');
+  await relaunch();
   assert.ok(renderer.root.findByType('MainTabs'));
+});
+
+test('a failed completion write leaves onboarding open and a retry saves before entering Home', async (t) => {
+  let writes = 0;
+  const { renderer, replace } = await renderOnboarding(t, () => {
+    writes += 1;
+    if (writes === 1) throw new Error('Storage temporarily unavailable');
+  });
+  await goToFinalSlide(renderer);
+  await act(async () => { await renderer.root.findByType('PrimaryButton').props.onPress(); });
+
+  assert.equal(replace.mock.callCount(), 0);
+  assert.match(renderer.root.findByProps({ accessibilityRole: 'alert' }).props.children, /save your progress/);
+  const retry = renderer.root.findAllByType('PrimaryButton')
+    .find(({ props }) => props.children === 'Try again').props.onPress;
+  await act(async () => { await Promise.all([retry(), retry()]); });
+  assert.equal(writes, 2);
+  assert.equal(replace.mock.callCount(), 1);
+  assert.equal(replace.mock.calls[0].result, 'seen');
+});
+
+test('a guest can explicitly continue when storage remains unavailable', async (t) => {
+  const write = t.mock.fn(() => { throw new Error('Storage unavailable'); });
+  const { renderer, replace } = await renderOnboarding(t, write);
+  await goToFinalSlide(renderer);
+  await act(async () => { await renderer.root.findByType('PrimaryButton').props.onPress(); });
+
+  const continueWithoutSaving = renderer.root.findAllByType('PrimaryButton')
+    .find(({ props }) => props.children === 'Continue without saving').props.onPress;
+  await act(async () => { await Promise.all([continueWithoutSaving(), continueWithoutSaving()]); });
+  assert.equal(write.mock.callCount(), 1);
+  assert.equal(replace.mock.callCount(), 1);
+  assert.equal(replace.mock.calls[0].result, undefined);
 });

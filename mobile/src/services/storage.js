@@ -18,7 +18,7 @@ export async function hasSeenWelcome() {
 }
 
 export function markWelcomeSeen() {
-  return AsyncStorage.setItem(WELCOME_KEY, 'seen').catch(() => {});
+  return AsyncStorage.setItem(WELCOME_KEY, 'seen');
 }
 
 let historyQueue = Promise.resolve();
