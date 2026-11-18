@@ -88,7 +88,7 @@ const getStyles = createThemedStyles((colors) => StyleSheet.create({
   thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: colors.design.thumbnailBorder },
   badge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
   badgeText: { color: colors.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
-  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 6 },
+  itemName: { ...TYPOGRAPHY.header, color: colors.text.primary, textAlign: 'center', marginBottom: 6 },
   binName: { fontSize: 15, fontWeight: '600', color: colors.text.secondary, marginBottom: 18 },
   confidenceContainer: { width: '100%', marginBottom: 24 },
   confidenceHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
