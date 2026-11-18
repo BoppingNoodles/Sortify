@@ -1,64 +1,230 @@
 // src/screens/HistoryScreen.js
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, View, Text, FlatList, StyleSheet } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { loadSavedScans } from '../services/storage';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
-export default function HistoryScreen() {
-  const [history, setHistory] = useState(null);
+function formatDate(isoString) {
+  if (!isoString) return 'Today';
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
 
-  useFocusEffect(useCallback(() => {
-    let active = true;
-    setHistory(null);
-    loadSavedScans().then((scans) => {
-      if (active) setHistory(scans);
-    });
-    return () => { active = false; };
-  }, []));
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  } catch {
+    return 'Today';
+  }
+}
+
+export default function HistoryScreen({ navigation }) {
+  const [scans, setScans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchHistory = async () => {
+    try {
+      const data = await loadSavedScans();
+      setScans(data || []);
+    } catch (err) {
+      console.warn('Failed to load scan history:', err);
+      setScans([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchHistory();
+    }, [])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchHistory();
+  };
 
   const renderItem = ({ item }) => {
-    const binColor = COLORS.bins[item.category] || COLORS.bins.landfill;
+    const itemName = item.item_name || item.itemName || 'Waste Item';
+    const category = (item.category || item.bin || 'landfill').toLowerCase();
+    const binColor = COLORS.bins[category] || COLORS.bins.landfill;
+    const formattedDate = formatDate(item.timestamp || item.date);
+
     return (
-      <View style={styles.itemCard}>
-        <View style={[styles.badge, { backgroundColor: binColor }]}>
-          <Text style={styles.badgeText}>{item.category.toUpperCase()}</Text>
+      <View style={styles.scanCard}>
+        {item.photoUri ? (
+          <Image source={{ uri: item.photoUri }} style={styles.cardImage} />
+        ) : (
+          <View style={[styles.cardPlaceholder, { borderColor: binColor }]}>
+            <Text style={styles.placeholderEmoji}>♻️</Text>
+          </View>
+        )}
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {itemName}
+          </Text>
+          <View style={[styles.categoryBadge, { backgroundColor: binColor }]}>
+            <Text style={styles.categoryBadgeText}>{category.toUpperCase()}</Text>
+          </View>
+          <Text style={styles.cardDate}>{formattedDate}</Text>
         </View>
-        <View style={styles.itemDetails}>
-          <Text style={styles.itemName}>{item.item_name}</Text>
-          <Text style={styles.itemTime}>{new Date(item.timestamp).toLocaleString()}</Text>
+        <View style={styles.pointsBadge}>
+          <Text style={styles.pointsText}>+10 pts</Text>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Scan History</Text>
-      {history === null ? (
-        <ActivityIndicator accessibilityLabel="Loading scan history" color={COLORS.accent.berkeleyBlue} />
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Scan History</Text>
+        {scans.length > 0 && (
+          <TouchableOpacity
+            style={styles.statsCtaButton}
+            onPress={() => navigation.navigate('Stats')}
+            accessibilityRole="button"
+            accessibilityLabel="View Impact Stats"
+            activeOpacity={0.7}
+          >
+            <Text style={styles.statsCtaText}>📊 Stats</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+        </View>
       ) : (
         <FlatList
-          data={history}
-          keyExtractor={(item) => item.id}
+          data={scans}
+          keyExtractor={(item, index) => item.id || `scan_${index}`}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<Text style={styles.emptyText}>No scans yet.</Text>}
+          contentContainerStyle={scans.length === 0 ? styles.emptyContainer : styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={
+            <View style={styles.emptyView}>
+              <Text style={styles.emptyEmoji}>📸</Text>
+              <Text style={styles.emptyTitle}>No scans yet</Text>
+              <Text style={styles.emptyBody}>
+                Snap a photo of waste on campus to start your sorting streak!
+              </Text>
+              <TouchableOpacity
+                style={styles.scanNowButton}
+                onPress={() => navigation.navigate('Scan')}
+                accessibilityRole="button"
+                accessibilityLabel="Scan First Item"
+                activeOpacity={0.8}
+              >
+                <Text style={styles.scanNowButtonText}>Scan First Item</Text>
+              </TouchableOpacity>
+            </View>
+          }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background.primary, padding: SPACING.md, paddingTop: SPACING.xl },
-  title: { ...TYPOGRAPHY.header, marginBottom: SPACING.md, color: COLORS.accent.berkeleyBlue },
-  emptyText: { ...TYPOGRAPHY.body, color: COLORS.text.secondary },
-  listContent: { paddingBottom: 24 },
-  itemCard: { flexDirection: 'row', backgroundColor: COLORS.background.card, padding: 14, borderRadius: 12, marginBottom: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, marginRight: 12 },
-  badgeText: { color: COLORS.text.inverse, fontSize: 11, fontWeight: '700' },
-  itemDetails: { flex: 1 },
-  itemName: { ...TYPOGRAPHY.body, fontWeight: '600', color: COLORS.text.primary },
-  itemTime: { ...TYPOGRAPHY.caption, color: COLORS.text.muted, marginTop: 2 },
+  container: { flex: 1, backgroundColor: COLORS.background.primary },
+  header: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: { ...TYPOGRAPHY.header, color: COLORS.accent.berkeleyBlue },
+  statsCtaButton: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  statsCtaText: { fontSize: 13, fontWeight: '700', color: COLORS.accent.berkeleyBlue },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  listContent: { padding: SPACING.md },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
+  scanCard: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.background.card,
+    borderRadius: 14,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cardImage: { width: 56, height: 56, borderRadius: 10, marginRight: SPACING.md },
+  cardPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: COLORS.background.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+    borderWidth: 2,
+  },
+  placeholderEmoji: { fontSize: 24 },
+  cardContent: { flex: 1, justifyContent: 'center' },
+  cardTitle: { ...TYPOGRAPHY.body, fontWeight: '700', color: COLORS.text.primary, marginBottom: 4 },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  categoryBadgeText: { color: COLORS.text.inverse, fontSize: 10, fontWeight: '700' },
+  cardDate: { fontSize: 12, color: COLORS.text.muted },
+  pointsBadge: { backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  pointsText: { color: '#2E7D32', fontSize: 12, fontWeight: '700' },
+  emptyView: { alignItems: 'center', paddingHorizontal: SPACING.lg },
+  emptyEmoji: { fontSize: 50, marginBottom: SPACING.sm },
+  emptyTitle: { ...TYPOGRAPHY.subtitle, color: COLORS.text.primary, marginBottom: 6 },
+  emptyBody: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  scanNowButton: {
+    backgroundColor: COLORS.accent.berkeleyBlue,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+  },
+  scanNowButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 15 },
 });

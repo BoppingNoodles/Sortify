@@ -13,13 +13,19 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* Daily Streak Card */}
-      <View style={styles.streakCard}>
+      <TouchableOpacity 
+        style={styles.streakCard}
+        onPress={() => navigation.navigate('Stats')}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="View streak and impact stats"
+      >
         <Text style={styles.streakEmoji}>🔥</Text>
         <View>
-          <Text style={styles.streakNumber}>3 Day Streak</Text>
-          <Text style={styles.streakSubtext}>Scan an item today to keep it active!</Text>
+          <Text style={styles.streakNumber}>Daily Streak & Stats</Text>
+          <Text style={styles.streakSubtext}>Tap to view your campus impact dashboard</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Main Scan Button CTA */}
       <TouchableOpacity 
