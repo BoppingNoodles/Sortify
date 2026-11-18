@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, useColorScheme } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,21 +12,22 @@ import StatsScreen from '../screens/StatsScreen';
 import RulesScreen from '../screens/RulesScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import { hasSeenWelcome, markWelcomeSeen } from '../services/storage';
-import { COLORS } from '../styles/theme';
+import { getAppColors } from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const TAB_ICONS = { Profile: 'person-outline', Rules: 'shield-checkmark-outline', Home: 'home-outline' };
 
 function MainTabs() {
+  const colors = getAppColors(useColorScheme());
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: COLORS.text.primary,
-        tabBarInactiveTintColor: COLORS.text.muted,
-        tabBarStyle: { backgroundColor: COLORS.background.card, borderTopColor: COLORS.design.border },
+        tabBarActiveTintColor: colors.text.primary,
+        tabBarInactiveTintColor: colors.text.muted,
+        tabBarStyle: { backgroundColor: colors.background.card, borderTopColor: colors.design.border },
         tabBarLabelStyle: { fontWeight: '700' },
         tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />,
       })}
@@ -48,6 +49,7 @@ function GuestWelcome({ navigation }) {
 }
 
 export default function AppNavigator() {
+  const colors = getAppColors(useColorScheme());
   const [seenWelcome, setSeenWelcome] = useState(null);
 
   useEffect(() => {
@@ -59,17 +61,17 @@ export default function AppNavigator() {
   }, []);
 
   if (seenWelcome === null) {
-    return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Loading Sortify" /></View>;
+    return <View style={[styles.loading, { backgroundColor: colors.background.card }]}><ActivityIndicator accessibilityLabel="Loading Sortify" /></View>;
   }
 
   return (
     <Stack.Navigator
       initialRouteName={seenWelcome ? 'MainTabs' : 'Welcome'}
       screenOptions={{
-        headerTintColor: COLORS.text.primary,
+        headerTintColor: colors.text.primary,
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: COLORS.background.card },
-        contentStyle: { backgroundColor: COLORS.background.primary },
+        headerStyle: { backgroundColor: colors.background.card },
+        contentStyle: { backgroundColor: colors.background.primary },
       }}
     >
       <Stack.Screen name="Welcome" component={GuestWelcome} options={{ headerShown: false }} />
@@ -83,5 +85,5 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background.card },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

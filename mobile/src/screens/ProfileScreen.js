@@ -1,15 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/DesignPrimitives';
 import { summarizeScans } from '../services/scanStats';
 import { loadSavedScans } from '../services/storage';
-import { COLORS } from '../styles/theme';
+import { createThemedStyles } from '../styles/theme';
 
 const POINTS_MILESTONE = 100;
 
 export default function ProfileScreen({ navigation }) {
+  const { colors, styles } = getStyles(useColorScheme());
   const [scans, setScans] = useState([]);
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -53,7 +54,7 @@ export default function ProfileScreen({ navigation }) {
         )}
         {scans.slice(0, 3).map((scan) => (
           <View key={scan.id} style={styles.historyRow}>
-            <View style={[styles.swatch, { backgroundColor: COLORS.bins[scan.category] || COLORS.bins.landfill }]} />
+            <View style={[styles.swatch, { backgroundColor: colors.bins[scan.category] || colors.bins.landfill }]} />
             <View style={styles.historyCopy}>
               <Text style={styles.bold}>{scan.item_name}</Text>
               <Text style={styles.caption}>{scan.disposal_tip}</Text>
@@ -65,21 +66,21 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background.primary },
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background.primary },
   content: { padding: 18, paddingTop: 24, gap: 14 },
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.text.primary },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text.primary },
   identity: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  avatar: { fontSize: 35, borderRadius: 32, padding: 9, backgroundColor: COLORS.design.greenTint },
-  name: { fontSize: 21, fontWeight: '800', color: COLORS.text.primary },
-  card: { padding: 18, borderRadius: 20, backgroundColor: COLORS.background.card, borderWidth: 1, borderColor: COLORS.design.border, gap: 8 },
-  caption: { color: COLORS.text.secondary, fontSize: 13, lineHeight: 19 },
-  total: { color: COLORS.text.primary, fontSize: 26, fontWeight: '800' },
-  bold: { color: COLORS.text.primary, fontWeight: '800' },
+  avatar: { fontSize: 35, borderRadius: 32, padding: 9, backgroundColor: colors.design.greenTint },
+  name: { fontSize: 21, fontWeight: '800', color: colors.text.primary },
+  card: { padding: 18, borderRadius: 20, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.design.border, gap: 8 },
+  caption: { color: colors.text.secondary, fontSize: 13, lineHeight: 19 },
+  total: { color: colors.text.primary, fontSize: 26, fontWeight: '800' },
+  bold: { color: colors.text.primary, fontWeight: '800' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 19, fontWeight: '800', color: COLORS.text.primary },
-  link: { paddingVertical: 8, color: COLORS.accent.berkeleyBlue, fontWeight: '700' },
-  historyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: COLORS.background.card, borderWidth: 1, borderColor: COLORS.design.border, borderRadius: 14 },
+  section: { fontSize: 19, fontWeight: '800', color: colors.text.primary },
+  link: { paddingVertical: 8, color: colors.accent.berkeleyBlue, fontWeight: '700' },
+  historyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.design.border, borderRadius: 14 },
   swatch: { width: 42, height: 42, borderRadius: 9 },
   historyCopy: { flex: 1 },
-});
+}));

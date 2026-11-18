@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
+  useColorScheme,
   Text,
   View,
   TouchableOpacity,
@@ -15,14 +16,14 @@ import {
 import { Camera, CameraView } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING } from '../styles/theme';
+import { createThemedStyles, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 import { MUNICIPALITIES } from '../services/municipalities';
 
 const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
 
-function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy }) {
+function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy, styles }) {
   const cameraRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -75,6 +76,7 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
 }
 
 export default function ScanScreen({ navigation }) {
+  const { colors, styles } = getStyles(useColorScheme());
   const [permission, setPermission] = useState(null);
   const [permissionError, setPermissionError] = useState(null);
   const [permissionCheck, setPermissionCheck] = useState(0);
@@ -222,7 +224,7 @@ export default function ScanScreen({ navigation }) {
           </>
         ) : (
           <>
-            <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+            <ActivityIndicator size="large" color={colors.accent.berkeleyBlue} />
             <Text style={styles.statusText}>Checking camera access…</Text>
           </>
         )}
@@ -288,7 +290,7 @@ export default function ScanScreen({ navigation }) {
         typeof result.item_name !== 'string' ||
         !result.item_name.trim() ||
         typeof result.category !== 'string' ||
-        !Object.hasOwn(COLORS.bins, result.category) ||
+        !Object.hasOwn(colors.bins, result.category) ||
         !Number.isFinite(result.confidence) ||
         result.confidence < 0 ||
         result.confidence > 1 ||
@@ -393,6 +395,7 @@ export default function ScanScreen({ navigation }) {
         </View>
       ) : showCamera ? (
         <CameraPreview
+          styles={styles}
           formattedCity={formattedCity}
           onCycleCity={handleCycleCity}
           onCapture={handleCapture}
@@ -404,10 +407,10 @@ export default function ScanScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.card,
+    backgroundColor: colors.background.card,
     padding: SPACING.md,
   },
   centered: {
@@ -415,38 +418,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: colors.background.primary,
   },
   permissionArea: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: colors.background.primary,
   },
   statusText: {
     marginTop: 12,
-    color: COLORS.text.secondary,
+    color: colors.text.secondary,
     fontSize: 14,
   },
   permissionTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 8,
-    color: COLORS.text.primary,
+    color: colors.text.primary,
   },
   permissionBody: {
     fontSize: 14,
-    color: COLORS.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   primaryButton: {
-    backgroundColor: COLORS.design.green,
+    backgroundColor: colors.design.green,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   buttonText: {
-    color: '#173208',
+    color: colors.design.onGreen,
     fontWeight: '700',
     fontSize: 15,
   },
@@ -454,9 +457,9 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
     borderRadius: 20,
-    borderColor: COLORS.design.border,
+    borderColor: colors.design.border,
     borderWidth: 1,
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: colors.background.surface,
   },
   camera: {
     flex: 1,
@@ -497,8 +500,8 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     borderWidth: 2,
-    borderColor: COLORS.text.primary,
-    backgroundColor: COLORS.background.card,
+    borderColor: colors.text.primary,
+    backgroundColor: colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -573,16 +576,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 130,
     minHeight: 48,
-    backgroundColor: COLORS.design.green,
+    backgroundColor: colors.design.green,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   analyzeButtonText: {
-    color: '#173208',
+    color: colors.design.onGreen,
     fontWeight: '700',
     fontSize: 15,
     textAlign: 'center',
   },
-});
+}));

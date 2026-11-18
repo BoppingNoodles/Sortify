@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/DesignPrimitives';
 import { fetchLocationRules } from '../services/api';
 import { MUNICIPALITIES } from '../services/municipalities';
-import { COLORS } from '../styles/theme';
+import { createThemedStyles } from '../styles/theme';
 
 const GROUPS = [
   { label: 'Compost', categories: ['compost'] },
@@ -14,6 +14,7 @@ const GROUPS = [
 ];
 
 export default function RulesScreen() {
+  const { colors, styles } = getStyles(useColorScheme());
   const [city, setCity] = useState('berkeley');
   const [choosingCity, setChoosingCity] = useState(false);
   const [group, setGroup] = useState(null);
@@ -102,19 +103,19 @@ export default function RulesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background.card },
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background.card },
   content: { padding: 20, paddingTop: 24, gap: 14 },
-  title: { color: COLORS.text.primary, fontWeight: '800', fontSize: 26, marginBottom: 8 },
-  location: { backgroundColor: COLORS.design.blueTint, borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  title: { color: colors.text.primary, fontWeight: '800', fontSize: 26, marginBottom: 8 },
+  location: { backgroundColor: colors.design.blueTint, borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 },
   marker: { backgroundColor: '#17AECB', borderRadius: 24, width: 46, height: 46, justifyContent: 'center', alignItems: 'center' },
-  caption: { color: COLORS.text.secondary, fontSize: 13 },
-  city: { color: COLORS.accent.berkeleyBlue, fontWeight: '800', marginTop: 4 },
+  caption: { color: colors.text.secondary, fontSize: 13 },
+  city: { color: colors.accent.berkeleyBlue, fontWeight: '800', marginTop: 4 },
   groups: { gap: 10, marginVertical: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 54, padding: 12, borderRadius: 13, borderWidth: 1, borderColor: COLORS.design.border },
-  selected: { backgroundColor: COLORS.design.greenTint, borderColor: COLORS.design.greenText },
-  badge: { color: COLORS.text.secondary, backgroundColor: COLORS.background.surface, minWidth: 30, borderRadius: 8, padding: 7, textAlign: 'center', fontWeight: '800' },
-  label: { color: COLORS.text.primary, fontWeight: '800' },
-  details: { padding: 14, borderColor: COLORS.design.border, borderWidth: 1, borderRadius: 13, gap: 8 },
-  rule: { color: COLORS.text.secondary, lineHeight: 21 },
-});
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 54, padding: 12, borderRadius: 13, borderWidth: 1, borderColor: colors.design.border },
+  selected: { backgroundColor: colors.design.greenTint, borderColor: colors.design.greenText },
+  badge: { color: colors.text.secondary, backgroundColor: colors.background.surface, minWidth: 30, borderRadius: 8, padding: 7, textAlign: 'center', fontWeight: '800' },
+  label: { color: colors.text.primary, fontWeight: '800' },
+  details: { padding: 14, borderColor: colors.design.border, borderWidth: 1, borderRadius: 13, gap: 8 },
+  rule: { color: colors.text.secondary, lineHeight: 21 },
+}));

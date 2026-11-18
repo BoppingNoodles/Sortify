@@ -10,6 +10,7 @@ const native = Object.fromEntries([
   'Text', 'View', 'TouchableOpacity', 'Image', 'SafeAreaView', 'ActivityIndicator', 'ScrollView',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles, absoluteFillObject: {} };
+native.useColorScheme = () => 'light';
 
 function deferred() {
   let resolve;
