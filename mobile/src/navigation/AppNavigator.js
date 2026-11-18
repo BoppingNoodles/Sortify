@@ -40,11 +40,32 @@ function MainTabs() {
 }
 
 function GuestWelcome({ navigation }) {
+  const finishing = React.useRef(false);
+  const [completion, setCompletion] = useState('idle');
+
+  async function continueAsGuest(saveCompletion) {
+    if (finishing.current) return;
+    finishing.current = true;
+    setCompletion('saving');
+
+    try {
+      if (saveCompletion) await markWelcomeSeen();
+    } catch {
+      finishing.current = false;
+      setCompletion('failed');
+      return;
+    }
+
+    navigation.replace('MainTabs');
+  }
+
   return (
-    <WelcomeScreen onContinue={() => {
-      void markWelcomeSeen();
-      navigation.replace('MainTabs');
-    }} />
+    <WelcomeScreen
+      saving={completion === 'saving'}
+      saveFailed={completion === 'failed'}
+      onContinue={() => continueAsGuest(true)}
+      onContinueWithoutSaving={() => continueAsGuest(false)}
+    />
   );
 }
 
