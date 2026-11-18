@@ -8,7 +8,7 @@ const { loadSource } = require('./load-source.cjs');
 global.IS_REACT_ACT_ENVIRONMENT = true;
 const theme = loadSource('src/styles/theme.js');
 const native = Object.fromEntries([
-  'ActivityIndicator', 'FlatList', 'Text', 'View',
+  'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'Text', 'TouchableOpacity', 'View',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles };
 const classification = {
@@ -54,6 +54,7 @@ test('History reloads on focus and ignores reads after leaving the tab', async (
   let focus;
   const HistoryScreen = loadSource('src/screens/HistoryScreen.js', {
     'react-native': native,
+    'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '@react-navigation/native': { useFocusEffect: (effect) => { focus = effect; } },
     '../styles/theme': theme,
     '../services/storage': { loadSavedScans },
@@ -79,7 +80,11 @@ test('History reloads on focus and ignores reads after leaving the tab', async (
   assert.equal(loadSavedScans.mock.callCount(), 3);
   const empty = renderer.root.findByType('FlatList').props;
   assert.equal(empty.data.length, 0);
-  assert.equal(empty.ListEmptyComponent.props.children, 'No scans yet.');
+  const emptyView = await mount(t, () => empty.ListEmptyComponent);
+  const labels = emptyView.root.findAllByType('Text').map(({ props }) => props.children);
+  assert.ok(labels.includes('No scans yet'));
+  assert.ok(labels.includes('Snap an item to start your streak'));
+  assert.ok(labels.includes('Scan First Item'));
   blur();
 });
 
@@ -101,6 +106,7 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   const nextLaunch = openStorage();
   const HistoryScreen = loadSource('src/screens/HistoryScreen.js', {
     'react-native': native,
+    'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(effect, [effect]) },
     '../styles/theme': theme,
     '../services/storage': nextLaunch,

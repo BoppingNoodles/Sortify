@@ -1,5 +1,5 @@
 // src/screens/HistoryScreen.js
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,59 +15,50 @@ import { useFocusEffect } from '@react-navigation/native';
 import { loadSavedScans } from '../services/storage';
 import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
 
-function formatDate(isoString) {
-  if (!isoString) return 'Today';
-  try {
-    const date = new Date(isoString);
-    const now = new Date();
-    const isToday =
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear();
-
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  } catch {
-    return 'Today';
-  }
-}
-
 export default function HistoryScreen({ navigation }) {
-  const [scans, setScans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [scans, setScans] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const requestRef = useRef(0);
 
-  const fetchHistory = async () => {
-    try {
-      const data = await loadSavedScans();
-      setScans(data || []);
-    } catch (err) {
-      console.warn('Failed to load history:', err);
-      setScans([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const readHistory = (request) => {
+    loadSavedScans()
+      .then((data) => {
+        if (request === requestRef.current) setScans(data ?? []);
+      })
+      .catch((err) => {
+        console.warn('Failed to load history:', err);
+        if (request === requestRef.current) setScans([]);
+      })
+      .finally(() => {
+        if (request === requestRef.current) setRefreshing(false);
+      });
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchHistory();
+      const request = ++requestRef.current;
+      setScans(null);
+      setRefreshing(false);
+      readHistory(request);
+      return () => {
+        requestRef.current += 1;
+      };
     }, [])
   );
 
   const onRefresh = () => {
+    const request = ++requestRef.current;
     setRefreshing(true);
-    fetchHistory();
+    readHistory(request);
   };
 
   const renderItem = ({ item }) => {
     const itemName = item.item_name || item.itemName || 'Waste Item';
     const category = (item.category || item.bin || 'landfill').toLowerCase();
     const binColor = COLORS.bins[category] || COLORS.bins.landfill;
-    const formattedDate = formatDate(item.timestamp || item.date);
+    const formattedDate = item.timestamp
+      ? new Date(item.timestamp).toLocaleString()
+      : 'Today';
 
     return (
       <View style={styles.scanCard}>
@@ -98,7 +89,7 @@ export default function HistoryScreen({ navigation }) {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Scan History</Text>
-        {scans.length > 0 && (
+        {scans?.length > 0 && (
           <TouchableOpacity
             style={styles.statsCtaButton}
             onPress={() => navigation.navigate('Stats')}
@@ -111,9 +102,13 @@ export default function HistoryScreen({ navigation }) {
         )}
       </View>
 
-      {loading ? (
+      {scans === null ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+          <ActivityIndicator
+            accessibilityLabel="Loading scan history"
+            size="large"
+            color={COLORS.accent.berkeleyBlue}
+          />
         </View>
       ) : (
         <FlatList
@@ -126,9 +121,7 @@ export default function HistoryScreen({ navigation }) {
             <View style={styles.emptyView}>
               <Text style={styles.emptyEmoji}>📸</Text>
               <Text style={styles.emptyTitle}>No scans yet</Text>
-              <Text style={styles.emptyBody}>
-                Snap a photo of waste on campus to start your sorting streak!
-              </Text>
+              <Text style={styles.emptyBody}>Snap an item to start your streak</Text>
               <TouchableOpacity
                 style={styles.scanNowButton}
                 onPress={() => navigation.navigate('Scan')}
