@@ -49,11 +49,11 @@ Expected response:
 2. Open https://dashboard.render.com/.
 3. Create a new Web Service.
 4. Connect the Sortify GitHub repository.
-5. Select the deployment branch or `main` after the changes are merged.
+5. Select `main` for the production service and enable automatic deploys. Use the deployment branch for staging verification.
 6. Select Docker as the runtime.
 7. Set the Dockerfile path to `backend/Dockerfile`.
 8. Set the Docker build context to the repository root.
-9. Deploy the service.
+9. Set the health check path to `/health` and deploy the service. Render builds the image from Git.
 
 The Dockerfile uses the `PORT` environment variable and binds Uvicorn to `0.0.0.0`.
 
@@ -103,6 +103,8 @@ Expected response body:
 ```
 
 A successful response confirms that the public backend service is responding.
+Record the deployed commit SHA, public HTTPS URL, HTTP status, and response body
+in the deployment ticket or pull request.
 
 ## 6. Production Notes
 
