@@ -10,6 +10,7 @@ const native = Object.fromEntries([
   'Text', 'View', 'TouchableOpacity', 'Image', 'SafeAreaView', 'ActivityIndicator', 'ScrollView',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles, absoluteFillObject: {} };
+native.useColorScheme = () => 'light';
 
 function deferred() {
   let resolve;
@@ -553,6 +554,34 @@ test('result styles use native-compatible category colors for every backend colo
     assert.equal(renderer.root.findByType('TouchableOpacity').props.style.backgroundColor, theme.COLORS.design.green);
     await act(async () => renderer.unmount());
   }
+});
+
+test('result item name and background follow the current appearance', async (t) => {
+  let scheme = 'dark';
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    'react-native': { ...native, useColorScheme: () => scheme },
+    '../styles/theme': theme,
+  }).default;
+  const itemName = 'Bottle';
+  const screenProps = { route: { params: { itemName } } };
+  let renderer;
+  await act(async () => {
+    renderer = create(React.createElement(ResultScreen, screenProps));
+  });
+  t.after(async () => { await act(async () => renderer.unmount()); });
+
+  const checkColors = () => {
+    const colors = theme.getAppColors(scheme);
+    const item = renderer.root.findAllByType('Text')
+      .find(({ props }) => props.children === itemName);
+    assert.equal(renderer.root.findByType('ScrollView').props.style.backgroundColor, colors.background.primary);
+    assert.equal(item.props.style.color, colors.text.primary);
+  };
+
+  checkColors();
+  scheme = 'light';
+  await act(async () => { renderer.update(React.createElement(ResultScreen, screenProps)); });
+  checkColors();
 });
 
 test('result bounds confidence and displays the backend disposal guidance', async () => {

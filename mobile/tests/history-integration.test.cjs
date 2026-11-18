@@ -11,6 +11,7 @@ const native = Object.fromEntries([
   'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'ScrollView', 'Text', 'TouchableOpacity', 'View',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles };
+native.useColorScheme = () => 'light';
 const classification = {
   item_name: 'Bottle',
   category: 'plastic',
@@ -29,17 +30,33 @@ async function mount(t, Screen) {
 test('startup initializes guest identity while the navigator renders', async (t) => {
   const pending = Promise.withResolvers();
   const getOrCreateDeviceUuid = t.mock.fn(() => pending.promise);
+  let scheme = 'light';
   const App = loadSource('App.js', {
     'expo-status-bar': { StatusBar: 'StatusBar' },
+    'react-native': { useColorScheme: () => scheme },
     'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider' },
-    '@react-navigation/native': { NavigationContainer: 'NavigationContainer' },
+    '@react-navigation/native': {
+      NavigationContainer: 'NavigationContainer',
+      DefaultTheme: { dark: false, colors: {} },
+      DarkTheme: { dark: true, colors: {} },
+    },
     './src/navigation/AppNavigator': 'AppNavigator',
     './src/services/storage': { getOrCreateDeviceUuid },
+    './src/styles/theme': theme,
   }).default;
 
   const renderer = await mount(t, App);
   assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
   assert.ok(renderer.root.findByType('AppNavigator'));
+  assert.equal(renderer.root.findByType('NavigationContainer').props.theme.dark, false);
+  assert.equal(renderer.root.findByType('StatusBar').props.style, 'dark');
+  scheme = 'dark';
+  await act(async () => { renderer.update(React.createElement(App)); });
+  const dark = renderer.root.findByType('NavigationContainer').props.theme;
+  assert.equal(dark.dark, true);
+  assert.equal(dark.colors.background, theme.getAppColors('dark').background.primary);
+  assert.equal(renderer.root.findByType('StatusBar').props.style, 'light');
+  assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
   pending.resolve(null);
 });
 

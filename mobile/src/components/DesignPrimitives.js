@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '../styles/theme';
+import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { createThemedStyles } from '../styles/theme';
 
 export function PrimaryButton({ children, onPress, disabled = false, subtle = false }) {
+  const { styles } = getStyles(useColorScheme());
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -11,12 +12,13 @@ export function PrimaryButton({ children, onPress, disabled = false, subtle = fa
       onPress={onPress}
       style={[styles.button, subtle && styles.subtle, disabled && styles.disabled]}
     >
-      <Text style={styles.label}>{children}</Text>
+      <Text style={[styles.label, subtle && styles.subtleLabel]}>{children}</Text>
     </TouchableOpacity>
   );
 }
 
 export function ProgressBar({ value, max, label }) {
+  const { styles } = getStyles(useColorScheme());
   return (
     <View
       accessibilityRole="progressbar"
@@ -29,9 +31,9 @@ export function ProgressBar({ value, max, label }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
   button: {
-    backgroundColor: COLORS.design.green,
+    backgroundColor: colors.design.green,
     minHeight: 50,
     borderRadius: 12,
     paddingHorizontal: 18,
@@ -39,9 +41,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  subtle: { backgroundColor: COLORS.design.greenTint },
+  subtle: { backgroundColor: colors.design.greenTint },
+  subtleLabel: { color: colors.design.greenText },
   disabled: { opacity: 0.55 },
-  label: { color: '#173208', fontWeight: '800', fontSize: 16, textAlign: 'center' },
-  track: { height: 12, borderRadius: 6, backgroundColor: COLORS.design.progress, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: COLORS.design.green, borderRadius: 6 },
-});
+  label: { color: colors.design.onGreen, fontWeight: '800', fontSize: 16, textAlign: 'center' },
+  track: { height: 12, borderRadius: 6, backgroundColor: colors.design.progress, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: colors.design.green, borderRadius: 6 },
+}));

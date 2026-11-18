@@ -1,9 +1,10 @@
 // src/screens/ResultScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useColorScheme } from 'react-native';
+import { createThemedStyles, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function ResultScreen({ route, navigation }) {
+  const { colors, styles } = getStyles(useColorScheme());
   const {
     itemName = 'Item Classified',
     category = 'compost',
@@ -18,7 +19,7 @@ export default function ResultScreen({ route, navigation }) {
 
   const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
   // API bin_color values are display labels ("Green"), not native style colors.
-  const binColor = COLORS.bins[category?.toLowerCase()] || COLORS.bins.landfill;
+  const binColor = colors.bins[category?.toLowerCase()] || colors.bins.landfill;
   const confidenceScore = typeof confidence === 'number' || typeof confidence === 'string'
     ? Number(confidence)
     : NaN;
@@ -81,24 +82,24 @@ export default function ResultScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background.primary },
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background.primary },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xl, alignItems: 'center' },
-  thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: '#CBD5E1' },
+  thumbnail: { width: 140, height: 140, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: colors.design.thumbnailBorder },
   badge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
-  badgeText: { color: COLORS.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
-  itemName: { ...TYPOGRAPHY.header, textAlign: 'center', marginBottom: 6 },
-  binName: { fontSize: 15, fontWeight: '600', color: COLORS.text.secondary, marginBottom: 18 },
+  badgeText: { color: colors.text.inverse, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
+  itemName: { ...TYPOGRAPHY.header, color: colors.text.primary, textAlign: 'center', marginBottom: 6 },
+  binName: { fontSize: 15, fontWeight: '600', color: colors.text.secondary, marginBottom: 18 },
   confidenceContainer: { width: '100%', marginBottom: 24 },
   confidenceHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  confidenceLabel: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary },
+  confidenceLabel: { ...TYPOGRAPHY.caption, color: colors.text.secondary },
   confidenceValue: { fontWeight: '700', fontSize: 14 },
-  progressBarBackground: { height: 10, backgroundColor: COLORS.design.border, borderRadius: 5, overflow: 'hidden' },
+  progressBarBackground: { height: 10, backgroundColor: colors.design.border, borderRadius: 5, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 5 },
-  tipCard: { backgroundColor: COLORS.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: COLORS.design.border },
-  tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: COLORS.accent.berkeleyBlue },
-  tipBody: { ...TYPOGRAPHY.body, color: COLORS.text.secondary, lineHeight: 22 },
-  historyWarning: { ...TYPOGRAPHY.caption, color: COLORS.text.secondary, marginBottom: SPACING.md },
-  primaryButton: { backgroundColor: COLORS.design.green, width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
-  primaryButtonText: { color: '#173208', fontWeight: '700', fontSize: 16 },
-});
+  tipCard: { backgroundColor: colors.background.card, padding: 18, borderRadius: 14, width: '100%', marginBottom: 28, borderWidth: 1, borderColor: colors.design.border },
+  tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: colors.accent.berkeleyBlue },
+  tipBody: { ...TYPOGRAPHY.body, color: colors.text.secondary, lineHeight: 22 },
+  historyWarning: { ...TYPOGRAPHY.caption, color: colors.text.secondary, marginBottom: SPACING.md },
+  primaryButton: { backgroundColor: colors.design.green, width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
+  primaryButtonText: { color: colors.design.onGreen, fontWeight: '700', fontSize: 16 },
+}));
