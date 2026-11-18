@@ -44,7 +44,7 @@ export default function HistoryScreen({ navigation }) {
       const data = await loadSavedScans();
       setScans(data || []);
     } catch (err) {
-      console.warn('Failed to load scan history:', err);
+      console.warn('Failed to load history:', err);
       setScans([]);
     } finally {
       setLoading(false);
