@@ -16,6 +16,8 @@ The Dockerfile is located at:
 `backend/Dockerfile`
 
 The Docker build context must be the repository root because the requirements file is located at the root.
+Keep local credentials outside the repository and provide them at runtime.
+Pass `--env-file /path/to/local.env` to `docker run` to supply local environment variables.
 
 Build the image:
 
@@ -106,6 +108,9 @@ A successful response confirms that the public backend service is responding.
 
 - Keep service credentials and private keys out of Git.
 - Configure production CORS origins explicitly.
-- Configure Firebase credentials securely if required.
+- When Firebase uses a service account file, add `serviceAccountKey.json` as a Render
+  Secret File and set `FIREBASE_CREDENTIALS_PATH=/etc/secrets/serviceAccountKey.json`.
+  For local Docker runs, mount the file read-only from outside the build context
+  and set `FIREBASE_CREDENTIALS_PATH` to its container path.
 - Monitor deployment logs for startup errors.
 - Verify the health endpoint after every production deployment.
