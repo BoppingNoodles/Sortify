@@ -42,6 +42,14 @@ scikit-image and Matplotlib.
 | `synthetic` | 5 | Flat gray wall, flat skin tone (a palm filling the frame), RGB noise, a colour gradient, heavy motion blur |
 | `near_domain` | 5 | Grass, gravel, brick wall, coins, wall clock. These are reported separately because a bin could plausibly hold them (yard waste is compostable, debris goes to landfill, metal) |
 
+**Grayscale sources.** Six of the scikit-image samples are single-channel:
+camera, grass, gravel, brick, coins and clock. They are converted to RGB with
+R = G = B. That affects 8 images: `real_person_camera.png`,
+`synth_motion_blur.png`, `light_tungsten_cast.png` (a colour tint applied to
+the grayscale camera photo) and all 5 `near_domain` images. The model was
+trained on colour photos, so the missing colour is itself a distribution
+shift. For these images it cannot be separated from the scene content.
+
 **Licenses.**
 - Public domain: NASA (astronaut, hubble_deep_field), SpaceX (rocket), U.S. Navy (grace_hopper), scikit-image (clock).
 - CC0: camera (Lav Varshney), chelsea (Stefan van der Walt), grass (DeviantArt, linolafett), CC0Textures (gravel, brick).
@@ -88,11 +96,22 @@ Rejection is strict (`p < cutoff`).
 | 0.80 | 70.0% | 80.0% |
 | 0.90 | 80.0% | 90.0% |
 
-Even a 0.90 cutoff only reaches 80% with eval preprocessing. A cutoff that
-high would also reject many correct in-domain predictions:
-[threshold_calibration_results.md](threshold_calibration_results.md) measured
-10.1% in-domain rejection at 0.60 alone. Raising the threshold therefore
-cannot fix this.
+With eval preprocessing (the export contract), even a 0.90 cutoff only
+reaches 80%. With the backend's squash preprocessing, a 0.90 cutoff reaches
+exactly 90.0% (27/30), which meets the target on this set. That still does
+not make a higher cutoff a safe fix:
+
+- In-domain rejection at 0.90 has not been measured.
+  [threshold_calibration_results.md](threshold_calibration_results.md) only
+  covers 0.40–0.60, and it already rejects 10.1% of in-domain validation
+  images at 0.60. Rejection can only grow as the cutoff rises, so 10.1% is a
+  lower bound for 0.90. Correct predictions have a median confidence of
+  0.983, so the real cost at 0.90 is likely much higher.
+- The pass rests on one preprocessing path and on 30 correlated images. A
+  single image moving across the line drops it below 90%.
+
+Measure in-domain rejection at 0.70–0.90 before considering a higher cutoff.
+On current evidence it is not a reliable way to reach the target.
 
 ### Per-image results
 
@@ -192,8 +211,9 @@ Patterns:
 - **Smooth, featureless frames default to compost with high confidence.**
   Blown-out white (94.4%), the colour gradient (99.8%), motion blur (98.3%)
   and the flat skin tone (57.4%) all land on `compost`. Uniform gray (36.5%)
-  and pure black (34.4%) were rejected, so the failure depends on colour, not
-  only flatness.
+  and pure black (34.4%) were rejected while flat colours and the gradient
+  were not, so hue appears to matter, not only flatness. Motion blur comes
+  from a grayscale photo, so smooth grayscale scenes can fail too.
 - **Dark scenes with point lights read as glass.** The Hubble deep field
   scores 90.9% glass, which is consistent with reflections on bottles in the
   training data.
@@ -220,7 +240,10 @@ is unchanged.
    response. The mobile app should show "Not sure — try again or pick a bin"
    instead of a bin. `backend/app/services/inference.py` has no threshold
    today, and the response schema has no such field. This change alone would
-   catch about a third of non-waste scans.
+   catch about a third of non-waste scans. It needs a real model to be
+   loaded: in the default fallback mode every response is a 0.91 mock, so the
+   flag would never fire. Point `MODEL_PATH` at `sortify_v2.pth` first, or at
+   least surface `is_mock` to the app.
 2. **Train a sixth `not_waste` / background class** on real negatives. Collect
    hands, faces, desks, floors, keyboards, walls and dark or blown-out frames
    from the team's phones. This is the only lever on the list likely to reach
@@ -248,12 +271,21 @@ is unchanged.
   variants or synthetic frames, which correlate with their sources.
 - The near-domain items are arguably in-distribution. Excluding them moves
   the rate to 36% (eval), still far below the target.
+- 8 of 30 images come from grayscale sources (see Dataset composition),
+  including every near-domain item. Their results mix two shifts: missing
+  colour and the scene itself.
 - Real phone captures of keyboards, chairs, desks and selfies, which the
   ticket asked for, are not included. Re-run the stress test after adding
   them; the runner accepts any folder of images.
-- The results describe the exported ONNX model with two preprocessing
-  paths. The backend currently serves the PyTorch checkpoint; ONNX parity
-  with it is below 1e-4 per [onnx_export_report.md](onnx_export_report.md).
+- The results describe the exported ONNX model (`sortify_v2`) under two
+  preprocessing paths. They are not what the backend serves by default.
+  `backend/app/config.py` and `.env.example` set `MODEL_PATH` to
+  `backend/app/models/sortify_mvp_v1.pth`, which is not in the repo. When
+  that file is missing, `ModelService` returns a mock for every image
+  (compost, 0.91, `is_mock: true`). The `backend` column is `sortify_v2`
+  with the backend's preprocessing. It matches production only once
+  `MODEL_PATH` points at `sortify_v2.pth`. PyTorch-to-ONNX parity for that
+  checkpoint is below 1e-4 per [onnx_export_report.md](onnx_export_report.md).
 
 Related evidence: [`ml/scripts/domain_gap.py`](../../ml/scripts/domain_gap.py)
 measures how confidence on *in-domain* items shifts under lighting and clutter.
