@@ -1,0 +1,850 @@
+{
+  "evaluated_at": "2026-11-19",
+  "model": "ml/models/sortify_v2.onnx",
+  "model_sha256": "26395d7e631d42eb3ce0f33a2eb0d520059350587a3433ccf6541c5b3e30fc31",
+  "source_checkpoint": "sortify_v2.pth",
+  "source_checkpoint_sha256": "0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6",
+  "class_names": [
+    "compost",
+    "glass",
+    "landfill",
+    "paper",
+    "plastic"
+  ],
+  "data_dir": "data/ood_test",
+  "threshold": 0.5,
+  "uncertain_rule": "max softmax probability < threshold",
+  "target_rejection_rate": 0.9,
+  "modes": [
+    "eval",
+    "backend"
+  ],
+  "summary": {
+    "eval": {
+      "total": 30,
+      "scored": 30,
+      "errors": 0,
+      "rejected": 10,
+      "rejection_rate": 0.3333333333333333,
+      "passed": false,
+      "excluding_near_domain": {
+        "total": 25,
+        "rejected": 9,
+        "rate": 0.36
+      },
+      "groups": {
+        "lighting_extreme": {
+          "total": 10,
+          "rejected": 3,
+          "rate": 0.3
+        },
+        "near_domain": {
+          "total": 5,
+          "rejected": 1,
+          "rate": 0.2
+        },
+        "real_derived": {
+          "total": 4,
+          "rejected": 1,
+          "rate": 0.25
+        },
+        "real_non_waste": {
+          "total": 6,
+          "rejected": 3,
+          "rate": 0.5
+        },
+        "synthetic": {
+          "total": 5,
+          "rejected": 2,
+          "rate": 0.4
+        }
+      },
+      "threshold_sweep": {
+        "0.50": 0.3333333333333333,
+        "0.60": 0.4,
+        "0.70": 0.6,
+        "0.80": 0.7,
+        "0.90": 0.8
+      },
+      "false_positives": [
+        {
+          "image": "synth_color_gradient.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.9981730559038958
+        },
+        {
+          "image": "synth_motion_blur.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.9831056766154873
+        },
+        {
+          "image": "light_overexposed_white.png",
+          "group": "lighting_extreme",
+          "top_class": "compost",
+          "confidence": 0.9444840509869793
+        },
+        {
+          "image": "real_portrait_hopper.png",
+          "group": "real_non_waste",
+          "top_class": "paper",
+          "confidence": 0.9121403100753759
+        },
+        {
+          "image": "real_night_sky.png",
+          "group": "real_non_waste",
+          "top_class": "glass",
+          "confidence": 0.9091099641873928
+        },
+        {
+          "image": "light_flashlight_glare.png",
+          "group": "lighting_extreme",
+          "top_class": "compost",
+          "confidence": 0.9062625756810256
+        },
+        {
+          "image": "real_portrait_astronaut.png",
+          "group": "real_non_waste",
+          "top_class": "landfill",
+          "confidence": 0.869729016943697
+        },
+        {
+          "image": "near_gravel.png",
+          "group": "near_domain",
+          "top_class": "compost",
+          "confidence": 0.8462307961047706
+        },
+        {
+          "image": "light_overexposed_portrait.png",
+          "group": "lighting_extreme",
+          "top_class": "landfill",
+          "confidence": 0.8172486501598621
+        },
+        {
+          "image": "near_wall_clock.png",
+          "group": "near_domain",
+          "top_class": "landfill",
+          "confidence": 0.7880549594095645
+        },
+        {
+          "image": "crop_selfie_face.png",
+          "group": "real_derived",
+          "top_class": "landfill",
+          "confidence": 0.7874717417312556
+        },
+        {
+          "image": "crop_sleeve_patch.png",
+          "group": "real_derived",
+          "top_class": "landfill",
+          "confidence": 0.7687874472983696
+        },
+        {
+          "image": "crop_clothing_uniform.png",
+          "group": "real_derived",
+          "top_class": "paper",
+          "confidence": 0.6852944477355569
+        },
+        {
+          "image": "near_brick_wall.png",
+          "group": "near_domain",
+          "top_class": "paper",
+          "confidence": 0.6747324697745696
+        },
+        {
+          "image": "light_tungsten_cast.png",
+          "group": "lighting_extreme",
+          "top_class": "paper",
+          "confidence": 0.6578626967568466
+        },
+        {
+          "image": "near_coins.png",
+          "group": "near_domain",
+          "top_class": "compost",
+          "confidence": 0.6439645962283147
+        },
+        {
+          "image": "light_underexposed_portrait.png",
+          "group": "lighting_extreme",
+          "top_class": "landfill",
+          "confidence": 0.6014229962730709
+        },
+        {
+          "image": "light_overexposed_hopper.png",
+          "group": "lighting_extreme",
+          "top_class": "paper",
+          "confidence": 0.6011120723681969
+        },
+        {
+          "image": "synth_skin_tone.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.5744947398643494
+        },
+        {
+          "image": "light_backlit_silhouette.png",
+          "group": "lighting_extreme",
+          "top_class": "plastic",
+          "confidence": 0.5375095348930007
+        }
+      ]
+    },
+    "backend": {
+      "total": 30,
+      "scored": 30,
+      "errors": 0,
+      "rejected": 9,
+      "rejection_rate": 0.3,
+      "passed": false,
+      "excluding_near_domain": {
+        "total": 25,
+        "rejected": 8,
+        "rate": 0.32
+      },
+      "groups": {
+        "lighting_extreme": {
+          "total": 10,
+          "rejected": 3,
+          "rate": 0.3
+        },
+        "near_domain": {
+          "total": 5,
+          "rejected": 1,
+          "rate": 0.2
+        },
+        "real_derived": {
+          "total": 4,
+          "rejected": 1,
+          "rate": 0.25
+        },
+        "real_non_waste": {
+          "total": 6,
+          "rejected": 2,
+          "rate": 0.3333333333333333
+        },
+        "synthetic": {
+          "total": 5,
+          "rejected": 2,
+          "rate": 0.4
+        }
+      },
+      "threshold_sweep": {
+        "0.50": 0.3,
+        "0.60": 0.43333333333333335,
+        "0.70": 0.5666666666666667,
+        "0.80": 0.8,
+        "0.90": 0.9
+      },
+      "false_positives": [
+        {
+          "image": "synth_color_gradient.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.9987077782586619
+        },
+        {
+          "image": "light_overexposed_white.png",
+          "group": "lighting_extreme",
+          "top_class": "compost",
+          "confidence": 0.9444840509869793
+        },
+        {
+          "image": "synth_motion_blur.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.9266966096305714
+        },
+        {
+          "image": "real_portrait_hopper.png",
+          "group": "real_non_waste",
+          "top_class": "paper",
+          "confidence": 0.8674735595267016
+        },
+        {
+          "image": "real_night_sky.png",
+          "group": "real_non_waste",
+          "top_class": "glass",
+          "confidence": 0.8521762305219224
+        },
+        {
+          "image": "near_gravel.png",
+          "group": "near_domain",
+          "top_class": "compost",
+          "confidence": 0.8348687191675475
+        },
+        {
+          "image": "crop_sleeve_patch.png",
+          "group": "real_derived",
+          "top_class": "landfill",
+          "confidence": 0.7949669060736231
+        },
+        {
+          "image": "real_portrait_astronaut.png",
+          "group": "real_non_waste",
+          "top_class": "landfill",
+          "confidence": 0.7807156482576777
+        },
+        {
+          "image": "near_wall_clock.png",
+          "group": "near_domain",
+          "top_class": "landfill",
+          "confidence": 0.7564860683388469
+        },
+        {
+          "image": "crop_clothing_uniform.png",
+          "group": "real_derived",
+          "top_class": "paper",
+          "confidence": 0.7479967304941667
+        },
+        {
+          "image": "crop_selfie_face.png",
+          "group": "real_derived",
+          "top_class": "landfill",
+          "confidence": 0.7405503737796867
+        },
+        {
+          "image": "light_overexposed_hopper.png",
+          "group": "lighting_extreme",
+          "top_class": "paper",
+          "confidence": 0.7069110694749079
+        },
+        {
+          "image": "light_flashlight_glare.png",
+          "group": "lighting_extreme",
+          "top_class": "compost",
+          "confidence": 0.7043335003053208
+        },
+        {
+          "image": "near_brick_wall.png",
+          "group": "near_domain",
+          "top_class": "paper",
+          "confidence": 0.6840946837985438
+        },
+        {
+          "image": "light_underexposed_portrait.png",
+          "group": "lighting_extreme",
+          "top_class": "landfill",
+          "confidence": 0.6515297600686173
+        },
+        {
+          "image": "light_tungsten_cast.png",
+          "group": "lighting_extreme",
+          "top_class": "paper",
+          "confidence": 0.6438154389284684
+        },
+        {
+          "image": "light_overexposed_portrait.png",
+          "group": "lighting_extreme",
+          "top_class": "landfill",
+          "confidence": 0.6234092598486753
+        },
+        {
+          "image": "synth_skin_tone.png",
+          "group": "synthetic",
+          "top_class": "compost",
+          "confidence": 0.5744947398643494
+        },
+        {
+          "image": "near_grass.png",
+          "group": "near_domain",
+          "top_class": "compost",
+          "confidence": 0.5271420004915708
+        },
+        {
+          "image": "real_person_camera.png",
+          "group": "real_non_waste",
+          "top_class": "paper",
+          "confidence": 0.5187490230963252
+        },
+        {
+          "image": "light_backlit_silhouette.png",
+          "group": "lighting_extreme",
+          "top_class": "plastic",
+          "confidence": 0.5078980881737916
+        }
+      ]
+    }
+  },
+  "records": [
+    {
+      "image": "crop_clothing_uniform.png",
+      "group": "real_derived",
+      "results": {
+        "eval": {
+          "top_class": "paper",
+          "confidence": 0.6852944477355569,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.7479967304941667,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "crop_pet_face.png",
+      "group": "real_derived",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.37124465126550776,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.3020228634940327,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "crop_selfie_face.png",
+      "group": "real_derived",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.7874717417312556,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.7405503737796867,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "crop_sleeve_patch.png",
+      "group": "real_derived",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.7687874472983696,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.7949669060736231,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_backlit_silhouette.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "plastic",
+          "confidence": 0.5375095348930007,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "plastic",
+          "confidence": 0.5078980881737916,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_dark_room_noise.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.3479754908129431,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.38617625980105785,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "light_flashlight_glare.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.9062625756810256,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.7043335003053208,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_overexposed_hopper.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "paper",
+          "confidence": 0.6011120723681969,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.7069110694749079,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_overexposed_portrait.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.8172486501598621,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.6234092598486753,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_overexposed_white.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.9444840509869793,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.9444840509869793,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_pitch_black.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.3443837637641754,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.3443837637641754,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "light_tungsten_cast.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "paper",
+          "confidence": 0.6578626967568466,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.6438154389284684,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "light_underexposed_pet.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.42028648615926517,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.4103439040870235,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "light_underexposed_portrait.png",
+      "group": "lighting_extreme",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.6014229962730709,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.6515297600686173,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "near_brick_wall.png",
+      "group": "near_domain",
+      "results": {
+        "eval": {
+          "top_class": "paper",
+          "confidence": 0.6747324697745696,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.6840946837985438,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "near_coins.png",
+      "group": "near_domain",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.6439645962283147,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.4156687195089123,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "near_grass.png",
+      "group": "near_domain",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.40805794412294333,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.5271420004915708,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "near_gravel.png",
+      "group": "near_domain",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.8462307961047706,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.8348687191675475,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "near_wall_clock.png",
+      "group": "near_domain",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.7880549594095645,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.7564860683388469,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "real_night_sky.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "glass",
+          "confidence": 0.9091099641873928,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "glass",
+          "confidence": 0.8521762305219224,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "real_person_camera.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.4826135956026926,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.5187490230963252,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "real_pet_cat.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.3386932788985899,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.333731603647594,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "real_portrait_astronaut.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "landfill",
+          "confidence": 0.869729016943697,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "landfill",
+          "confidence": 0.7807156482576777,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "real_portrait_hopper.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "paper",
+          "confidence": 0.9121403100753759,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.8674735595267016,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "real_rocket_launch.png",
+      "group": "real_non_waste",
+      "results": {
+        "eval": {
+          "top_class": "glass",
+          "confidence": 0.2315846446624606,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "paper",
+          "confidence": 0.27331175719255746,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "synth_color_gradient.png",
+      "group": "synthetic",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.9981730559038958,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.9987077782586619,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "synth_gray_wall.png",
+      "group": "synthetic",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.3650519664817716,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.3650519664817716,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "synth_motion_blur.png",
+      "group": "synthetic",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.9831056766154873,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.9266966096305714,
+          "uncertain": false
+        }
+      }
+    },
+    {
+      "image": "synth_rgb_noise.png",
+      "group": "synthetic",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.3807329845213916,
+          "uncertain": true
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.4700644416174739,
+          "uncertain": true
+        }
+      }
+    },
+    {
+      "image": "synth_skin_tone.png",
+      "group": "synthetic",
+      "results": {
+        "eval": {
+          "top_class": "compost",
+          "confidence": 0.5744947398643494,
+          "uncertain": false
+        },
+        "backend": {
+          "top_class": "compost",
+          "confidence": 0.5744947398643494,
+          "uncertain": false
+        }
+      }
+    }
+  ]
+}
