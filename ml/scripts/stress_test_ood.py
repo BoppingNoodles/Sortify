@@ -25,7 +25,8 @@ Usage:
       --json-out docs/ml/robustness_stress_test_results.json
 
 Exit codes: 0 every evaluated mode passed, 1 a mode missed the target,
-2 no images or invalid input.
+2 no images, invalid arguments, or a model that cannot be loaded (missing
+onnxruntime, unreadable file, or metadata that breaks the contract).
 """
 
 from __future__ import annotations
@@ -474,7 +475,14 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     modes = list(MODES) if args.preprocess == "both" else [args.preprocess]
-    classifier = OnnxClassifier(args.model)
+    try:
+        classifier = OnnxClassifier(args.model)
+    except ImportError as exc:
+        print(f"[!] onnxruntime is required: {exc}")
+        return 2
+    except Exception as exc:  # noqa: BLE001 - onnxruntime raises its own types
+        print(f"[!] Could not load {args.model}: {type(exc).__name__}: {exc}")
+        return 2
     records = evaluate(classifier, images, args.data_dir, args.threshold, modes)
     report = build_report(
         classifier,

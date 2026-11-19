@@ -252,6 +252,31 @@ def test_main_rejects_invalid_threshold(tmp_path):
     assert main(["--data-dir", str(tmp_path), "--threshold", "0"]) == 2
 
 
+@pytest.mark.parametrize(
+    "error", [ImportError("no onnxruntime"), ValueError("bad metadata")]
+)
+def test_main_returns_2_when_model_cannot_load(tmp_path, monkeypatch, capsys, error):
+    import ml.scripts.stress_test_ood as runner
+
+    def broken(_path):
+        raise error
+
+    write_image(tmp_path / "a.png")
+    model = tmp_path / "model.onnx"
+    model.write_bytes(b"junk")
+    monkeypatch.setattr(runner, "OnnxClassifier", broken)
+    assert main(["--model", str(model), "--data-dir", str(tmp_path)]) == 2
+    assert "[!]" in capsys.readouterr().out
+
+
+def test_main_returns_2_for_corrupt_onnx(tmp_path):
+    pytest.importorskip("onnxruntime")
+    write_image(tmp_path / "a.png")
+    model = tmp_path / "corrupt.onnx"
+    model.write_bytes(b"not a protobuf")
+    assert main(["--model", str(model), "--data-dir", str(tmp_path)]) == 2
+
+
 # ------------------------------------------------- integration (real ONNX)
 def test_shipped_onnx_end_to_end(tmp_path):
     pytest.importorskip("onnxruntime")
