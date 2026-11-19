@@ -121,6 +121,27 @@ def test_center_crop_rounds_odd_margins():
     assert tuple(cropped[0, 0, :2]) == (2, 2)
 
 
+def test_extreme_aspect_ratio_is_refused_not_resized():
+    with pytest.raises(ValueError, match="Aspect ratio"):
+        resize_short_edge(Image.new("RGB", (8192, 1)))
+    # The backend squash path stays bounded and still works.
+    assert preprocess(Image.new("RGB", (8192, 1)), "backend").shape[-2:] == (224, 224)
+
+
+def test_extreme_aspect_ratio_is_a_per_image_error(tmp_path):
+    write_image(tmp_path / "strip.png", size=(4096, 2))
+    records = evaluate(
+        FakeClassifier([logits_for(0.3)]),
+        collect_images(tmp_path),
+        tmp_path,
+        0.5,
+        ["eval", "backend"],
+    )
+    assert "Aspect ratio" in records[0]["results"]["eval"]["error"]
+    assert records[0]["results"]["eval"]["uncertain"] is False
+    assert records[0]["results"]["backend"]["uncertain"] is True
+
+
 def test_unknown_preprocess_mode_raises():
     with pytest.raises(ValueError, match="Unknown preprocessing mode"):
         preprocess(Image.new("RGB", (256, 256)), "squash")

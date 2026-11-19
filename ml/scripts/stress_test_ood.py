@@ -51,6 +51,7 @@ IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 MODES = ("eval", "backend")
 NEAR_DOMAIN_GROUP = "near_domain"
 SWEEP_THRESHOLDS = (0.5, 0.6, 0.7, 0.8, 0.9)
+MAX_ASPECT_RATIO = 16
 EXPECTED_PREPROCESSING = {
     "resize_short_edge": 256,
     "center_crop": [224, 224],
@@ -136,8 +137,18 @@ def load_image(path: Path) -> Image.Image:
 
 
 def resize_short_edge(image: Image.Image, size: int = 256) -> Image.Image:
-    """Match torchvision ``Resize(int)`` on PIL input (truncating long side)."""
+    """Match torchvision ``Resize(int)`` on PIL input (truncating long side).
+
+    Raises ``ValueError`` when the aspect ratio exceeds ``MAX_ASPECT_RATIO``:
+    an 8192x1 image would otherwise resize to ~2,000,000x256 (~1.6 GB) before
+    the crop. ``evaluate`` records that as a per-image error.
+    """
     width, height = image.size
+    if max(width, height) > MAX_ASPECT_RATIO * min(width, height):
+        raise ValueError(
+            f"Aspect ratio of {image.size} exceeds {MAX_ASPECT_RATIO}:1; "
+            "refusing an unbounded resize"
+        )
     if width <= height:
         new_size = (size, int(size * height / width))
     else:
