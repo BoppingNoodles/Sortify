@@ -44,8 +44,8 @@ scikit-image and Matplotlib.
 
 **Licenses.**
 - Public domain: NASA (astronaut, hubble_deep_field), SpaceX (rocket), U.S. Navy (grace_hopper), scikit-image (clock).
-- CC0: camera, chelsea, CC0Textures (grass, gravel, brick).
-- No known copyright: Walters Art Museum (coins).
+- CC0: camera (Lav Varshney), chelsea (Stefan van der Walt), grass (DeviantArt, linolafett), CC0Textures (gravel, brick).
+- No known copyright: Brooklyn Museum Collection (coins).
 - Generated frames contain no third-party content.
 - Excluded on purpose: `moon`, `colorwheel` and `stereo_motorcycle` (licenses unclear); `page`, `text` and `coffee` (paper and a cup are in-domain).
 
