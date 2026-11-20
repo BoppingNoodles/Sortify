@@ -76,13 +76,14 @@ async function scan(t, classifyImage, {
       impactAsync,
       notificationAsync,
       ImpactFeedbackStyle: { Medium: 'medium' },
-      NotificationFeedbackType: { Success: 'success' },
+      NotificationFeedbackType: { Success: 'success', Warning: 'warning' },
     },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
     '../services/api': { classifyImage, isServerAwake, wakeServer },
     '../services/storage': { saveScanRecord },
     '../services/municipalities': loadSource('src/services/municipalities.js'),
+    '../services/confidence': loadSource('src/services/confidence.js'),
   }).default;
   let renderer;
   await act(async () => {
@@ -436,6 +437,7 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   assert.equal(params.location, 'san-francisco');
   assert.equal(params.photoUri, 'file:///photo.jpg');
   assert.equal(params.historySaved, true);
+  assert.equal(params.uncertain, false);
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
 });
 
@@ -483,6 +485,31 @@ test('an unreachable server fails fast with a retryable alert and no upload', as
   assert.equal(app.alerts[0][2].map(({ text }) => text).join(','), 'Retake,Try Again');
   // The photo is kept so Try Again can retry the same scan.
   assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+});
+
+test('a low-confidence result opens as not sure and is kept out of History', async (t) => {
+  const saveScanRecord = t.mock.fn(async () => ({ id: 'saved' }));
+  const notificationAsync = t.mock.fn(async () => {});
+  const lowConfidence = {
+    ...predictionFixture,
+    confidence: 0.52,
+    alternatives: [{ category: 'paper', confidence: 0.3 }],
+  };
+  const app = await scan(t, async () => lowConfidence, { saveScanRecord, notificationAsync });
+  await act(async () => { await app.handler('handleCapture')(); });
+  await act(async () => { await app.handler('handleAnalyze')(); });
+
+  assert.equal(saveScanRecord.mock.callCount(), 0);
+  assert.equal(app.destinations.length, 1);
+  const [route, params] = app.destinations[0];
+  assert.equal(route, 'ResultModal');
+  assert.equal(params.uncertain, true);
+  assert.equal(params.historySaved, null);
+  assert.equal(params.confidence, 0.52);
+  assert.equal(params.category, 'plastic');
+  assert.equal(notificationAsync.mock.calls[0].arguments[0], 'warning');
+  // The preview resets so Retake Photo returns to a live camera.
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
 });
 
 test('invalid classification responses retain the photo for a successful retry', async (t) => {
@@ -661,4 +688,80 @@ test('result bounds confidence and displays the backend disposal guidance', asyn
       await act(async () => renderer.unmount());
     }
   }
+});
+
+test('confidence cutoff flags results strictly below 0.60', () => {
+  const { isUncertain, UNCERTAIN_BELOW } = loadSource('src/services/confidence.js');
+  assert.equal(UNCERTAIN_BELOW, 0.6);
+  assert.equal(isUncertain(0.6), false);
+  assert.equal(isUncertain(0.95), false);
+  assert.equal(isUncertain(0.5999), true);
+  assert.equal(isUncertain(0), true);
+  assert.equal(isUncertain(Number.NaN), true);
+  assert.equal(isUncertain(undefined), true);
+});
+
+test('not-sure result shows the best guess, alternatives and a retake path', async (t) => {
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    'react-native': native,
+    '../styles/theme': theme,
+  }).default;
+  let wentBack = 0;
+  let renderer;
+  await act(async () => {
+    renderer = create(React.createElement(ResultScreen, {
+      route: { params: {
+        itemName: 'Plastic',
+        category: 'plastic',
+        confidence: 0.52,
+        bin: 'Blue Recycling Bin',
+        location: 'san-jose',
+        disposalTip: 'Rinse before recycling.',
+        alternatives: [{ category: 'paper', confidence: 0.3 }, { category: 'landfill', confidence: 0.1 }],
+        uncertain: true,
+        historySaved: null,
+      } },
+      navigation: { goBack: () => { wentBack++; } },
+    }));
+  });
+  t.after(async () => { await act(async () => renderer.unmount()); });
+  const labels = renderer.root.findAllByType('Text')
+    .map(({ props }) => React.Children.toArray(props.children).join(''));
+  assert.ok(labels.includes('NOT SURE'));
+  assert.ok(labels.includes('Not sure what this is'));
+  assert.ok(labels.includes('Best guess: Plastic, but the confidence is too low to trust.'));
+  assert.ok(labels.includes('Could also be: Paper 30%, Landfill 10%'));
+  assert.ok(labels.includes('52%'));
+  assert.ok(labels.includes('If it is Plastic (San Jose 📍)'));
+  assert.ok(labels.includes('Rinse before recycling.'));
+  assert.ok(labels.includes('Not added to History.'));
+  assert.ok(labels.includes('Retake Photo'));
+  assert.ok(!labels.includes('PLASTIC'));
+  assert.ok(!labels.some((label) => label.startsWith('Target:')));
+  assert.ok(!labels.some((label) => label.includes('be saved to History')));
+  const badge = renderer.root.findAllByType('Text').find(({ props }) => props.children === 'NOT SURE').parent;
+  assert.equal(badge.props.style[1].backgroundColor, theme.COLORS.design.streak);
+  await act(async () => { renderer.root.findByType('TouchableOpacity').props.onPress(); });
+  assert.equal(wentBack, 1);
+});
+
+test('confident results keep the normal layout', async (t) => {
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    'react-native': native,
+    '../styles/theme': theme,
+  }).default;
+  let renderer;
+  await act(async () => {
+    renderer = create(React.createElement(ResultScreen, {
+      route: { params: { category: 'glass', confidence: 0.9, uncertain: false, bin: 'Blue Bin' } },
+    }));
+  });
+  t.after(async () => { await act(async () => renderer.unmount()); });
+  const labels = renderer.root.findAllByType('Text')
+    .map(({ props }) => React.Children.toArray(props.children).join(''));
+  assert.ok(labels.includes('GLASS'));
+  assert.ok(labels.includes('Target: Blue Bin'));
+  assert.ok(labels.includes('Scan Another Item'));
+  assert.ok(!labels.includes('NOT SURE'));
+  assert.ok(!labels.includes('Not added to History.'));
 });

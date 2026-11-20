@@ -14,8 +14,11 @@ export default function ResultScreen({ route, navigation }) {
     disposalTip = null,
     location = 'berkeley',
     photoUri = null,
+    alternatives = [],
+    uncertain = false,
     historySaved,
   } = route?.params || {};
+  const notSure = uncertain === true;
 
   const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
   // API bin_color values are display labels ("Green"), not native style colors.
@@ -26,6 +29,13 @@ export default function ResultScreen({ route, navigation }) {
   const confidencePercent = Number.isFinite(confidenceScore)
     ? Math.round(Math.max(0, Math.min(1, confidenceScore)) * 100)
     : 0;
+  const categoryLabel = (value) => value.charAt(0).toUpperCase() + value.slice(1);
+  const otherGuesses = (Array.isArray(alternatives) ? alternatives : [])
+    .filter((alt) => typeof alt?.category === 'string' && Number.isFinite(Number(alt.confidence)))
+    .slice(0, 2)
+    .map((alt) => `${categoryLabel(alt.category)} ${Math.round(Math.max(0, Math.min(1, Number(alt.confidence))) * 100)}%`)
+    .join(', ');
+  const accentColor = notSure ? colors.design.streakText : binColor;
   const locationLabel = location
     ? location
         .split('-')
@@ -39,30 +49,61 @@ export default function ResultScreen({ route, navigation }) {
         <Image source={{ uri: photoUri }} style={styles.thumbnail} />
       )}
 
-      {/* Top Category Banner */}
-      <View style={[styles.badge, { backgroundColor: binColor }]}>
-        <Text style={styles.badgeText}>{(category || 'LANDFILL').toUpperCase()}</Text>
-      </View>
+      {notSure ? (
+        <>
+          <View style={[styles.badge, styles.notSureBadge]}>
+            <Text style={[styles.badgeText, styles.notSureBadgeText]}>NOT SURE</Text>
+          </View>
+          <Text style={styles.itemName} accessibilityRole="header">Not sure what this is</Text>
+          <Text style={styles.notSureBody}>
+            {`Best guess: ${categoryLabel(category || 'landfill')}, but the confidence is too low to trust.`}
+          </Text>
+          {otherGuesses ? (
+            <Text style={styles.notSureBody}>{`Could also be: ${otherGuesses}`}</Text>
+          ) : null}
+          <View style={[styles.tipCard, styles.notSureCard]}>
+            <Text style={[styles.tipTitle, styles.notSureTitle]}>Try another photo</Text>
+            <Text style={styles.tipBody}>
+              {`Fill most of the frame with one item, in good light, against a plain background. If it's still unclear, check the Municipal Rules tab for ${locationLabel}.`}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          {/* Top Category Banner */}
+          <View style={[styles.badge, { backgroundColor: binColor }]}>
+            <Text style={styles.badgeText}>{(category || 'LANDFILL').toUpperCase()}</Text>
+          </View>
 
-      <Text style={styles.itemName}>{itemName}</Text>
-      {bin ? <Text style={styles.binName}>Target: {bin}</Text> : null}
+          <Text style={styles.itemName}>{itemName}</Text>
+          {bin ? <Text style={styles.binName}>Target: {bin}</Text> : null}
+        </>
+      )}
 
       {/* Confidence Score Bar */}
       <View style={styles.confidenceContainer}>
         <View style={styles.confidenceHeader}>
           <Text style={styles.confidenceLabel}>Detection Confidence</Text>
-          <Text style={[styles.confidenceValue, { color: binColor }]}>{confidencePercent}%</Text>
+          <Text style={[styles.confidenceValue, { color: accentColor }]}>{confidencePercent}%</Text>
         </View>
         <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarFill, { width: `${confidencePercent}%`, backgroundColor: binColor }]} />
+          <View style={[styles.progressBarFill, { width: `${confidencePercent}%`, backgroundColor: accentColor }]} />
         </View>
       </View>
 
       {/* Disposal Recommendation Card */}
       <View style={styles.tipCard}>
-        <Text style={styles.tipTitle}>Disposal Guideline ({locationLabel} 📍)</Text>
+        <Text style={styles.tipTitle}>
+          {notSure
+            ? `If it is ${categoryLabel(category || 'landfill')} (${locationLabel} 📍)`
+            : `Disposal Guideline (${locationLabel} 📍)`}
+        </Text>
         <Text style={styles.tipBody}>{effectiveTip}</Text>
       </View>
+
+      {notSure && (
+        <Text style={styles.historyWarning}>Not added to History.</Text>
+      )}
 
       {historySaved === false && (
         <Text accessibilityRole="alert" style={styles.historyWarning}>
@@ -76,7 +117,7 @@ export default function ResultScreen({ route, navigation }) {
         onPress={() => navigation.goBack()}
         activeOpacity={0.8}
       >
-        <Text style={styles.primaryButtonText}>Scan Another Item</Text>
+        <Text style={styles.primaryButtonText}>{notSure ? 'Retake Photo' : 'Scan Another Item'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -100,6 +141,11 @@ const getStyles = createThemedStyles((colors) => StyleSheet.create({
   tipTitle: { ...TYPOGRAPHY.subtitle, fontSize: 15, marginBottom: 8, color: colors.accent.berkeleyBlue },
   tipBody: { ...TYPOGRAPHY.body, color: colors.text.secondary, lineHeight: 22 },
   historyWarning: { ...TYPOGRAPHY.caption, color: colors.text.secondary, marginBottom: SPACING.md },
+  notSureBadge: { backgroundColor: colors.design.streak, borderWidth: 1, borderColor: colors.design.streakBorder },
+  notSureBadgeText: { color: colors.design.streakText },
+  notSureBody: { ...TYPOGRAPHY.body, color: colors.text.secondary, textAlign: 'center', marginBottom: 10 },
+  notSureCard: { backgroundColor: colors.design.streak, borderColor: colors.design.streakBorder, marginTop: 8, marginBottom: 20 },
+  notSureTitle: { color: colors.design.streakText },
   primaryButton: { backgroundColor: colors.design.green, width: '100%', padding: 16, borderRadius: 14, alignItems: 'center', elevation: 2 },
   primaryButtonText: { color: colors.design.onGreen, fontWeight: '700', fontSize: 16 },
 }));

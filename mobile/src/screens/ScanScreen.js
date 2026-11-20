@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createThemedStyles, SPACING } from '../styles/theme';
 import { classifyImage, isServerAwake, wakeServer } from '../services/api';
 import { saveScanRecord } from '../services/storage';
+import { isUncertain } from '../services/confidence';
 import { MUNICIPALITIES } from '../services/municipalities';
 
 async function playHaptic(feedback) {
@@ -354,9 +355,14 @@ export default function ScanScreen({ navigation }) {
         throw new Error('Classification server returned an invalid response.');
       }
 
-      pending.saving = true;
-      const savedRecord = await saveScanRecord(result, capturedPhoto);
-      if (!isCurrent(pending.generation)) return;
+      // Low-confidence guesses are shown as "not sure" and kept out of History and stats.
+      const uncertain = isUncertain(result.confidence);
+      let savedRecord = null;
+      if (!uncertain) {
+        pending.saving = true;
+        savedRecord = await saveScanRecord(result, capturedPhoto);
+        if (!isCurrent(pending.generation)) return;
+      }
       const resultParams = {
         itemName: result.item_name,
         category: result.category,
@@ -368,12 +374,15 @@ export default function ScanScreen({ navigation }) {
         location: result.location || selectedCity,
         alternatives: result.alternatives || [],
         photoUri: capturedPhoto.uri,
-        historySaved: savedRecord !== null,
+        uncertain,
+        historySaved: uncertain ? null : savedRecord !== null,
       };
 
       setCapturedPhoto(null);
       navigation.navigate('ResultModal', resultParams);
-      void playHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+      void playHaptic(() => Haptics.notificationAsync(uncertain
+        ? Haptics.NotificationFeedbackType.Warning
+        : Haptics.NotificationFeedbackType.Success));
     } catch (error) {
       if (!isCurrent(pending.generation)) return;
       console.error('Classification request failed:', error);
