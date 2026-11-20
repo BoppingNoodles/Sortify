@@ -26,6 +26,7 @@ const AWAKE_FOR_MS = 10 * 60 * 1000;
 
 let lastServerResponseAt = null;
 let pendingWake = null;
+let pendingWakeStartedAt = 0;
 
 function markServerAwake() {
   lastServerResponseAt = Date.now();
@@ -65,10 +66,13 @@ async function pingHealth(timeoutMs) {
  */
 export function wakeServer() {
   if (isServerAwake()) return Promise.resolve(true);
-  if (pendingWake) return pendingWake;
+  // JS timers pause in the background, so an attempt can outlive its deadline
+  // there. Don't hand a stale attempt to a new caller; start a fresh one.
+  if (pendingWake && Date.now() - pendingWakeStartedAt < WAKE_DEADLINE_MS) return pendingWake;
 
-  pendingWake = (async () => {
-    const startedAt = Date.now();
+  const startedAt = Date.now();
+  pendingWakeStartedAt = startedAt;
+  const attempt = (async () => {
     let unreachable = 0;
     for (;;) {
       const remaining = WAKE_DEADLINE_MS - (Date.now() - startedAt);
@@ -87,9 +91,10 @@ export function wakeServer() {
       await new Promise((resolve) => setTimeout(resolve, WAKE_RETRY_DELAY_MS));
     }
   })().finally(() => {
-    pendingWake = null;
+    if (pendingWake === attempt) pendingWake = null;
   });
-  return pendingWake;
+  pendingWake = attempt;
+  return attempt;
 }
 
 class ApiError extends Error {

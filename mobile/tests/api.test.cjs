@@ -219,6 +219,29 @@ test('wakeServer never runs past its 90 s deadline when the server never starts'
   assert.ok(pingEnds.every((end) => end <= 90000), pingEnds.join(','));
 });
 
+test('a wake attempt older than the deadline is not shared after the app resumes', async () => {
+  let now = 0;
+  const firstPing = Promise.withResolvers();
+  let calls = 0;
+  const { wakeServer } = client('android', {
+    Date: { now: () => now },
+    setTimeout: () => 0,
+    clearTimeout() {},
+    fetch: () => {
+      calls++;
+      return calls === 1 ? firstPing.promise : Promise.resolve(Response.json({ status: 'ok' }));
+    },
+  });
+  const stale = wakeServer();
+  assert.equal(calls, 1);
+  // Backgrounded for two minutes: timers froze, the wall clock did not.
+  now = 120000;
+  assert.equal(await wakeServer(), true);
+  assert.equal(calls, 2);
+  firstPing.resolve(Response.json({ status: 'ok' }));
+  assert.equal(await stale, true);
+});
+
 test('a 200 page that is not the health response counts as still starting', async () => {
   const clock = virtualClock();
   let calls = 0;
