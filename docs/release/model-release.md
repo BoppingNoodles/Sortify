@@ -1,6 +1,8 @@
 # Model release reproduction
 
-Release verification is blocked pending the ML owner's selected PyTorch checkpoint, source commit, authorized download location, and checksum. The worktree contains `ml/models/sortify_v2.onnx`. Its SHA-256 matches the [ONNX export report](../ml/onnx_export_metrics.json), which describes a MobileNetV2 export from `sortify_v2.pth` with digest `0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6`. That report is a lead for identifying the artifact. The API loads PyTorch weights, and the selected checkpoint still needs confirmation and verification.
+**Selected checkpoint (November 19, 2026):** `backend/app/models/sortify_v2.pth`, the default `MODEL_PATH`. Caden supplied it from the team Drive. Its SHA-256 `0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6` matches the source checkpoint in the [ONNX export report](../ml/onnx_export_metrics.json). It is a MobileNetV2 dict checkpoint with ordered `class_names` `compost, glass, landfill, paper, plastic` and validation accuracy 0.909. It is committed so the backend Docker image ships it, an exception to the weights-outside-Git rule below. Through `ModelService` on CPU it returns the same top class as `sortify_v2.onnx` with backend preprocessing on all 30 images of the OOD stress set, with confidence within 5e-5.
+
+The packaging steps below remain the procedure for any later checkpoint.
 
 ## Package the selected checkpoint
 

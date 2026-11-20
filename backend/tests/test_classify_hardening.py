@@ -317,8 +317,24 @@ def test_default_settings_use_existing_checkpoint_location(monkeypatch):
         "backend",
         "app",
         "models",
-        "sortify_mvp_v1.pth",
+        "sortify_v2.pth",
     )
+
+
+def test_default_checkpoint_loads_real_model():
+    from backend.app.services.model_service import DEFAULT_MODEL_PATH
+
+    assert DEFAULT_MODEL_PATH.is_file(), "bundled sortify_v2.pth is missing"
+    ModelService.reset_instance()
+    try:
+        svc = ModelService(model_path=DEFAULT_MODEL_PATH, device="cpu")
+        assert svc.model is not None
+        assert svc.class_names == ["compost", "glass", "landfill", "paper", "plastic"]
+        result = svc.predict(create_test_image())
+        assert result["is_mock"] is False
+        assert result["category"] in svc.class_names
+    finally:
+        ModelService.reset_instance()
 
 
 def test_relative_checkpoint_path_does_not_depend_on_cwd(tmp_path, monkeypatch):
