@@ -30,10 +30,21 @@ async function mount(t, Screen) {
 test('startup initializes guest identity while the navigator renders', async (t) => {
   const pending = Promise.withResolvers();
   const getOrCreateDeviceUuid = t.mock.fn(() => pending.promise);
+  const wakeServer = t.mock.fn(async () => true);
+  let onAppStateChange;
+  const removeListener = t.mock.fn();
   let scheme = 'light';
   const App = loadSource('App.js', {
     'expo-status-bar': { StatusBar: 'StatusBar' },
-    'react-native': { useColorScheme: () => scheme },
+    'react-native': {
+      useColorScheme: () => scheme,
+      AppState: {
+        addEventListener: (_event, listener) => {
+          onAppStateChange = listener;
+          return { remove: removeListener };
+        },
+      },
+    },
     'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider' },
     '@react-navigation/native': {
       NavigationContainer: 'NavigationContainer',
@@ -41,12 +52,19 @@ test('startup initializes guest identity while the navigator renders', async (t)
       DarkTheme: { dark: true, colors: {} },
     },
     './src/navigation/AppNavigator': 'AppNavigator',
+    './src/services/api': { wakeServer },
     './src/services/storage': { getOrCreateDeviceUuid },
     './src/styles/theme': theme,
   }).default;
 
   const renderer = await mount(t, App);
   assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
+  // The backend is woken at launch and whenever the app returns to the foreground.
+  assert.equal(wakeServer.mock.callCount(), 1);
+  await act(async () => { onAppStateChange('background'); });
+  assert.equal(wakeServer.mock.callCount(), 1);
+  await act(async () => { onAppStateChange('active'); });
+  assert.equal(wakeServer.mock.callCount(), 2);
   assert.ok(renderer.root.findByType('AppNavigator'));
   assert.equal(renderer.root.findByType('NavigationContainer').props.theme.dark, false);
   assert.equal(renderer.root.findByType('StatusBar').props.style, 'dark');
@@ -57,6 +75,7 @@ test('startup initializes guest identity while the navigator renders', async (t)
   assert.equal(dark.colors.background, theme.getAppColors('dark').background.primary);
   assert.equal(renderer.root.findByType('StatusBar').props.style, 'light');
   assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
+  assert.equal(wakeServer.mock.callCount(), 2);
   pending.resolve(null);
 });
 
