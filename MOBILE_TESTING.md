@@ -81,6 +81,7 @@ Run each case on every phone you have and record the outcome in the [device test
 | D01 | Fresh launch | Delete Expo Go's data (or reinstall Expo Go), open the project | The welcome or onboarding screen appears. Continuing reaches the Home tab |
 | D02 | Camera permission | On **Home**, tap **Start**. Deny camera access, then grant it from the prompt or the phone's Settings. Repeat with a permanent denial ("Don't ask again" on Android) | Denial shows a way to recover. After granting, the live preview appears |
 | D03 | Scan in every city | Tap the 📍 city pill to cycle cities. For each of the 5 cities, take a photo, tap **Retake** once, retake, then tap **Identify Bin** | A result shows the item, bin and disposal guidance for that city |
+| D03b | Not sure result | Scan something that isn't waste (your hand, a blank wall, a keyboard), and a real item in dim light | Low-confidence results (below 60%) show **NOT SURE** with the best guess, other guesses, photo tips and **Retake Photo**. They are **not** added to History. Confident results show the normal bin |
 | D04 | Repeated scans | Tap **Scan Another Item** and complete three scans in a row | Exactly one result per scan. **Profile → History** shows one entry per successful scan |
 | D05 | Persistence | Force-close Expo Go, reopen the project, then check **Profile → History** and **Home → stats** (Impact Dashboard) | History is still there. Stats match the scans you made |
 | D06 | Wi-Fi loss | Turn on airplane mode just after tapping **Identify Bin**, then turn it off | A clear error appears, and you can retry or retake. No endless spinner and no crash |
@@ -94,11 +95,13 @@ Also try **dark mode** (switch the phone's appearance while the app is open) and
 ## 6. Expected behavior (not bugs)
 
 - **Slow scans.** On the free plan a scan takes about 3–8 seconds once the server is awake. The first scan after a long break can show **Waking up the server…** for up to a minute.
-- **Non-waste photos still get a bin.** The model always picks one of the five bins and has no "not sure" result yet. Faces, hands, blank walls and very bright or dark frames are often labeled confidently, frequently as compost or landfill. This is documented in the [robustness report](docs/ml/robustness_stress_test.md). Don't log it as a bug unless the app crashes or shows something misleading beyond the bin choice.
+- **Some non-waste photos still get a confident bin.** The app shows **NOT SURE** when the model's confidence is below 60%, but the model has no "not waste" class. Faces, hands, blank walls and very bright or dark frames are sometimes labeled confidently anyway, often as compost or landfill. The [robustness report](docs/ml/robustness_stress_test.md) found that a 60% cutoff catches about 40% of non-waste photos. Log these as **cosmetic** with the photo described, so the ML team can collect them.
+- **Real items can show NOT SURE.** At this cutoff about 1 in 10 real waste photos is flagged. Retaking with better framing usually fixes it. If one item is flagged every time, log it.
+- **NOT SURE scans don't appear in History or stats.** This is intended.
 - **History is per device.** It's stored locally on the phone in guest mode, and nothing syncs between devices.
 - **No shutter vibration in Expo Go on iPhone.** Expo Go can't load Sortify's camera-session module. Use the native build in section 8 to test haptics.
 
-Do log as bugs: wrong guidance for the selected city, a result that doesn't match the bin shown, duplicate or missing history rows, stats that don't match your scans, crashes, frozen screens, and layout problems.
+Do log as bugs: a NOT SURE scan that appears in History, wrong guidance for the selected city, a result that doesn't match the bin shown, duplicate or missing history rows, stats that don't match your scans, crashes, frozen screens, and layout problems.
 
 ## 7. Report a bug
 
