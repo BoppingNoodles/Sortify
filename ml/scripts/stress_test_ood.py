@@ -16,7 +16,7 @@ import torch
 from PIL import Image, ImageOps
 from torchvision import transforms
 
-from backend.app.services.inference import detect_architecture, build_model
+from backend.app.services.inference import build_model, detect_architecture
 
 ROOT = Path(__file__).resolve().parents[2]
 CHECKPOINT = ROOT / "ml/models/resnet18_finetuned.pth"
