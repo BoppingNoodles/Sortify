@@ -45,6 +45,8 @@ backend/serviceAccountKey.json
 *.onnx
 # Reviewed portable artifact for issue #65; keep other model outputs ignored.
 !ml/models/sortify_v2.onnx
+# Reviewed v2 checkpoint the backend image serves (SHA-256 0f35a570...b60f6).
+!backend/app/models/sortify_v2.pth
 *.tflite
 *.zip
 
