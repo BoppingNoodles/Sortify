@@ -468,6 +468,34 @@ test('a sleeping server is woken before upload with a visible waiting message', 
   assert.ok(!labels().includes('Waking up the server…'));
 });
 
+test('leaving during wake-up releases the preview instead of leaving it disabled', async (t) => {
+  const wake = deferred();
+  const classifyImage = t.mock.fn(async () => predictionFixture);
+  const app = await scan(t, classifyImage, {
+    isServerAwake: () => false,
+    wakeServer: () => wake.promise,
+  });
+  await act(async () => { await app.handler('handleCapture')(); });
+  let analyzeTask;
+  await act(async () => { analyzeTask = app.handler('handleAnalyze')(); });
+
+  await app.setAppState('background');
+  await app.setAppState('active');
+  const buttons = app.renderer.root.findAllByType('TouchableOpacity');
+  const retake = buttons.find(({ props }) => props.onPress.name === 'handleRetake');
+  const identify = buttons.find(({ props }) => props.onPress.name === 'handleAnalyze');
+  assert.equal(retake.props.disabled, false);
+  assert.equal(identify.props.disabled, false);
+
+  // The abandoned wake finishing later must not upload, alert or relock the preview.
+  await act(async () => { wake.resolve(true); await analyzeTask; });
+  assert.equal(classifyImage.mock.callCount(), 0);
+  assert.equal(app.alerts.length, 0);
+  assert.equal(app.destinations.length, 0);
+  assert.equal(app.renderer.root.findAllByType('TouchableOpacity')
+    .find(({ props }) => props.onPress.name === 'handleAnalyze').props.disabled, false);
+});
+
 test('an unreachable server fails fast with a retryable alert and no upload', async (t) => {
   const classifyImage = t.mock.fn(async () => predictionFixture);
   const app = await scan(t, classifyImage, {

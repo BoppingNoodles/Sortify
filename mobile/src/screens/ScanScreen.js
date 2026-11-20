@@ -142,6 +142,12 @@ export default function ScanScreen({ navigation }) {
     setGeneration(screen.current.generation);
     setIsAnalyzing(false);
     setIsWakingServer(false);
+    // A scan still waiting for the server holds no request yet, so release it:
+    // the preview must not sit disabled until the (up to 90 s) wake finishes.
+    if (operation.current?.waking) {
+      operation.current = null;
+      setIsBusy(false);
+    }
     // A scan whose save has started must not be submitted again on return.
     if (operation.current?.saving) setCapturedPhoto(null);
   }, []);
@@ -324,9 +330,11 @@ export default function ScanScreen({ navigation }) {
     setIsAnalyzing(true);
     try {
       if (!isServerAwake()) {
+        pending.waking = true;
         setIsWakingServer(true);
         const awake = await wakeServer();
         if (!isCurrent(pending.generation)) return;
+        pending.waking = false;
         setIsWakingServer(false);
         if (!awake) {
           throw new Error(
