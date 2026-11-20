@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } 
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/DesignPrimitives';
-import { fetchLocationRules } from '../services/api';
+import { fetchLocationRules, isServerAwake, wakeServer } from '../services/api';
 import { MUNICIPALITIES } from '../services/municipalities';
 import { createThemedStyles } from '../styles/theme';
 
@@ -21,12 +21,22 @@ export default function RulesScreen() {
   const [rules, setRules] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [waking, setWaking] = useState(false);
 
   const search = async () => {
     setLoading(true);
     setError(null);
     setRules(null);
     try {
+      if (!isServerAwake()) {
+        setWaking(true);
+        const awake = await wakeServer();
+        setWaking(false);
+        if (!awake) {
+          setError('Could not reach the Sortify server. Check your internet connection and try again.');
+          return;
+        }
+      }
       const response = await fetchLocationRules(city);
       if (!response?.rules || typeof response.rules !== 'object' || Array.isArray(response.rules)) {
         throw new Error('Invalid municipal rules response.');
@@ -35,6 +45,7 @@ export default function RulesScreen() {
     } catch {
       setError('Could not load municipal rules. Try again.');
     } finally {
+      setWaking(false);
       setLoading(false);
     }
   };
@@ -85,7 +96,7 @@ export default function RulesScreen() {
           ))}
         </View>
 
-        <PrimaryButton disabled={loading} onPress={search}>{loading ? 'Loading rules…' : 'Search'}</PrimaryButton>
+        <PrimaryButton disabled={loading} onPress={search}>{waking ? 'Waking up the server…' : loading ? 'Loading rules…' : 'Search'}</PrimaryButton>
         {error && <Text accessibilityRole="alert" style={styles.caption}>{error}</Text>}
         {rules && (group ? [group] : GROUPS).map((entry) => (
           <View key={entry.label} style={styles.details}>
