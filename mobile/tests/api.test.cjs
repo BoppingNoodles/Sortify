@@ -140,3 +140,76 @@ test('aborted requests exhaust retries with a friendly timeout error', async () 
   await assert.rejects(classifyImage('file:///photo.jpg'), /timed out/);
   assert.equal(requests, 3);
 });
+
+function abortError() {
+  const error = new Error('aborted');
+  error.name = 'AbortError';
+  return error;
+}
+
+test('wakeServer waits through a slow cold start and then remembers the server is awake', async () => {
+  const calls = [];
+  const replies = [
+    () => { throw abortError(); },
+    () => Response.json({ detail: 'starting' }, { status: 503 }),
+    () => Response.json({ status: 'ok' }),
+  ];
+  const { wakeServer, isServerAwake } = client('ios', {
+    setTimeout: fastTimers,
+    clearTimeout() {},
+    fetch: async (url) => {
+      calls.push(url);
+      return replies[calls.length - 1]();
+    },
+  });
+  assert.equal(isServerAwake(), false);
+  const [first, second] = await Promise.all([wakeServer(), wakeServer()]);
+  assert.equal(first, true);
+  assert.equal(second, true);
+  assert.equal(calls.length, 3);
+  assert.ok(calls.every((url) => url === 'http://test-api:8000/health'));
+  assert.equal(isServerAwake(), true);
+  assert.equal(await wakeServer(), true);
+  assert.equal(calls.length, 3);
+});
+
+test('wakeServer gives up quickly when the server is unreachable', async () => {
+  let calls = 0;
+  const { wakeServer, isServerAwake } = client('android', {
+    setTimeout: fastTimers,
+    clearTimeout() {},
+    fetch: async () => { calls++; throw new TypeError('Network request failed'); },
+  });
+  assert.equal(await wakeServer(), false);
+  assert.equal(calls, 3);
+  assert.equal(isServerAwake(), false);
+});
+
+test('wakeServer stops at its deadline when the server never finishes starting', async () => {
+  let now = 0;
+  let calls = 0;
+  const { wakeServer } = client('android', {
+    Date: { now: () => now },
+    setTimeout: fastTimers,
+    clearTimeout() {},
+    fetch: async () => {
+      calls++;
+      now += 20000;
+      throw abortError();
+    },
+  });
+  assert.equal(await wakeServer(), false);
+  assert.equal(calls, 5);
+  assert.ok(now <= 100000);
+});
+
+test('a successful API response marks the server awake without a health check', async () => {
+  const urls = [];
+  const { fetchLocationRules, wakeServer, isServerAwake } = client('android', {
+    fetch: async (url) => { urls.push(url); return Response.json({ rules: [] }); },
+  });
+  await fetchLocationRules('oakland');
+  assert.equal(isServerAwake(), true);
+  assert.equal(await wakeServer(), true);
+  assert.deepEqual(urls, ['http://test-api:8000/api/rules/oakland']);
+});

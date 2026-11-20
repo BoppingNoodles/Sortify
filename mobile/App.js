@@ -1,10 +1,11 @@
 // mobile/App.js
 import React, { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { AppState, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
+import { wakeServer } from './src/services/api';
 import { getOrCreateDeviceUuid } from './src/services/storage';
 import { getAppColors } from './src/styles/theme';
 
@@ -29,6 +30,15 @@ export default function App() {
   const isDark = useColorScheme() === 'dark';
   useEffect(() => {
     void getOrCreateDeviceUuid();
+  }, []);
+
+  // Start waking the backend early so the first scan doesn't wait for it.
+  useEffect(() => {
+    void wakeServer();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void wakeServer();
+    });
+    return () => subscription.remove();
   }, []);
 
   return (

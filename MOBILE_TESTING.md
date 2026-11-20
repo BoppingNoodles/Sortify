@@ -30,9 +30,11 @@ Write down the commit hash. Every result and bug report needs it.
 
 ## 2. Wake up the backend
 
-The Render backend is on the free plan and goes to sleep after about 15 minutes without traffic. Waking it takes about 50 seconds. The app gives up after about 40 seconds, so **the first scan after a break fails unless you wake the server first.**
+The Render backend is on the free plan and goes to sleep after about 15 minutes without traffic. Waking it takes about 50 seconds.
 
-Open `https://sortify-backend-uhc6.onrender.com/health` in your phone's browser and wait until it shows `{"status":"ok"}`. Do this at the start of every test session and after any long break.
+The app wakes it for you. It pings the server when it opens and when you return to it. If you tap **Identify Bin** before the server is up, the scan screen shows **Waking up the server…** and continues once the server answers. Waiting up to a minute there is expected, not a bug.
+
+If the app can't reach the server at all, open `https://sortify-backend-uhc6.onrender.com/health` in your phone's browser. It should show `{"status":"ok"}`.
 
 ## 3. Install Expo Go for SDK 58
 
@@ -82,7 +84,7 @@ Run each case on every phone you have and record the outcome in the [device test
 | D04 | Repeated scans | Tap **Scan Another Item** and complete three scans in a row | Exactly one result per scan. **Profile → History** shows one entry per successful scan |
 | D05 | Persistence | Force-close Expo Go, reopen the project, then check **Profile → History** and **Home → stats** (Impact Dashboard) | History is still there. Stats match the scans you made |
 | D06 | Wi-Fi loss | Turn on airplane mode just after tapping **Identify Bin**, then turn it off | A clear error appears, and you can retry or retake. No endless spinner and no crash |
-| D07 | Server problems | Scan while the backend is asleep (skip step 2), or with `EXPO_PUBLIC_API_URL` set to a wrong address | An actionable error appears, and nothing is added to History |
+| D07 | Server problems | (a) After the backend has been idle 15+ minutes, open the app and scan right away. (b) Set `EXPO_PUBLIC_API_URL` to a host that doesn't exist, such as `https://sortify-wrong.onrender.com`, and scan | (a) **Waking up the server…** appears, then the result. (b) Within about 10 seconds a "Could not reach the Sortify server" alert offers Retake and Try Again. Nothing is added to History |
 | D08 | Storage failure | Only in a test build that can simulate a failed save | The result still shows with a save warning, and the next scan saves |
 | D09 | Rapid input | Double-tap the shutter and **Identify Bin**, switch tabs during analysis, background the app and return | Only one capture or request runs. No stale result or alert. The camera works on return |
 | D10 | Small screen and large text | Test on the smallest phone available with the largest system text size | The city pill, shutter, **Retake** and **Identify Bin** stay visible and tappable |
@@ -91,7 +93,7 @@ Also try **dark mode** (switch the phone's appearance while the app is open) and
 
 ## 6. Expected behavior (not bugs)
 
-- **Slow scans.** On the free plan a scan takes about 3–8 seconds once the server is awake.
+- **Slow scans.** On the free plan a scan takes about 3–8 seconds once the server is awake. The first scan after a long break can show **Waking up the server…** for up to a minute.
 - **Non-waste photos still get a bin.** The model always picks one of the five bins and has no "not sure" result yet. Faces, hands, blank walls and very bright or dark frames are often labeled confidently, frequently as compost or landfill. This is documented in the [robustness report](docs/ml/robustness_stress_test.md). Don't log it as a bug unless the app crashes or shows something misleading beyond the bin choice.
 - **History is per device.** It's stored locally on the phone in guest mode, and nothing syncs between devices.
 - **No shutter vibration in Expo Go on iPhone.** Expo Go can't load Sortify's camera-session module. Use the native build in section 8 to test haptics.
@@ -145,7 +147,7 @@ The bundled `backend/app/models/sortify_v2.pth` loads automatically. Put your ph
 |---|---|
 | "Project is incompatible with this version of Expo Go" | Update Expo Go to SDK 58 and pull the latest `main` |
 | QR code opens, but the app loads forever | Phone and computer aren't on the same network. Use `--tunnel` |
-| First scan fails with a network or timeout error | The backend was asleep. Open `/health`, wait for `ok`, and scan again |
+| **Waking up the server…** lasts more than about 90 seconds and then fails | Open `/health` in the phone browser. If it doesn't load, the backend is down. Tell the backend owner |
 | Every scan fails | Check `/health` in the phone browser. Make sure `EXPO_PUBLIC_API_URL` has no typo, then restart Expo with `--clear` after changing it |
 | Every result is "Almond Milk Carton (Scaffold)" | The backend is in mock mode with no model loaded. Tell the backend owner |
 | Odd behavior after switching branches | Run `npm ci` and `npx expo start --go --clear` again |

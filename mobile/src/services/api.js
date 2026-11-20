@@ -17,6 +17,75 @@ const TIMEOUT_MS = 12000;
 const MAX_RETRIES = 2;
 const INITIAL_RETRY_DELAY_MS = 500;
 
+// Free Render instances sleep after ~15 idle minutes and take ~50 s to wake.
+const HEALTH_TIMEOUT_MS = 15000;
+const WAKE_DEADLINE_MS = 90000;
+const WAKE_RETRY_DELAY_MS = 2000;
+const MAX_UNREACHABLE_PINGS = 3;
+const AWAKE_FOR_MS = 10 * 60 * 1000;
+
+let lastServerResponseAt = null;
+let pendingWake = null;
+
+function markServerAwake() {
+  lastServerResponseAt = Date.now();
+}
+
+export function isServerAwake() {
+  return lastServerResponseAt !== null && Date.now() - lastServerResponseAt < AWAKE_FOR_MS;
+}
+
+// Returns 'ok', 'waiting' (slow or 5xx: the server may be starting) or 'unreachable'.
+async function pingHealth() {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (response.ok) return 'ok';
+    return response.status >= 500 ? 'waiting' : 'unreachable';
+  } catch (error) {
+    return error?.name === 'AbortError' ? 'waiting' : 'unreachable';
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Wake the backend if it may be asleep. Resolves true once /health answers,
+ * or false when the server stays unreachable (offline, wrong URL) or does not
+ * start within WAKE_DEADLINE_MS. Concurrent callers share one wake attempt.
+ */
+export function wakeServer() {
+  if (isServerAwake()) return Promise.resolve(true);
+  if (pendingWake) return pendingWake;
+
+  pendingWake = (async () => {
+    const startedAt = Date.now();
+    let unreachable = 0;
+    for (;;) {
+      const status = await pingHealth();
+      if (status === 'ok') {
+        markServerAwake();
+        return true;
+      }
+      if (status === 'unreachable') unreachable += 1;
+      if (
+        unreachable >= MAX_UNREACHABLE_PINGS ||
+        Date.now() - startedAt + WAKE_RETRY_DELAY_MS >= WAKE_DEADLINE_MS
+      ) {
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, WAKE_RETRY_DELAY_MS));
+    }
+  })().finally(() => {
+    pendingWake = null;
+  });
+  return pendingWake;
+}
+
 class ApiError extends Error {
   constructor(message, status) {
     super(message);
@@ -88,7 +157,9 @@ async function requestWithRetry(url, createOptions, maxRetries = MAX_RETRIES) {
         );
       }
 
-      return await response.json();
+      const body = await response.json();
+      markServerAwake();
+      return body;
 
     } catch (error) {
       // Do not retry client errors such as 413 or 415.
