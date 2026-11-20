@@ -10,7 +10,7 @@ python -m pip install -r requirements.txt
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Windows installations without an IANA timezone database can run `python -m pip install tzdata` to enable stats' default `America/Los_Angeles` timezone. Check `http://127.0.0.1:8000/health`, then use `/docs` for interactive API testing. Set `MODEL_PATH` to the selected PyTorch checkpoint for real classifications. With absent weights, the development service can return scaffold classifications while health still reports `ok`. See [#60](https://github.com/BoppingNoodles/Sortify/issues/60) for hosting ownership and deployed endpoint details.
+Windows installations without an IANA timezone database can run `python -m pip install tzdata` to enable stats' default `America/Los_Angeles` timezone. Check `http://127.0.0.1:8000/health`, then use `/docs` for interactive API testing. `MODEL_PATH` defaults to the bundled `backend/app/models/sortify_v2.pth`; set it only to test another checkpoint. If the file is missing, the service returns scaffold classifications (`is_mock: true`) while health still reports `ok`. See [#60](https://github.com/BoppingNoodles/Sortify/issues/60) for hosting ownership and deployed endpoint details.
 
 ## Export the API contract
 
