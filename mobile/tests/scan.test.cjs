@@ -40,6 +40,8 @@ async function scan(t, classifyImage, {
   impactAsync = async () => {},
   notificationAsync = async () => {},
   stopCamera = null,
+  isServerAwake = () => true,
+  wakeServer = async () => true,
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -78,7 +80,7 @@ async function scan(t, classifyImage, {
     },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
-    '../services/api': { classifyImage },
+    '../services/api': { classifyImage, isServerAwake, wakeServer },
     '../services/storage': { saveScanRecord },
     '../services/municipalities': loadSource('src/services/municipalities.js'),
   }).default;
@@ -435,6 +437,52 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   assert.equal(params.photoUri, 'file:///photo.jpg');
   assert.equal(params.historySaved, true);
   assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+});
+
+test('a sleeping server is woken before upload with a visible waiting message', async (t) => {
+  const wake = deferred();
+  let awake = false;
+  const wakeServer = t.mock.fn(() => wake.promise);
+  const requests = [];
+  const app = await scan(t, async (...args) => { requests.push(args); return predictionFixture; }, {
+    isServerAwake: () => awake,
+    wakeServer,
+  });
+  await act(async () => { await app.handler('handleCapture')(); });
+  let analyzeTask;
+  await act(async () => { analyzeTask = app.handler('handleAnalyze')(); });
+
+  const labels = () => app.renderer.root.findAllByType('Text')
+    .map(({ props }) => React.Children.toArray(props.children).join(''));
+  assert.equal(wakeServer.mock.callCount(), 1);
+  assert.equal(requests.length, 0);
+  assert.ok(labels().includes('Waking up the server…'));
+
+  awake = true;
+  await act(async () => { wake.resolve(true); await analyzeTask; });
+  assert.equal(requests.length, 1);
+  assert.equal(app.destinations.length, 1);
+  assert.equal(app.destinations[0][0], 'ResultModal');
+  assert.ok(!labels().includes('Waking up the server…'));
+});
+
+test('an unreachable server fails fast with a retryable alert and no upload', async (t) => {
+  const classifyImage = t.mock.fn(async () => predictionFixture);
+  const app = await scan(t, classifyImage, {
+    isServerAwake: () => false,
+    wakeServer: async () => false,
+  });
+  await act(async () => { await app.handler('handleCapture')(); });
+  await act(async () => { await app.handler('handleAnalyze')(); });
+
+  assert.equal(classifyImage.mock.callCount(), 0);
+  assert.equal(app.destinations.length, 0);
+  assert.equal(app.alerts.length, 1);
+  assert.equal(app.alerts[0][0], 'Scan Failed');
+  assert.match(app.alerts[0][1], /Could not reach the Sortify server/);
+  assert.equal(app.alerts[0][2].map(({ text }) => text).join(','), 'Retake,Try Again');
+  // The photo is kept so Try Again can retry the same scan.
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
 });
 
 test('invalid classification responses retain the photo for a successful retry', async (t) => {

@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createThemedStyles, SPACING } from '../styles/theme';
-import { classifyImage } from '../services/api';
+import { classifyImage, isServerAwake, wakeServer } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 import { MUNICIPALITIES } from '../services/municipalities';
 
@@ -115,6 +115,7 @@ export default function ScanScreen({ navigation }) {
   const [generation, setGeneration] = useState(0);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isWakingServer, setIsWakingServer] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isActive, setIsActive] = useState(AppState.currentState === 'active');
@@ -139,6 +140,7 @@ export default function ScanScreen({ navigation }) {
     if (!mounted.current) return;
     setGeneration(screen.current.generation);
     setIsAnalyzing(false);
+    setIsWakingServer(false);
     // A scan whose save has started must not be submitted again on return.
     if (operation.current?.saving) setCapturedPhoto(null);
   }, []);
@@ -231,7 +233,10 @@ export default function ScanScreen({ navigation }) {
     operation.current = null;
     if (!mounted.current || !screen.current.focused || !screen.current.active) return;
     setIsBusy(false);
-    if (isCurrent(pending.generation)) setIsAnalyzing(false);
+    if (isCurrent(pending.generation)) {
+      setIsAnalyzing(false);
+      setIsWakingServer(false);
+    }
   };
 
   const handlePreviewReady = (camera) => {
@@ -317,6 +322,17 @@ export default function ScanScreen({ navigation }) {
     if (!pending) return;
     setIsAnalyzing(true);
     try {
+      if (!isServerAwake()) {
+        setIsWakingServer(true);
+        const awake = await wakeServer();
+        if (!isCurrent(pending.generation)) return;
+        setIsWakingServer(false);
+        if (!awake) {
+          throw new Error(
+            'Could not reach the Sortify server. Check your internet connection and try again.'
+          );
+        }
+      }
       const result = await classifyImage(capturedPhoto.uri, selectedCity);
       if (!isCurrent(pending.generation)) return;
 
@@ -401,8 +417,19 @@ export default function ScanScreen({ navigation }) {
           {isAnalyzing ? (
             <View style={styles.analyzingOverlay}>
               <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.analyzingText}>Analyzing waste item with AI...</Text>
-              <Text style={styles.analyzingSubtext}>Checking {formattedCity} sorting rules</Text>
+              {isWakingServer ? (
+                <>
+                  <Text style={styles.analyzingText} accessibilityRole="alert">Waking up the server…</Text>
+                  <Text style={styles.analyzingSubtext}>
+                    This can take up to a minute after Sortify has been idle.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.analyzingText}>Analyzing waste item with AI...</Text>
+                  <Text style={styles.analyzingSubtext}>Checking {formattedCity} sorting rules</Text>
+                </>
+              )}
             </View>
           ) : (
             <SafeAreaView edges={['left', 'right']} style={styles.previewControls}>
