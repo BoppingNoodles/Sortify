@@ -430,7 +430,7 @@ export default function ScanScreen({ navigation }) {
                 <>
                   <Text style={styles.analyzingText} accessibilityRole="alert">Waking up the server…</Text>
                   <Text style={styles.analyzingSubtext}>
-                    This can take up to a minute after Sortify has been idle.
+                    This usually takes under a minute after Sortify has been idle.
                   </Text>
                 </>
               ) : (
