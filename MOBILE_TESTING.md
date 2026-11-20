@@ -32,7 +32,7 @@ Write down the commit hash. Every result and bug report needs it.
 
 The Render backend is on the free plan and goes to sleep after about 15 minutes without traffic. Waking it takes about 50 seconds.
 
-The app wakes it for you. It pings the server when it opens and when you return to it. If you tap **Identify Bin** before the server is up, the scan screen shows **Waking up the server…** and continues once the server answers. Waiting up to a minute there is expected, not a bug.
+The app wakes it for you. It pings the server when it opens and when you return to it. If you tap **Identify Bin** before the server is up, the scan screen shows **Waking up the server…** and continues once the server answers. Waiting under a minute there is expected, not a bug. It gives up after 90 seconds. **Municipal Rules → Search** does the same.
 
 If the app can't reach the server at all, open `https://sortify-backend-uhc6.onrender.com/health` in your phone's browser. It should show `{"status":"ok"}`.
 
@@ -81,11 +81,11 @@ Run each case on every phone you have and record the outcome in the [device test
 | D01 | Fresh launch | Delete Expo Go's data (or reinstall Expo Go), open the project | The welcome or onboarding screen appears. Continuing reaches the Home tab |
 | D02 | Camera permission | On **Home**, tap **Start**. Deny camera access, then grant it from the prompt or the phone's Settings. Repeat with a permanent denial ("Don't ask again" on Android) | Denial shows a way to recover. After granting, the live preview appears |
 | D03 | Scan in every city | Tap the 📍 city pill to cycle cities. For each of the 5 cities, take a photo, tap **Retake** once, retake, then tap **Identify Bin** | A result shows the item, bin and disposal guidance for that city |
-| D03b | Not sure result | Scan something that isn't waste (your hand, a blank wall, a keyboard), and a real item in dim light | Low-confidence results (below 60%) show **NOT SURE** with the best guess, other guesses, photo tips and **Retake Photo**. They are **not** added to History. Confident results show the normal bin |
+| D03b | Not sure result | Scan something that isn't waste (your hand, a blank wall, a keyboard), and a real item in dim light. | Low-confidence results (below 60%) show **NOT SURE** with the best guess, other guesses, photo tips and **Retake Photo**. They are **not** added to History. Confident results show the normal bin |
 | D04 | Repeated scans | Tap **Scan Another Item** and complete three scans in a row | Exactly one result per scan. **Profile → History** shows one entry per successful scan |
 | D05 | Persistence | Force-close Expo Go, reopen the project, then check **Profile → History** and **Home → stats** (Impact Dashboard) | History is still there. Stats match the scans you made |
 | D06 | Wi-Fi loss | Turn on airplane mode just after tapping **Identify Bin**, then turn it off | A clear error appears, and you can retry or retake. No endless spinner and no crash |
-| D07 | Server problems | (a) After the backend has been idle 15+ minutes, open the app and scan right away. (b) Set `EXPO_PUBLIC_API_URL` to a host that doesn't exist, such as `https://sortify-wrong.onrender.com`, and scan | (a) **Waking up the server…** appears, then the result. (b) Within about 10 seconds a "Could not reach the Sortify server" alert offers Retake and Try Again. Nothing is added to History |
+| D07 | Server problems | (a) After the backend has been idle 15+ minutes, open the app and scan right away. Repeat with **Municipal Rules → Search**, and once background the app while it's waking. (b) Set `EXPO_PUBLIC_API_URL` to a host that doesn't exist, such as `https://sortify-wrong.onrender.com`, and scan | (a) **Waking up the server…** appears (on the Rules button for Rules), then the result. If you leave and come back while it's waking, **Retake** and **Identify Bin** work again right away. (b) Within about 10 seconds a "Could not reach the Sortify server" alert offers Retake and Try Again. Nothing is added to History |
 | D08 | Storage failure | Only in a test build that can simulate a failed save | The result still shows with a save warning, and the next scan saves |
 | D09 | Rapid input | Double-tap the shutter and **Identify Bin**, switch tabs during analysis, background the app and return | Only one capture or request runs. No stale result or alert. The camera works on return |
 | D10 | Small screen and large text | Test on the smallest phone available with the largest system text size | The city pill, shutter, **Retake** and **Identify Bin** stay visible and tappable |
@@ -94,9 +94,9 @@ Also try **dark mode** (switch the phone's appearance while the app is open) and
 
 ## 6. Expected behavior (not bugs)
 
-- **Slow scans.** On the free plan a scan takes about 3–8 seconds once the server is awake. The first scan after a long break can show **Waking up the server…** for up to a minute.
-- **Some non-waste photos still get a confident bin.** The app shows **NOT SURE** when the model's confidence is below 60%, but the model has no "not waste" class. Faces, hands, blank walls and very bright or dark frames are sometimes labeled confidently anyway, often as compost or landfill. The [robustness report](docs/ml/robustness_stress_test.md) found that a 60% cutoff catches about 40% of non-waste photos. Log these as **cosmetic** with the photo described, so the ML team can collect them.
-- **Real items can show NOT SURE.** At this cutoff about 1 in 10 real waste photos is flagged. Retaking with better framing usually fixes it. If one item is flagged every time, log it.
+- **Slow scans.** On the free plan a scan takes about 3–8 seconds once the server is awake. The first scan after a long break can show **Waking up the server…** for up to a minute (it gives up at 90 seconds).
+- **Some non-waste photos still get a confident bin.** The app shows **NOT SURE** when the model's confidence is below 60%, but the model has no "not waste" class. Faces, hands, blank walls and very bright or dark frames are sometimes labeled confidently anyway, often as compost or landfill. On the 30-image [robustness](docs/ml/robustness_stress_test.md) set, the 60% cutoff catches 43% of non-waste photos with the backend's image processing. Log these as **cosmetic** with the photo described, so the ML team can collect them.
+- **Real items can show NOT SURE.** The 60% cutoff hasn't been validated on the app's own image processing. Offline calibration (with slightly different processing) flagged about 1 in 10 real waste photos. Retaking with better framing usually fixes it. If one item is flagged every time, log it, so the team can measure the real rate.
 - **NOT SURE scans don't appear in History or stats.** This is intended.
 - **History is per device.** It's stored locally on the phone in guest mode, and nothing syncs between devices.
 - **No shutter vibration in Expo Go on iPhone.** Expo Go can't load Sortify's camera-session module. Use the native build in section 8 to test haptics.

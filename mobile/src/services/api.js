@@ -26,6 +26,7 @@ const AWAKE_FOR_MS = 10 * 60 * 1000;
 
 let lastServerResponseAt = null;
 let pendingWake = null;
+let pendingWakeStartedAt = 0;
 
 function markServerAwake() {
   lastServerResponseAt = Date.now();
@@ -35,16 +36,20 @@ export function isServerAwake() {
   return lastServerResponseAt !== null && Date.now() - lastServerResponseAt < AWAKE_FOR_MS;
 }
 
-// Returns 'ok', 'waiting' (slow or 5xx: the server may be starting) or 'unreachable'.
-async function pingHealth() {
+// Returns 'ok', 'waiting' (slow, 5xx or a non-health page such as a hosting
+// "starting up" screen: the server may be starting) or 'unreachable'.
+async function pingHealth(timeoutMs) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${API_BASE_URL}/health`, {
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     });
-    if (response.ok) return 'ok';
+    if (response.ok) {
+      const body = await response.json().catch(() => null);
+      return body?.status === 'ok' ? 'ok' : 'waiting';
+    }
     return response.status >= 500 ? 'waiting' : 'unreachable';
   } catch (error) {
     return error?.name === 'AbortError' ? 'waiting' : 'unreachable';
@@ -54,19 +59,24 @@ async function pingHealth() {
 }
 
 /**
- * Wake the backend if it may be asleep. Resolves true once /health answers,
- * or false when the server stays unreachable (offline, wrong URL) or does not
- * start within WAKE_DEADLINE_MS. Concurrent callers share one wake attempt.
+ * Wake the backend if it may be asleep. Resolves true once /health answers
+ * {"status":"ok"}, or false when the server stays unreachable (offline, wrong
+ * URL) or does not start within WAKE_DEADLINE_MS. No ping runs past the
+ * deadline. Concurrent callers share one wake attempt.
  */
 export function wakeServer() {
   if (isServerAwake()) return Promise.resolve(true);
-  if (pendingWake) return pendingWake;
+  // JS timers pause in the background, so an attempt can outlive its deadline
+  // there. Don't hand a stale attempt to a new caller; start a fresh one.
+  if (pendingWake && Date.now() - pendingWakeStartedAt < WAKE_DEADLINE_MS) return pendingWake;
 
-  pendingWake = (async () => {
-    const startedAt = Date.now();
+  const startedAt = Date.now();
+  pendingWakeStartedAt = startedAt;
+  const attempt = (async () => {
     let unreachable = 0;
     for (;;) {
-      const status = await pingHealth();
+      const remaining = WAKE_DEADLINE_MS - (Date.now() - startedAt);
+      const status = await pingHealth(Math.min(HEALTH_TIMEOUT_MS, remaining));
       if (status === 'ok') {
         markServerAwake();
         return true;
@@ -81,9 +91,10 @@ export function wakeServer() {
       await new Promise((resolve) => setTimeout(resolve, WAKE_RETRY_DELAY_MS));
     }
   })().finally(() => {
-    pendingWake = null;
+    if (pendingWake === attempt) pendingWake = null;
   });
-  return pendingWake;
+  pendingWake = attempt;
+  return attempt;
 }
 
 class ApiError extends Error {

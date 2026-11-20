@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  AccessibilityInfo,
   Linking,
   findNodeHandle,
 } from 'react-native';
@@ -142,6 +143,12 @@ export default function ScanScreen({ navigation }) {
     setGeneration(screen.current.generation);
     setIsAnalyzing(false);
     setIsWakingServer(false);
+    // A scan still waiting for the server holds no request yet, so release it:
+    // the preview must not sit disabled until the (up to 90 s) wake finishes.
+    if (operation.current?.waking) {
+      operation.current = null;
+      setIsBusy(false);
+    }
     // A scan whose save has started must not be submitted again on return.
     if (operation.current?.saving) setCapturedPhoto(null);
   }, []);
@@ -324,9 +331,12 @@ export default function ScanScreen({ navigation }) {
     setIsAnalyzing(true);
     try {
       if (!isServerAwake()) {
+        pending.waking = true;
         setIsWakingServer(true);
+        AccessibilityInfo?.announceForAccessibility?.('Waking up the server. This usually takes under a minute.');
         const awake = await wakeServer();
         if (!isCurrent(pending.generation)) return;
+        pending.waking = false;
         setIsWakingServer(false);
         if (!awake) {
           throw new Error(
@@ -424,13 +434,13 @@ export default function ScanScreen({ navigation }) {
           <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
 
           {isAnalyzing ? (
-            <View style={styles.analyzingOverlay}>
+            <View style={styles.analyzingOverlay} accessibilityLiveRegion="polite">
               <ActivityIndicator size="large" color="#FFFFFF" />
               {isWakingServer ? (
                 <>
                   <Text style={styles.analyzingText} accessibilityRole="alert">Waking up the server…</Text>
                   <Text style={styles.analyzingSubtext}>
-                    This can take up to a minute after Sortify has been idle.
+                    This usually takes under a minute after Sortify has been idle.
                   </Text>
                 </>
               ) : (

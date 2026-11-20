@@ -185,22 +185,80 @@ test('wakeServer gives up quickly when the server is unreachable', async () => {
   assert.equal(isServerAwake(), false);
 });
 
-test('wakeServer stops at its deadline when the server never finishes starting', async () => {
+// Fake timers on a virtual clock: each timer advances the clock by its delay.
+function virtualClock() {
+  const clock = { now: 0 };
+  clock.Date = { now: () => clock.now };
+  clock.setTimeout = (callback, delay) => {
+    clock.now += delay;
+    queueMicrotask(callback);
+    return 0;
+  };
+  return clock;
+}
+
+function hangUntilAborted(_url, { signal }) {
+  return new Promise((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(abortError()));
+  });
+}
+
+test('wakeServer never runs past its 90 s deadline when the server never starts', async () => {
+  const clock = virtualClock();
+  // The fake clock advances when a timer is scheduled, so this records when each ping times out.
+  const pingEnds = [];
+  const { wakeServer } = client('android', {
+    Date: clock.Date,
+    setTimeout: clock.setTimeout,
+    clearTimeout() {},
+    fetch: (url, options) => { pingEnds.push(clock.now); return hangUntilAborted(url, options); },
+  });
+  assert.equal(await wakeServer(), false);
+  assert.ok(clock.now <= 90000, `wake ended at ${clock.now} ms`);
+  assert.ok(pingEnds.length >= 5);
+  assert.ok(pingEnds.every((end) => end <= 90000), pingEnds.join(','));
+});
+
+test('a wake attempt older than the deadline is not shared after the app resumes', async () => {
   let now = 0;
+  const firstPing = Promise.withResolvers();
   let calls = 0;
   const { wakeServer } = client('android', {
     Date: { now: () => now },
-    setTimeout: fastTimers,
+    setTimeout: () => 0,
+    clearTimeout() {},
+    fetch: () => {
+      calls++;
+      return calls === 1 ? firstPing.promise : Promise.resolve(Response.json({ status: 'ok' }));
+    },
+  });
+  const stale = wakeServer();
+  assert.equal(calls, 1);
+  // Backgrounded for two minutes: timers froze, the wall clock did not.
+  now = 120000;
+  assert.equal(await wakeServer(), true);
+  assert.equal(calls, 2);
+  firstPing.resolve(Response.json({ status: 'ok' }));
+  assert.equal(await stale, true);
+});
+
+test('a 200 page that is not the health response counts as still starting', async () => {
+  const clock = virtualClock();
+  let calls = 0;
+  const { wakeServer, isServerAwake } = client('android', {
+    Date: clock.Date,
+    setTimeout: clock.setTimeout,
     clearTimeout() {},
     fetch: async () => {
       calls++;
-      now += 20000;
-      throw abortError();
+      return calls < 3
+        ? new Response('<html>Service waking up…</html>', { headers: { 'Content-Type': 'text/html' } })
+        : Response.json({ status: 'ok' });
     },
   });
-  assert.equal(await wakeServer(), false);
-  assert.equal(calls, 5);
-  assert.ok(now <= 100000);
+  assert.equal(await wakeServer(), true);
+  assert.equal(calls, 3);
+  assert.equal(isServerAwake(), true);
 });
 
 test('a successful API response marks the server awake without a health check', async () => {
