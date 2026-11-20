@@ -23,6 +23,7 @@ class ClassificationAlternative(BaseModel):
 
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
+    uncertain: bool = False
 
     @field_validator("category", mode="before")
     @classmethod

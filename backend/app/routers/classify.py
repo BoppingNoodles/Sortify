@@ -158,6 +158,7 @@ async def classify_item(
         raw_conf = prediction.get("confidence", 0.0)
         primary_conf = float(raw_conf) if isinstance(raw_conf, (int, float)) else 0.0
         primary_conf = max(0.0, min(1.0, primary_conf))
+        uncertain = bool(prediction.get("uncertain", primary_conf < 0.50))
 
         # 5. Build validated response payload
         return ClassifyResponse(
@@ -174,6 +175,7 @@ async def classify_item(
                 notes=notes,
             ),
             alternatives=alternatives,
+            uncertain=uncertain,
         )
     except Exception:
         logger.exception("Failed to build classification response payload")

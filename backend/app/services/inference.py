@@ -140,7 +140,7 @@ class ModelService:
             return
 
         try:
-            checkpoint = torch.load(self.model_path, map_location=self.device)
+            checkpoint = torch.load(self.model_path, map_location="cpu", weights_only=False)
             arch = detect_architecture(checkpoint)
 
             # 1. Unpack checkpoint metadata and state dict before building the network head
@@ -238,6 +238,7 @@ class ModelService:
                     {"category": "paper", "confidence": 0.06},
                     {"category": "landfill", "confidence": 0.03},
                 ],
+                "uncertain": True,
                 "is_mock": True,
                 "latency_ms": elapsed_ms,
             }
@@ -287,6 +288,7 @@ class ModelService:
             "item_name": predicted_label.title(),
             "confidence": round(confidence, 4),
             "alternatives": alternatives,
+            "uncertain": confidence < 0.50,
             "is_mock": False,
             "latency_ms": elapsed_ms,
         }
