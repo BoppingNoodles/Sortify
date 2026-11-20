@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  AccessibilityInfo,
   Linking,
   findNodeHandle,
 } from 'react-native';
@@ -332,6 +333,7 @@ export default function ScanScreen({ navigation }) {
       if (!isServerAwake()) {
         pending.waking = true;
         setIsWakingServer(true);
+        AccessibilityInfo?.announceForAccessibility?.('Waking up the server. This usually takes under a minute.');
         const awake = await wakeServer();
         if (!isCurrent(pending.generation)) return;
         pending.waking = false;
@@ -432,7 +434,7 @@ export default function ScanScreen({ navigation }) {
           <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
 
           {isAnalyzing ? (
-            <View style={styles.analyzingOverlay}>
+            <View style={styles.analyzingOverlay} accessibilityLiveRegion="polite">
               <ActivityIndicator size="large" color="#FFFFFF" />
               {isWakingServer ? (
                 <>

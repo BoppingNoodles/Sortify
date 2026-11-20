@@ -42,6 +42,7 @@ async function scan(t, classifyImage, {
   stopCamera = null,
   isServerAwake = () => true,
   wakeServer = async () => true,
+  announceForAccessibility = () => {},
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -57,6 +58,7 @@ async function scan(t, classifyImage, {
   };
   const Screen = loadSource('src/screens/ScanScreen.js', {
     'react-native': { ...native, Platform: { OS: platform }, AppState: appState, Linking: { openSettings },
+      AccessibilityInfo: { announceForAccessibility },
       findNodeHandle: (camera) => camera.nativeTag,
       Alert: { alert: (...args) => alerts.push(args) } },
     expo: { requireOptionalNativeModule: () => stopCamera && { stop: stopCamera } },
@@ -471,13 +473,19 @@ test('a sleeping server is woken before upload with a visible waiting message', 
 test('leaving during wake-up releases the preview instead of leaving it disabled', async (t) => {
   const wake = deferred();
   const classifyImage = t.mock.fn(async () => predictionFixture);
+  const announceForAccessibility = t.mock.fn();
   const app = await scan(t, classifyImage, {
     isServerAwake: () => false,
     wakeServer: () => wake.promise,
+    announceForAccessibility,
   });
   await act(async () => { await app.handler('handleCapture')(); });
   let analyzeTask;
   await act(async () => { analyzeTask = app.handler('handleAnalyze')(); });
+  assert.equal(announceForAccessibility.mock.callCount(), 1);
+  assert.match(announceForAccessibility.mock.calls[0].arguments[0], /Waking up the server/);
+  assert.equal(app.renderer.root.findAllByType('View')
+    .filter(({ props }) => props.accessibilityLiveRegion === 'polite').length, 1);
 
   await app.setAppState('background');
   await app.setAppState('active');
