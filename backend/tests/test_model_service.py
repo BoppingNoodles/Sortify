@@ -39,12 +39,17 @@ def test_model_service_predict_corrupted_image():
 
 
 def test_model_service_fallback():
-    # Pass a path that definitely doesn't exist
-    service = ModelService(model_path="non_existent_model.pth")
-    # Verify fallback mode
-    assert service.model is None
+    # The import-time singleton loads the bundled checkpoint, so build a fresh
+    # instance for a path that definitely doesn't exist.
+    ModelService.reset_instance()
+    try:
+        service = ModelService(model_path="non_existent_model.pth")
+        # Verify fallback mode
+        assert service.model is None
 
-    result = service.predict(_create_sample_jpeg())
+        result = service.predict(_create_sample_jpeg())
 
-    assert "category" in result
-    assert result["is_mock"] is True
+        assert "category" in result
+        assert result["is_mock"] is True
+    finally:
+        ModelService.reset_instance()

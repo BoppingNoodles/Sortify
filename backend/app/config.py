@@ -13,7 +13,7 @@ from pydantic_settings import (
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BACKEND_DIR.parent
-DEFAULT_MODEL_PATH = BACKEND_DIR / "app" / "models" / "sortify_mvp_v1.pth"
+DEFAULT_MODEL_PATH = BACKEND_DIR / "app" / "models" / "sortify_v2.pth"
 
 
 class Settings(BaseSettings):
