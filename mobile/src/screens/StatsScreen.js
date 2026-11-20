@@ -2,6 +2,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
+  useColorScheme,
   Text,
   View,
   ScrollView,
@@ -11,65 +12,18 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { HISTORY_LIMIT, loadSavedScans } from '../services/storage';
-import { COLORS, SPACING } from '../styles/theme';
-
-function localDayOrdinal(date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
-}
-
-export function calculateStreak(timestamps, now = new Date()) {
-  const days = new Set(timestamps
-    .map((timestamp) => localDayOrdinal(new Date(timestamp)))
-    .filter(Number.isFinite));
-
-  const today = localDayOrdinal(now);
-  let day = days.has(today) ? today : today - 1;
-  let streak = 0;
-
-  while (days.has(day)) {
-    streak += 1;
-    day -= 1;
-  }
-  return streak;
-}
+import { summarizeScans } from '../services/scanStats';
+import { createThemedStyles, SPACING } from '../styles/theme';
 
 export default function StatsScreen() {
+  const { colors, styles } = getStyles(useColorScheme());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    currentStreak: 0,
-    totalScans: 0,
-    ecoPoints: 0,
-    breakdown: { compost: 0, plastic: 0, paper: 0, glass: 0, landfill: 0 },
-  });
+  const [stats, setStats] = useState(() => summarizeScans([]));
 
   const computeStats = async () => {
     try {
-      const scans = await loadSavedScans();
-      const total = scans.length;
-      const points = total * 10;
-
-      const counts = { compost: 0, plastic: 0, paper: 0, glass: 0, landfill: 0 };
-      const timestamps = [];
-
-      scans.forEach((scan) => {
-        const cat = (scan.category || '').toLowerCase();
-        if (Object.prototype.hasOwnProperty.call(counts, cat)) {
-          counts[cat] += 1;
-        } else {
-          counts.landfill += 1;
-        }
-        if (scan.timestamp) timestamps.push(scan.timestamp);
-      });
-
-      const streak = calculateStreak(timestamps);
-
-      setStats({
-        currentStreak: streak,
-        totalScans: total,
-        ecoPoints: points,
-        breakdown: counts,
-      });
+      setStats(summarizeScans(await loadSavedScans()));
     } catch (err) {
       console.warn('Failed to compute stats:', err);
     } finally {
@@ -93,12 +47,20 @@ export default function StatsScreen() {
     <SafeAreaView style={styles.container}>
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+          <ActivityIndicator size="large" color={colors.accent.berkeleyBlue} />
         </View>
       ) : (
         <ScrollView
           contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={(
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent.berkeleyBlue}
+              colors={[colors.accent.berkeleyBlue]}
+              progressBackgroundColor={colors.background.card}
+            />
+          )}
         >
           <Text style={styles.screenTitle}>Recent Scan Activity</Text>
           <Text style={styles.scopeText}>
@@ -134,7 +96,7 @@ export default function StatsScreen() {
           <View style={styles.breakdownCard}>
             <Text style={styles.cardHeader}>Category Distribution</Text>
             {Object.entries(stats.breakdown).map(([cat, count]) => {
-              const binColor = COLORS.bins[cat] || COLORS.bins.landfill;
+              const binColor = colors.bins[cat] || colors.bins.landfill;
               return (
                 <View key={cat} style={styles.categoryRow}>
                   <View style={styles.categoryLeft}>
@@ -154,15 +116,15 @@ export default function StatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background.primary },
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background.primary },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 20 },
-  screenTitle: { fontSize: 24, fontWeight: '800', color: COLORS.accent.berkeleyBlue, marginBottom: 4 },
-  scopeText: { fontSize: 13, color: COLORS.text.secondary, lineHeight: 18, marginBottom: 16 },
+  screenTitle: { fontSize: 24, fontWeight: '800', color: colors.accent.berkeleyBlue, marginBottom: 4 },
+  scopeText: { fontSize: 13, color: colors.text.secondary, lineHeight: 18, marginBottom: 16 },
   streakCard: {
-    backgroundColor: '#FFF3E0',
-    borderColor: '#FFE0B2',
+    backgroundColor: colors.design.streak,
+    borderColor: colors.design.streakBorder,
     borderWidth: 1,
     borderRadius: 18,
     padding: 24,
@@ -170,12 +132,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   streakEmoji: { fontSize: 44, marginBottom: 8 },
-  streakCount: { fontSize: 22, fontWeight: '800', color: '#E65100' },
-  streakSubtext: { fontSize: 13, color: '#BF360C', marginTop: 4, textAlign: 'center' },
+  streakCount: { fontSize: 22, fontWeight: '800', color: colors.design.greenText },
+  streakSubtext: { fontSize: 13, color: colors.design.streakText, marginTop: 4, textAlign: 'center' },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   statBox: {
     flex: 1,
-    backgroundColor: COLORS.background.card,
+    backgroundColor: colors.background.card,
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 4,
@@ -185,12 +147,12 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.design.border,
   },
-  statNumber: { fontSize: 26, fontWeight: '800', color: COLORS.accent.berkeleyBlue },
-  statLabel: { fontSize: 13, color: COLORS.text.secondary, marginTop: 4, fontWeight: '600' },
+  statNumber: { fontSize: 26, fontWeight: '800', color: colors.accent.berkeleyBlue },
+  statLabel: { fontSize: 13, color: colors.text.secondary, marginTop: 4, fontWeight: '600' },
   breakdownCard: {
-    backgroundColor: COLORS.background.card,
+    backgroundColor: colors.background.card,
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -198,19 +160,19 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.design.border,
   },
-  cardHeader: { fontSize: 16, fontWeight: '700', color: COLORS.text.primary, marginBottom: 14 },
+  cardHeader: { fontSize: 16, fontWeight: '700', color: colors.text.primary, marginBottom: 14 },
   categoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: colors.design.border,
   },
   categoryLeft: { flexDirection: 'row', alignItems: 'center' },
   categoryIndicator: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
-  categoryName: { fontSize: 14, fontWeight: '600', color: COLORS.text.primary },
-  categoryCount: { fontSize: 14, fontWeight: '700', color: COLORS.accent.berkeleyBlue },
-});
+  categoryName: { fontSize: 14, fontWeight: '600', color: colors.text.primary },
+  categoryCount: { fontSize: 14, fontWeight: '700', color: colors.accent.berkeleyBlue },
+}));

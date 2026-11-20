@@ -10,6 +10,7 @@ const native = Object.fromEntries([
   'Text', 'View', 'TouchableOpacity', 'Image', 'SafeAreaView', 'ActivityIndicator', 'ScrollView',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles, absoluteFillObject: {} };
+native.useColorScheme = () => 'light';
 
 function deferred() {
   let resolve;
@@ -35,6 +36,10 @@ async function scan(t, classifyImage, {
   requestPermission = readPermission,
   openSettings = async () => {},
   startReady = true,
+  platform = 'android',
+  impactAsync = async () => {},
+  notificationAsync = async () => {},
+  stopCamera = null,
 } = {}) {
   const alerts = [];
   const destinations = [];
@@ -49,8 +54,10 @@ async function scan(t, classifyImage, {
     },
   };
   const Screen = loadSource('src/screens/ScanScreen.js', {
-    'react-native': { ...native, AppState: appState, Linking: { openSettings },
+    'react-native': { ...native, Platform: { OS: platform }, AppState: appState, Linking: { openSettings },
+      findNodeHandle: (camera) => camera.nativeTag,
       Alert: { alert: (...args) => alerts.push(args) } },
+    expo: { requireOptionalNativeModule: () => stopCamera && { stop: stopCamera } },
     '@react-navigation/native': { useFocusEffect: (effect) => React.useEffect(() => {
       focusEffect = effect;
       leave = effect();
@@ -63,16 +70,23 @@ async function scan(t, classifyImage, {
         requestCameraPermissionsAsync: requestPermission,
       },
     },
+    'expo-haptics': {
+      impactAsync,
+      notificationAsync,
+      ImpactFeedbackStyle: { Medium: 'medium' },
+      NotificationFeedbackType: { Success: 'success' },
+    },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
     '../styles/theme': theme,
     '../services/api': { classifyImage },
     '../services/storage': { saveScanRecord },
+    '../services/municipalities': loadSource('src/services/municipalities.js'),
   }).default;
   let renderer;
   await act(async () => {
     renderer = create(React.createElement(Screen, {
       navigation: { navigate: (...args) => destinations.push(args) },
-    }), { createNodeMock: (element) => element.type === 'CameraView' ? { takePictureAsync } : null });
+    }), { createNodeMock: (element) => element.type === 'CameraView' ? { takePictureAsync, nativeTag: 42 } : null });
   });
   t.after(async () => { await act(async () => renderer.unmount()); });
   const cameraReady = () => act(async () => {
@@ -106,6 +120,85 @@ test('camera and preview keep controls in safe-area overlays', async (t) => {
   assert.deepEqual(Array.from(preview.props.edges), ['left', 'right']);
   assert.deepEqual(preview.findAllByType('Text').map(({ props }) => props.children),
     ['Retake', 'Identify Bin']);
+});
+
+test('shutter feedback runs once per capture and result feedback follows a valid result', async (t) => {
+  const takingPhoto = deferred();
+  const impactAsync = t.mock.fn(async () => { throw new Error('Feedback unavailable'); });
+  const notificationAsync = t.mock.fn(async () => { throw new Error('Feedback unavailable'); });
+  const classifyImage = t.mock.fn(async () => predictionFixture);
+  classifyImage.mock.mockImplementationOnce(async () => null);
+  const app = await scan(t, classifyImage, {
+    impactAsync,
+    notificationAsync,
+    takePictureAsync: () => takingPhoto.promise,
+  });
+  const shutter = app.handler('handleCapture');
+  let capture;
+  await act(async () => {
+    capture = shutter();
+    await shutter();
+  });
+  assert.equal(impactAsync.mock.callCount(), 1);
+  assert.equal(impactAsync.mock.calls[0].arguments[0], 'medium');
+  assert.equal(notificationAsync.mock.callCount(), 0);
+  await act(async () => {
+    takingPhoto.resolve({ uri: 'file:///photo.jpg' });
+    await capture;
+  });
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(notificationAsync.mock.callCount(), 0);
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(notificationAsync.mock.callCount(), 1);
+  assert.equal(notificationAsync.mock.calls[0].arguments[0], 'success');
+  assert.equal(app.destinations.length, 1);
+});
+
+test('iOS plays shutter feedback only after native camera shutdown', async (t) => {
+  const stopping = deferred();
+  const stopCamera = t.mock.fn(() => stopping.promise);
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, {
+    platform: 'ios', impactAsync, stopCamera,
+  });
+  let capture;
+  await act(async () => { capture = app.handler('handleCapture')(); });
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 1);
+  assert.equal(stopCamera.mock.callCount(), 1);
+  assert.equal(stopCamera.mock.calls[0].arguments[0], 42);
+  assert.equal(impactAsync.mock.callCount(), 0);
+  await act(async () => {
+    stopping.resolve(true);
+    await capture;
+  });
+  assert.equal(app.renderer.root.findAllByType('CameraView').length, 0);
+  assert.equal(impactAsync.mock.callCount(), 1);
+  assert.equal(impactAsync.mock.calls[0].arguments[0], 'medium');
+});
+
+test('iOS suppresses a pending shutter pulse after leaving Scan', async (t) => {
+  const stopping = deferred();
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, {
+    platform: 'ios', impactAsync, stopCamera: () => stopping.promise,
+  });
+  let capture;
+  await act(async () => { capture = app.handler('handleCapture')(); });
+  await app.blur();
+  await act(async () => {
+    stopping.resolve(true);
+    await capture;
+  });
+  assert.equal(impactAsync.mock.callCount(), 0);
+  assert.equal(app.renderer.root.findAllByType('Image').length, 0);
+});
+
+test('iOS opens the photo preview when native camera shutdown cannot be confirmed', async (t) => {
+  const impactAsync = t.mock.fn(async () => {});
+  const app = await scan(t, async () => predictionFixture, { platform: 'ios', impactAsync });
+  await act(async () => { await app.handler('handleCapture')(); });
+  assert.equal(app.renderer.root.findAllByType('Image').length, 1);
+  assert.equal(impactAsync.mock.callCount(), 0);
 });
 
 test('requestable denial can grant access from the scan screen', async (t) => {
@@ -455,10 +548,40 @@ test('result styles use native-compatible category colors for every backend colo
         route: { params: { category, binColor } }, navigation: { goBack() {} },
       }));
     });
-    const button = renderer.root.findByType('TouchableOpacity');
-    assert.equal(button.props.style[1].backgroundColor, theme.COLORS.bins[category]);
+    const badge = renderer.root.findAllByType('Text')
+      .find(({ props }) => props.children === category.toUpperCase()).parent;
+    assert.equal(badge.props.style[1].backgroundColor, theme.COLORS.bins[category]);
+    assert.equal(renderer.root.findByType('TouchableOpacity').props.style.backgroundColor, theme.COLORS.design.green);
     await act(async () => renderer.unmount());
   }
+});
+
+test('result item name and background follow the current appearance', async (t) => {
+  let scheme = 'dark';
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    'react-native': { ...native, useColorScheme: () => scheme },
+    '../styles/theme': theme,
+  }).default;
+  const itemName = 'Bottle';
+  const screenProps = { route: { params: { itemName } } };
+  let renderer;
+  await act(async () => {
+    renderer = create(React.createElement(ResultScreen, screenProps));
+  });
+  t.after(async () => { await act(async () => renderer.unmount()); });
+
+  const checkColors = () => {
+    const colors = theme.getAppColors(scheme);
+    const item = renderer.root.findAllByType('Text')
+      .find(({ props }) => props.children === itemName);
+    assert.equal(renderer.root.findByType('ScrollView').props.style.backgroundColor, colors.background.primary);
+    assert.equal(item.props.style.color, colors.text.primary);
+  };
+
+  checkColors();
+  scheme = 'light';
+  await act(async () => { renderer.update(React.createElement(ResultScreen, screenProps)); });
+  checkColors();
 });
 
 test('result bounds confidence and displays the backend disposal guidance', async () => {

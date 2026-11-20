@@ -8,9 +8,10 @@ const { loadSource } = require('./load-source.cjs');
 global.IS_REACT_ACT_ENVIRONMENT = true;
 const theme = loadSource('src/styles/theme.js');
 const native = Object.fromEntries([
-  'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'Text', 'TouchableOpacity', 'View',
+  'ActivityIndicator', 'FlatList', 'Image', 'RefreshControl', 'ScrollView', 'Text', 'TouchableOpacity', 'View',
 ].map((name) => [name, name]));
 native.StyleSheet = { create: (styles) => styles };
+native.useColorScheme = () => 'light';
 const classification = {
   item_name: 'Bottle',
   category: 'plastic',
@@ -29,17 +30,33 @@ async function mount(t, Screen) {
 test('startup initializes guest identity while the navigator renders', async (t) => {
   const pending = Promise.withResolvers();
   const getOrCreateDeviceUuid = t.mock.fn(() => pending.promise);
+  let scheme = 'light';
   const App = loadSource('App.js', {
     'expo-status-bar': { StatusBar: 'StatusBar' },
+    'react-native': { useColorScheme: () => scheme },
     'react-native-safe-area-context': { SafeAreaProvider: 'SafeAreaProvider' },
-    '@react-navigation/native': { NavigationContainer: 'NavigationContainer' },
+    '@react-navigation/native': {
+      NavigationContainer: 'NavigationContainer',
+      DefaultTheme: { dark: false, colors: {} },
+      DarkTheme: { dark: true, colors: {} },
+    },
     './src/navigation/AppNavigator': 'AppNavigator',
     './src/services/storage': { getOrCreateDeviceUuid },
+    './src/styles/theme': theme,
   }).default;
 
   const renderer = await mount(t, App);
   assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
   assert.ok(renderer.root.findByType('AppNavigator'));
+  assert.equal(renderer.root.findByType('NavigationContainer').props.theme.dark, false);
+  assert.equal(renderer.root.findByType('StatusBar').props.style, 'dark');
+  scheme = 'dark';
+  await act(async () => { renderer.update(React.createElement(App)); });
+  const dark = renderer.root.findByType('NavigationContainer').props.theme;
+  assert.equal(dark.dark, true);
+  assert.equal(dark.colors.background, theme.getAppColors('dark').background.primary);
+  assert.equal(renderer.root.findByType('StatusBar').props.style, 'light');
+  assert.equal(getOrCreateDeviceUuid.mock.callCount(), 1);
   pending.resolve(null);
 });
 
@@ -123,4 +140,37 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   const row = await mount(t, () => renderItem({ item: data[0] }));
   assert.ok(row.root.findAllByType('Text').some(({ props }) =>
     props.children === classification.item_name));
+});
+
+test('Profile updates guest streak and points from saved scans on focus', async (t) => {
+  const { summarizeScans } = loadSource('src/services/scanStats.js');
+  let scans = [];
+  let focus;
+  const ProfileScreen = loadSource('src/screens/ProfileScreen.js', {
+    'react-native': native,
+    '@react-navigation/native': { useFocusEffect: (effect) => { focus = effect; } },
+    '../styles/theme': theme,
+    '../services/scanStats': { summarizeScans },
+    'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
+    '../components/DesignPrimitives': { ProgressBar: 'ProgressBar' },
+    '../services/storage': { loadSavedScans: async () => scans },
+  }).default;
+
+  const renderer = await mount(t, ProfileScreen);
+  const labels = () => renderer.root.findAllByType('Text')
+    .map(({ props }) => [].concat(props.children).join(''));
+
+  let blur;
+  await act(async () => { blur = focus(); });
+  assert.ok(labels().includes('0 Days'));
+  assert.ok(labels().includes('0'));
+
+  scans = [
+    { ...classification, id: 'first', timestamp: new Date().toISOString() },
+    { ...classification, id: 'second', timestamp: new Date().toISOString() },
+  ];
+  await act(async () => { blur(); blur = focus(); });
+  assert.ok(labels().includes('1 Day'));
+  assert.ok(labels().includes('20'));
+  blur();
 });

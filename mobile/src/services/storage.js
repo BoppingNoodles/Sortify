@@ -6,11 +6,20 @@ import { COLORS } from '../styles/theme';
 
 const SCANS_STORAGE_KEY = '@sortify_saved_scans';
 const DEVICE_UUID_KEY = '@sortify_device_uuid';
+const WELCOME_KEY = '@sortify_guest_welcome';
 export const HISTORY_LIMIT = 100;
 const THUMBNAIL_SIZE = 96;
 const MAX_THUMBNAIL_LENGTH = 12 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;
+
+export async function hasSeenWelcome() {
+  return (await AsyncStorage.getItem(WELCOME_KEY).catch(() => null)) === 'seen';
+}
+
+export function markWelcomeSeen() {
+  return AsyncStorage.setItem(WELCOME_KEY, 'seen');
+}
 
 let historyQueue = Promise.resolve();
 let deviceInitialization;

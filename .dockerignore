@@ -1,0 +1,41 @@
+# Git
+.git
+.github
+
+# Local configuration and credentials
+**/.env
+**/.env.*
+!**/.env.example
+**/serviceAccountKey.json
+**/service-account.json
+**/*firebase-adminsdk*.json
+**/*.pem
+
+# Python environments
+.venv
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.log
+
+# Raw data
+data/raw/
+data/raw_expanded/
+
+# ML models
+ml/models/*.pth
+!ml/models/sortify_mvp_v1.pth
+
+# Frontend dependencies
+node_modules/
+.expo/

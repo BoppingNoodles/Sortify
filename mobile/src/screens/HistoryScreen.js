@@ -2,6 +2,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   StyleSheet,
+  useColorScheme,
   Text,
   View,
   FlatList,
@@ -13,9 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { loadSavedScans } from '../services/storage';
-import { COLORS, SPACING, TYPOGRAPHY } from '../styles/theme';
+import { createThemedStyles, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function HistoryScreen({ navigation }) {
+  const { colors, styles } = getStyles(useColorScheme());
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,7 +56,7 @@ export default function HistoryScreen({ navigation }) {
   const renderItem = ({ item }) => {
     const itemName = item.item_name || item.itemName || 'Waste Item';
     const category = (item.category || item.bin || 'landfill').toLowerCase();
-    const binColor = COLORS.bins[category] || COLORS.bins.landfill;
+    const binColor = colors.bins[category] || colors.bins.landfill;
     const formattedDate = item.timestamp
       ? new Date(item.timestamp).toLocaleString()
       : 'Today';
@@ -88,7 +90,7 @@ export default function HistoryScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Scan History</Text>
         {scans?.length > 0 && (
@@ -99,7 +101,7 @@ export default function HistoryScreen({ navigation }) {
             accessibilityLabel="View Impact Stats"
             activeOpacity={0.7}
           >
-            <Text style={styles.statsCtaText}>📊 Stats</Text>
+            <Text style={styles.statsCtaText}>Impact stats</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -109,7 +111,7 @@ export default function HistoryScreen({ navigation }) {
           <ActivityIndicator
             accessibilityLabel="Loading scan history"
             size="large"
-            color={COLORS.accent.berkeleyBlue}
+            color={colors.accent.berkeleyBlue}
           />
         </View>
       ) : (
@@ -118,7 +120,15 @@ export default function HistoryScreen({ navigation }) {
           keyExtractor={(item, index) => item.id || `scan_${index}`}
           renderItem={renderItem}
           contentContainerStyle={scans.length === 0 ? styles.emptyContainer : styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={(
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent.berkeleyBlue}
+              colors={[colors.accent.berkeleyBlue]}
+              progressBackgroundColor={colors.background.card}
+            />
+          )}
           ListEmptyComponent={
             <View style={styles.emptyView}>
               <Text style={styles.emptyEmoji}>📸</Text>
@@ -141,34 +151,34 @@ export default function HistoryScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background.primary },
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background.primary },
   header: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.background.card,
+    backgroundColor: colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.design.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerTitle: { ...TYPOGRAPHY.header, color: COLORS.accent.berkeleyBlue },
+  headerTitle: { ...TYPOGRAPHY.header, color: colors.accent.berkeleyBlue },
   statsCtaButton: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.design.blueTint,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: colors.design.border,
   },
-  statsCtaText: { fontSize: 13, fontWeight: '700', color: COLORS.accent.berkeleyBlue },
+  statsCtaText: { fontSize: 13, fontWeight: '700', color: colors.accent.berkeleyBlue },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: SPACING.md },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
   scanCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background.card,
+    backgroundColor: colors.background.card,
     borderRadius: 14,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
@@ -178,14 +188,14 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.design.border,
   },
   cardImage: { width: 56, height: 56, borderRadius: 10, marginRight: SPACING.md },
   cardPlaceholder: {
     width: 56,
     height: 56,
     borderRadius: 10,
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: colors.background.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.md,
@@ -193,7 +203,7 @@ const styles = StyleSheet.create({
   },
   placeholderEmoji: { fontSize: 24 },
   cardContent: { flex: 1, justifyContent: 'center' },
-  cardTitle: { ...TYPOGRAPHY.body, fontWeight: '700', color: COLORS.text.primary, marginBottom: 4 },
+  cardTitle: { ...TYPOGRAPHY.body, fontWeight: '700', color: colors.text.primary, marginBottom: 4 },
   categoryBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
@@ -201,25 +211,25 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 4,
   },
-  categoryBadgeText: { color: COLORS.text.inverse, fontSize: 10, fontWeight: '700' },
-  cardDate: { fontSize: 12, color: COLORS.text.muted },
-  pointsBadge: { backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  pointsText: { color: '#2E7D32', fontSize: 12, fontWeight: '700' },
+  categoryBadgeText: { color: colors.text.inverse, fontSize: 10, fontWeight: '700' },
+  cardDate: { fontSize: 12, color: colors.text.muted },
+  pointsBadge: { backgroundColor: colors.design.points, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  pointsText: { color: colors.design.pointsText, fontSize: 12, fontWeight: '700' },
   emptyView: { alignItems: 'center', paddingHorizontal: SPACING.lg },
   emptyEmoji: { fontSize: 50, marginBottom: SPACING.sm },
-  emptyTitle: { ...TYPOGRAPHY.subtitle, color: COLORS.text.primary, marginBottom: 6 },
+  emptyTitle: { ...TYPOGRAPHY.subtitle, color: colors.text.primary, marginBottom: 6 },
   emptyBody: {
     ...TYPOGRAPHY.body,
-    color: COLORS.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: SPACING.md,
   },
   scanNowButton: {
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: colors.design.green,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
   },
-  scanNowButtonText: { color: COLORS.text.inverse, fontWeight: '700', fontSize: 15 },
-});
+  scanNowButtonText: { color: colors.design.onGreen, fontWeight: '700', fontSize: 15 },
+}));

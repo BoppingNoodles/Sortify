@@ -2,7 +2,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
+  useColorScheme,
   Text,
+  Platform,
   View,
   TouchableOpacity,
   Image,
@@ -11,17 +13,48 @@ import {
   Alert,
   AppState,
   Linking,
+  findNodeHandle,
 } from 'react-native';
+import { requireOptionalNativeModule } from 'expo';
 import { Camera, CameraView } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING } from '../styles/theme';
+import { createThemedStyles, SPACING } from '../styles/theme';
 import { classifyImage } from '../services/api';
 import { saveScanRecord } from '../services/storage';
+import { MUNICIPALITIES } from '../services/municipalities';
 
-const SUPPORTED_CITIES = ['berkeley', 'san-francisco', 'oakland', 'san-jose', 'sunnyvale'];
+async function playHaptic(feedback) {
+  try {
+    await feedback();
+  } catch {
+    // Feedback is optional on devices and browsers without haptic support.
+  }
+}
 
-function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy }) {
+function playShutterHaptic() {
+  return playHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+}
+
+const iosCameraSession = Platform.OS === 'ios'
+  ? requireOptionalNativeModule('SortifyCameraSession')
+  : null;
+
+async function stopCameraForShutter(camera) {
+  if (!iosCameraSession) return false;
+  try {
+    const viewTag = findNodeHandle(camera);
+    return viewTag != null && await iosCameraSession.stop(viewTag);
+  } catch {
+    // The photo is still usable if native shutter feedback is unavailable.
+    return false;
+  }
+}
+
+const SUPPORTED_CITIES = Object.keys(MUNICIPALITIES);
+
+function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, isBusy, styles }) {
   const cameraRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -37,7 +70,7 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
   };
 
   return (
-    <>
+    <View style={styles.cameraFrame}>
       <CameraView style={styles.camera} ref={cameraRef} onCameraReady={handleReady} />
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.cameraOverlay}
         pointerEvents="box-none">
@@ -55,12 +88,6 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
           </TouchableOpacity>
         </View>
 
-        {/* Target Reticle Overlay */}
-        <View style={styles.reticleContainer}>
-          <View style={styles.reticleBox} />
-          <Text style={styles.reticleHint}>Center item inside frame</Text>
-        </View>
-
         {/* Shutter Button Controls */}
         <View style={styles.bottomControls}>
           <TouchableOpacity
@@ -75,11 +102,12 @@ function CameraPreview({ formattedCity, onCycleCity, onCapture, onPreviewReady, 
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </>
+    </View>
   );
 }
 
 export default function ScanScreen({ navigation }) {
+  const { colors, styles } = getStyles(useColorScheme());
   const [permission, setPermission] = useState(null);
   const [permissionError, setPermissionError] = useState(null);
   const [permissionCheck, setPermissionCheck] = useState(0);
@@ -227,7 +255,7 @@ export default function ScanScreen({ navigation }) {
           </>
         ) : (
           <>
-            <ActivityIndicator size="large" color={COLORS.accent.berkeleyBlue} />
+            <ActivityIndicator size="large" color={colors.accent.berkeleyBlue} />
             <Text style={styles.statusText}>Checking camera access…</Text>
           </>
         )}
@@ -261,14 +289,18 @@ export default function ScanScreen({ navigation }) {
   const handleCapture = async (camera) => {
     const pending = beginOperation(camera);
     if (!pending) return;
+    if (Platform.OS !== 'ios') void playShutterHaptic();
     try {
       const photo = await camera.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
       });
-      if (photo?.uri && isCurrent(pending.generation)) {
-        setCapturedPhoto(photo);
-      }
+      if (!photo?.uri || !isCurrent(pending.generation)) return;
+      // iOS can suppress haptics until the native capture session has stopped.
+      const stopped = Platform.OS === 'ios' && await stopCameraForShutter(camera);
+      if (!isCurrent(pending.generation)) return;
+      setCapturedPhoto(photo);
+      if (stopped) void playShutterHaptic();
     } catch (error) {
       if (isCurrent(pending.generation)) {
         console.error('Failed to capture photo:', error);
@@ -293,7 +325,7 @@ export default function ScanScreen({ navigation }) {
         typeof result.item_name !== 'string' ||
         !result.item_name.trim() ||
         typeof result.category !== 'string' ||
-        !Object.hasOwn(COLORS.bins, result.category) ||
+        !Object.hasOwn(colors.bins, result.category) ||
         !Number.isFinite(result.confidence) ||
         result.confidence < 0 ||
         result.confidence > 1 ||
@@ -325,6 +357,7 @@ export default function ScanScreen({ navigation }) {
 
       setCapturedPhoto(null);
       navigation.navigate('ResultModal', resultParams);
+      void playHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     } catch (error) {
       if (!isCurrent(pending.generation)) return;
       console.error('Classification request failed:', error);
@@ -356,7 +389,7 @@ export default function ScanScreen({ navigation }) {
     setSelectedCity(nextCity);
   };
 
-  const formattedCity = selectedCity.replace('-', ' ').toUpperCase();
+  const formattedCity = MUNICIPALITIES[selectedCity].toUpperCase();
   const showCamera = isFocused && isActive && !capturedPhoto;
 
   return (
@@ -398,6 +431,7 @@ export default function ScanScreen({ navigation }) {
         </View>
       ) : showCamera ? (
         <CameraPreview
+          styles={styles}
           formattedCity={formattedCity}
           onCycleCity={handleCycleCity}
           onCapture={handleCapture}
@@ -409,50 +443,59 @@ export default function ScanScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = createThemedStyles((colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background.card,
+    padding: SPACING.md,
   },
   centered: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: colors.background.primary,
   },
   permissionArea: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: colors.background.primary,
   },
   statusText: {
     marginTop: 12,
-    color: COLORS.text.secondary,
+    color: colors.text.secondary,
     fontSize: 14,
   },
   permissionTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 8,
-    color: COLORS.text.primary,
+    color: colors.text.primary,
   },
   permissionBody: {
     fontSize: 14,
-    color: COLORS.text.secondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   primaryButton: {
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: colors.design.green,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.design.onGreen,
     fontWeight: '700',
     fontSize: 15,
+  },
+  cameraFrame: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 20,
+    borderColor: colors.design.border,
+    borderWidth: 1,
+    backgroundColor: colors.background.surface,
   },
   camera: {
     flex: 1,
@@ -485,50 +528,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center',
   },
-  reticleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reticleBox: {
-    flexShrink: 1,
-    width: '80%',
-    maxWidth: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
-    borderRadius: 18,
-    borderStyle: 'dashed',
-  },
-  reticleHint: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginTop: 14,
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-    textAlign: 'center',
-  },
   bottomControls: {
     alignItems: 'center',
   },
   shutterButton: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'transparent',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: colors.text.primary,
+    backgroundColor: colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
   shutterInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#FFFFFF',
   },
   previewContainer: {
     flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
     backgroundColor: '#0F172A',
   },
   previewImage: {
@@ -590,16 +612,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 130,
     minHeight: 48,
-    backgroundColor: COLORS.accent.berkeleyBlue,
+    backgroundColor: colors.design.green,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   analyzeButtonText: {
-    color: '#FFFFFF',
+    color: colors.design.onGreen,
     fontWeight: '700',
     fontSize: 15,
     textAlign: 'center',
   },
-});
+}));
