@@ -9,14 +9,11 @@ on:
 permissions:
   contents: read
 
-# A newer push to the same branch/PR makes the older run obsolete.
+# A newer push to a PR makes its older run obsolete. Runs on main/dev pushes
+# are never cancelled, so every merged commit gets a CI result.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  # CI has no GPU; the CPU wheels skip several GB of CUDA libraries.
-  PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   python-lint:
@@ -58,7 +55,10 @@ jobs:
           cache: 'pip'
           cache-dependency-path: requirements.txt
 
+      # CI has no GPU; the CPU wheels skip several GB of CUDA libraries.
       - name: Install dependencies
+        env:
+          PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
         run: pip install -r requirements.txt
 
       - name: Run backend test suite
@@ -83,6 +83,8 @@ jobs:
             ml/requirements-onnx.txt
 
       - name: Install dependencies
+        env:
+          PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
         run: pip install -r requirements.txt -r ml/requirements-onnx.txt
 
       - name: Run ML test suite
@@ -100,6 +102,17 @@ jobs:
       # Render builds this exact Dockerfile from the repo root on deploy.
       - name: Build image
         run: docker build -f backend/Dockerfile -t sortify-backend:ci .
+
+      # A missing or unreadable checkpoint does not crash the app; it silently
+      # falls back to no-model mode, so /health alone cannot catch it.
+      - name: Verify model loads inside the image
+        run: |
+          docker run --rm sortify-backend:ci python -c '
+          from backend.app.services.inference import ModelService
+          s = ModelService()
+          assert s.model is not None, f"model not loaded from {s.model_path}"
+          print(f"Model loaded from {s.model_path}: {len(s.class_names)} classes")
+          '
 
       - name: Boot container and hit /health
         run: |
