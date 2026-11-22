@@ -6,9 +6,10 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
+# gcc covers any dependency that has to compile from source; it stays in the
+# builder stage only. (No PostgreSQL client is used, so no libpq-dev.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Runtime dependencies only; dev, test and ML tooling stays out of the image.
