@@ -12,7 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Render has no GPU, so install the CPU-only torch build first. The default
+# PyPI wheels bundle ~5 GB of CUDA libraries the service can never use.
+# Only torch/torchvision come from the PyTorch index; everything else,
+# including the already-satisfied torch lines, resolves from PyPI.
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --user --index-url ${TORCH_INDEX_URL} torch torchvision \
+    && pip install --no-cache-dir --user -r requirements.txt
 
 # ==========================================
 # Stage 2: Production runtime image
