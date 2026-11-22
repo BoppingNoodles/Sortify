@@ -160,6 +160,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Offline mode checks against the version table bundled with the
+      # installed expo package, so the result only changes when the lockfile
+      # does, not whenever Expo publishes a patch release.
+      - name: Check native packages match the Expo SDK
+        env:
+          CI: 1
+          EXPO_OFFLINE: 1
+        run: npx expo install --check
+
       - name: Syntax check
         run: npm run lint
 
