@@ -6,10 +6,46 @@ on:
   push:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
+# A newer push to the same branch/PR makes the older run obsolete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # CI has no GPU; the CPU wheels skip several GB of CUDA libraries.
+  PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+
 jobs:
-  python-lint-and-test:
-    name: Python Lint, Syntax & Tests
+  python-lint:
+    name: Python Lint & Format (Ruff)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Code
@@ -20,51 +56,73 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: requirements.txt
 
-      - name: Install Ruff
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Check Syntax & Code Quality (Ruff)
-        run: |
-          echo "Running Ruff syntax & import checks..."
-          ruff check .
+      - name: Run backend test suite
+        run: pytest backend/tests -q
 
-      - name: Check Code Formatting (Ruff)
-        run: |
-          echo "Checking code formatting with Ruff..."
-          ruff format --check .
+  ml-tests:
+    name: ML Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
-      - name: Smart Backend Smoke Test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            ml/requirements-onnx.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r ml/requirements-onnx.txt
+
+      - name: Run ML test suite
+        run: pytest ml/tests -q
+
+  backend-docker:
+    name: Backend Docker Build & Boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Render builds this exact Dockerfile from the repo root on deploy.
+      - name: Build image
+        run: docker build -f backend/Dockerfile -t sortify-backend:ci .
+
+      - name: Boot container and hit /health
         run: |
-          if [ -f "backend/app/main.py" ] || [ -f "backend/main.py" ]; then
-            echo "backend/app/main.py found! Installing dependencies..."
-            pip install -r requirements.txt
-            if find backend/ -name "test_*.py" -o -name "*_test.py" | grep -q .; then
-              echo "Running backend test suite..."
-              PYTHONPATH=. pytest backend/tests -q
-            else
-              echo "No backend test files found yet — testing app import directly..."
-              PYTHONPATH=. python -c "from backend.app.main import app; print('Backend app imported successfully!')"
+          docker run -d --name sortify -p 8000:8000 sortify-backend:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/health; then
+              echo
+              echo "Backend container is healthy."
+              exit 0
             fi
-          else
-            echo "backend/app/main.py not created yet — skipping backend smoke test for now."
-          fi
-
-      - name: ML contract tests
-        run: |
-          if find ml -name 'test_*.py' | grep -q .; then
-            echo "Installing dependencies for ML contract tests..."
-            pip install -r requirements.txt -r ml/requirements-onnx.txt
-            pytest ml/tests -q
-          else
-            echo "No ML tests yet."
-          fi
+            sleep 2
+          done
+          echo "Backend container never became healthy. Logs:"
+          docker logs sortify
+          exit 1
 
   frontend-check:
-    name: Frontend Sanity Check
+    name: Frontend Lint, Tests & Bundle
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mobile
 
     steps:
       - name: Checkout Code
@@ -77,9 +135,19 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
-      - name: Check frontend syntax and run tests
-        working-directory: mobile
-        run: |
-          npm ci
-          npm run lint --if-present
-          npm test
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      # The syntax check parses files one at a time; only a real Metro bundle
+      # catches unresolved imports and missing modules.
+      - name: Bundle app (Android + iOS)
+        env:
+          CI: 1
+          EXPO_OFFLINE: 1
+        run: npx expo export --platform android --platform ios --output-dir dist
