@@ -105,9 +105,15 @@ jobs:
 
       # A missing or unreadable checkpoint does not crash the app; it silently
       # falls back to no-model mode, so /health alone cannot catch it.
+      - name: Report image size
+        run: docker image ls sortify-backend:ci --format 'sortify-backend:ci {{.Size}}'
+
       - name: Verify model loads inside the image
         run: |
           docker run --rm sortify-backend:ci python -c '
+          import torch
+          assert torch.version.cuda is None, f"CUDA torch in image: {torch.__version__}"
+          print(f"torch {torch.__version__} (CPU-only)")
           from backend.app.services.inference import ModelService
           s = ModelService()
           assert s.model is not None, f"model not loaded from {s.model_path}"
