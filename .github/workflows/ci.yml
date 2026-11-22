@@ -31,7 +31,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Ruff
-        run: pip install ruff
+        run: pip install ruff==0.17.6  # keep in sync with requirements.txt
 
       - name: Ruff lint
         run: ruff check .
