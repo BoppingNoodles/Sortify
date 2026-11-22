@@ -1,0 +1,20 @@
+# Runtime dependencies for the backend service only.
+# This is what backend/Dockerfile installs for the Render image.
+# Dev, test and ML tooling lives in the root requirements.txt,
+# which includes this file.
+
+# Web framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+
+# Authentication & Database (Firebase / Firestore)
+firebase-admin>=6.5.0
+
+# Model inference
+torch>=2.2.0
+torchvision>=0.17.0
+Pillow>=10.0.0

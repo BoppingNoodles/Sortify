@@ -1,18 +1,9 @@
-# Core Backend Framework
-fastapi>=0.115.0
-uvicorn[standard]>=0.30.0
-pydantic>=2.8.0
-pydantic-settings>=2.4.0
-python-multipart>=0.0.9
-python-dotenv>=1.0.0
+# Full development environment: backend runtime + ML scripts + tests.
+# The backend's runtime-only dependencies live in backend/requirements.txt
+# (the Docker image installs just that file).
+-r backend/requirements.txt
 
-# Authentication & Database (Firebase / Firestore)
-firebase-admin>=6.5.0
-
-# Computer Vision & Machine Learning
-torch>=2.2.0
-torchvision>=0.17.0
-Pillow>=10.0.0
+# ML training, evaluation and plotting
 numpy>=1.26.0
 matplotlib>=3.8.0
 scikit-learn>=1.4.0

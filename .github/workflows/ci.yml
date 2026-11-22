@@ -53,7 +53,9 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            backend/requirements.txt
 
       # CI has no GPU; the CPU wheels skip several GB of CUDA libraries.
       - name: Install dependencies
@@ -80,6 +82,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
+            backend/requirements.txt
             ml/requirements-onnx.txt
 
       - name: Install dependencies

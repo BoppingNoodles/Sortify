@@ -15,7 +15,7 @@ The Dockerfile is located at:
 
 `backend/Dockerfile`
 
-The Docker build context must be the repository root because the requirements file is located at the root.
+The Docker build context must be the repository root. The image installs only the runtime dependencies in `backend/requirements.txt`; the root `requirements.txt` adds dev, test and ML tooling and is for local development and CI.
 Keep local credentials outside the repository and provide them at runtime.
 Pass `--env-file /path/to/local.env` to `docker run` to supply local environment variables.
 

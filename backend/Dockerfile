@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Runtime dependencies only; dev, test and ML tooling stays out of the image.
+COPY backend/requirements.txt requirements.txt
 
 # Render has no GPU, so install the CPU-only torch build first. The default
 # PyPI wheels bundle ~5 GB of CUDA libraries the service can never use.
