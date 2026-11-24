@@ -1,5 +1,6 @@
 // src/services/api.js
 
+import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 
 // Emulator and localhost defaults. Physical devices use EXPO_PUBLIC_API_URL.
@@ -251,11 +252,15 @@ export async function classifyImage(imageUri, location = 'berkeley', maxRetries 
     if (Platform.OS === 'web') {
       formData.append('file', webBlob, filename);
     } else {
-      // Native iOS and Android image upload.
+      // Expo SDK 52+ replaces global fetch with expo/fetch, which rejects
+      // React Native's { uri, name, type } parts ("Unsupported FormDataPart
+      // implementation"). It accepts any part exposing bytes(), and takes the
+      // multipart filename and Content-Type from name/type, which the backend
+      // validates strictly.
       formData.append('file', {
-        uri: imageUri,
         name: filename,
         type,
+        bytes: () => new File(imageUri).bytes(),
       });
     }
 

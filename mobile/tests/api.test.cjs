@@ -5,6 +5,12 @@ const { loadSource } = require('./load-source.cjs');
 function client(os, globals) {
   return loadSource('src/services/api.js', {
     'react-native': { Platform: { OS: os, select: (values) => values[os] || values.default } },
+    'expo-file-system': {
+      File: class {
+        constructor(uri) { this.uri = uri; }
+        async bytes() { return new TextEncoder().encode(`bytes of ${this.uri}`); }
+      },
+    },
   }, globals);
 }
 
@@ -69,8 +75,11 @@ test('native upload retries transient errors using fresh multipart bodies', asyn
   await classifyImage('file:///photo.jpg');
   assert.equal(bodies.length, 3);
   assert.equal(new Set(bodies).size, 3);
-  assert.equal(bodies[0].file.uri, 'file:///photo.jpg');
+  // expo/fetch only serializes parts exposing bytes(), not { uri } objects.
+  assert.equal(bodies[0].file.uri, undefined);
+  assert.equal(bodies[0].file.name, 'photo.jpg');
   assert.equal(bodies[0].file.type, 'image/jpeg');
+  assert.equal(new TextDecoder().decode(await bodies[0].file.bytes()), 'bytes of file:///photo.jpg');
 });
 
 test('4xx errors are readable and never retried', async () => {
