@@ -6,6 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import BoundedSemaphore
 from typing import Any
 
+from backend.app.core.config import settings
+
 
 class InferenceBusyError(RuntimeError):
     """Raised when all inference workers are occupied."""
@@ -47,4 +49,4 @@ class InferenceRunner:
         self._executor.shutdown(wait=True, cancel_futures=True)
 
 
-inference_runner = InferenceRunner()
+inference_runner = InferenceRunner(settings.INFERENCE_MAX_WORKERS)

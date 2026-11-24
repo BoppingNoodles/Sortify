@@ -57,6 +57,9 @@ class Settings(BaseSettings):
         description="Path to Firebase credentials service account key",
     )
     INFERENCE_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, allow_inf_nan=False)
+    # Each concurrent scan can add ~65 MB at the decode cap; 2 keeps the
+    # 512 MB Render instance clear of its limit.
+    INFERENCE_MAX_WORKERS: int = Field(default=2, ge=1, le=16)
     HISTORY_STORAGE: Literal["memory", "firestore"] = Field(
         default="memory",
         description="Scan history storage backend ('memory' or 'firestore')",

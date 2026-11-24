@@ -306,6 +306,8 @@ export default function ScanScreen({ navigation }) {
     try {
       const photo = await camera.takePictureAsync({
         quality: 0.8,
+        // Web defaults to PNG, which the backend cannot decode at reduced scale.
+        imageType: 'jpg',
         skipProcessing: false,
       });
       if (!photo?.uri || !isCurrent(pending.generation)) return;

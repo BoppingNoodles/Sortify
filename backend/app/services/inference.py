@@ -16,6 +16,9 @@ from backend.app.core.config import DEFAULT_MODEL_PATH, settings
 
 logger = logging.getLogger(__name__)
 Image.MAX_IMAGE_PIXELS = 25_000_000
+# Pixels actually decoded after JPEG draft scaling. PNG/WebP cannot be
+# drafted, so this bounds their full-resolution decode on the 512 MB instance.
+MAX_DECODED_PIXELS = 4_194_304  # 2048 x 2048
 
 # Canonical five-bin order for checkpoints without label metadata.
 DEFAULT_CLASSES = ["compost", "glass", "landfill", "paper", "plastic"]
@@ -213,11 +216,17 @@ class ModelService:
                 # A full 12 MP phone photo decodes to ~36 MB per copy, which
                 # pushed the 512 MB Render instance over its memory limit.
                 raw_img.draft("RGB", (448, 448))
+                # draft() shrinks JPEG sizes; anything still this large is a
+                # PNG/WebP (or bomb) that would be decoded at full resolution.
+                if raw_img.width * raw_img.height > MAX_DECODED_PIXELS:
+                    raise ValueError("Image resolution is too large to process")
+                raw_img.load()
                 try:
-                    img = ImageOps.exif_transpose(raw_img)
+                    # In place: avoid a second full-size copy when no rotation.
+                    ImageOps.exif_transpose(raw_img, in_place=True)
                 except (TypeError, ValueError, OSError):
-                    img = raw_img
-                img = img.convert("RGB")
+                    pass
+                img = raw_img if raw_img.mode == "RGB" else raw_img.convert("RGB")
         except (
             UnidentifiedImageError,
             OSError,

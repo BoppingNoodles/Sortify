@@ -67,6 +67,7 @@ Configure the following environment variables in Render:
 | `PROJECT_NAME` | `Sortify API` |
 | `ENV` | `production` |
 | `CORS_ORIGINS` | JSON array of deployed frontend origins |
+| `INFERENCE_MAX_WORKERS` | `2` (default). Concurrent scans; each can add ~65 MB, so raise it only on an instance with more than 512 MB of RAM |
 
 Example CORS configuration:
 
