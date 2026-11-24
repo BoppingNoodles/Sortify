@@ -53,7 +53,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <Text style={styles.prompt}>Throwing away?</Text>
-        <PrimaryButton subtle onPress={() => navigation.navigate('Scan')}>Start</PrimaryButton>
+        <PrimaryButton onPress={() => navigation.navigate('Scan')}>Start</PrimaryButton>
       </ScrollView>
     </SafeAreaView>
   );
