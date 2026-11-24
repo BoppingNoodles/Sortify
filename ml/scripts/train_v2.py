@@ -7,10 +7,12 @@ Run from the repo root:
 """
 
 import json
+import random
 import sys
 from pathlib import Path
 
 import torch
+from PIL import Image, ImageOps
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
@@ -29,33 +31,74 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
+def exif_pil_loader(path: str) -> Image.Image:
+    """Load an image file and apply EXIF orientation to match inference."""
+    with open(path, "rb") as f:
+        img = Image.open(f)
+        img.load()
+    return ImageOps.exif_transpose(img).convert("RGB")
+
+
+class RandomRightAngleRotation:
+    """Rotate a PIL image by a random 90-degree multiple for angle invariance."""
+
+    def __init__(self, angles: tuple[int, ...] = (0, 90, 180, 270)) -> None:
+        self.angles = angles
+
+    def __call__(self, img: Image.Image) -> Image.Image:
+        angle = random.choice(self.angles)
+        if angle == 0:
+            return img
+        return img.rotate(angle, expand=True)
+
+
+def get_v2_train_transforms() -> transforms.Compose:
+    """Return full-orientation training transforms aligned with backend resize."""
+    return transforms.Compose(
+        [
+            RandomRightAngleRotation(),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),
+            transforms.RandomChoice(
+                [
+                    transforms.Resize((224, 224)),
+                    transforms.RandomResizedCrop(
+                        224, scale=(0.65, 1.0), ratio=(0.75, 1.33)
+                    ),
+                ]
+            ),
+            transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.1),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        ]
+    )
+
+
+def get_v2_eval_transforms() -> transforms.Compose:
+    """Return validation transforms matching ModelService preprocessing."""
+    return transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        ]
+    )
+
+
 def get_data_loaders(
     data_dir: Path,
     batch_size: int = 32,
     num_workers: int = DEFAULT_NUM_WORKERS,
 ):
-    train_transform = transforms.Compose(
-        [
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(15),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ]
-    )
+    train_transform = get_v2_train_transforms()
+    val_transform = get_v2_eval_transforms()
 
-    val_transform = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ]
+    train_ds = datasets.ImageFolder(
+        data_dir / "train", transform=train_transform, loader=exif_pil_loader
     )
-
-    train_ds = datasets.ImageFolder(data_dir / "train", transform=train_transform)
-    val_ds = datasets.ImageFolder(data_dir / "val", transform=val_transform)
+    val_ds = datasets.ImageFolder(
+        data_dir / "val", transform=val_transform, loader=exif_pil_loader
+    )
 
     if train_ds.classes != val_ds.classes:
         raise ValueError(
