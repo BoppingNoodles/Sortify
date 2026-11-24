@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } 
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton, ProgressBar } from '../components/DesignPrimitives';
+import { wakeServer } from '../services/api';
 import { summarizeScans } from '../services/scanStats';
 import { loadSavedScans } from '../services/storage';
 import { createThemedStyles } from '../styles/theme';
@@ -53,7 +54,14 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <Text style={styles.prompt}>Throwing away?</Text>
-        <PrimaryButton onPress={() => navigation.navigate('Scan')}>Start</PrimaryButton>
+        <PrimaryButton
+          onPress={() => {
+            void wakeServer();
+            navigation.navigate('Scan');
+          }}
+        >
+          Start
+        </PrimaryButton>
       </ScrollView>
     </SafeAreaView>
   );
