@@ -194,3 +194,68 @@ def test_interoperability_with_model_service_module():
 
     assert LegacyService is ModelService
     assert legacy_instance is not None
+
+
+def test_large_jpeg_is_decoded_at_reduced_scale(monkeypatch):
+    """Phone-sized JPEGs must not be fully decoded on the 512 MB instance."""
+    img = Image.new("RGB", (4032, 3024), color="green")
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG")
+    seen = []
+
+    def capture(image):
+        seen.append(image.size)
+        return torch.zeros(3, 224, 224)
+
+    monkeypatch.setattr(model_service, "transform", capture)
+    monkeypatch.setattr(
+        model_service,
+        "model",
+        lambda batch: torch.zeros(batch.shape[0], len(model_service.class_names)),
+    )
+    result = model_service.predict(buffer.getvalue())
+
+    assert result["is_mock"] is False
+    assert seen == [(1008, 756)]
+
+
+def test_reduced_scale_decode_keeps_exif_orientation(monkeypatch):
+    """Draft scaling must not undo EXIF rotation of portrait phone photos."""
+    exif = Image.Exif()
+    exif[0x0112] = 6  # rotate 90 degrees on display
+    buffer = io.BytesIO()
+    Image.new("RGB", (4032, 3024), color="green").save(
+        buffer, format="JPEG", exif=exif.tobytes()
+    )
+    seen = []
+
+    def capture(image):
+        seen.append(image.size)
+        return torch.zeros(3, 224, 224)
+
+    monkeypatch.setattr(model_service, "transform", capture)
+    monkeypatch.setattr(
+        model_service,
+        "model",
+        lambda batch: torch.zeros(batch.shape[0], len(model_service.class_names)),
+    )
+    model_service.predict(buffer.getvalue())
+
+    assert seen == [(756, 1008)]
+
+
+def test_oversized_non_jpeg_is_rejected_before_decoding():
+    """PNG/WebP cannot be drafted, so huge ones must be refused, not decoded."""
+    buffer = io.BytesIO()
+    Image.new("L", (2049, 2048)).save(buffer, format="PNG")
+
+    with pytest.raises(ValueError, match="too large"):
+        model_service.predict(buffer.getvalue())
+
+
+def test_non_jpeg_at_decode_cap_is_accepted():
+    """A PNG exactly at the decoded-pixel cap is still classified."""
+    buffer = io.BytesIO()
+    Image.new("RGB", (2048, 2048)).save(buffer, format="PNG")
+
+    assert model_service.predict(buffer.getvalue())["category"]
