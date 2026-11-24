@@ -194,3 +194,22 @@ def test_interoperability_with_model_service_module():
 
     assert LegacyService is ModelService
     assert legacy_instance is not None
+
+
+def test_large_jpeg_is_decoded_at_reduced_scale(monkeypatch):
+    """Phone-sized JPEGs must not be fully decoded on the 512 MB instance."""
+    img = Image.new("RGB", (4032, 3024), color="green")
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG")
+    seen = []
+
+    def capture(image):
+        seen.append(image.size)
+        return torch.zeros(3, 224, 224)
+
+    monkeypatch.setattr(model_service, "transform", capture)
+    monkeypatch.setattr(model_service, "model", torch.nn.Linear(1, 1))
+    with pytest.raises(RuntimeError):  # the stub model rejects the tensor
+        model_service.predict(buffer.getvalue())
+
+    assert seen and max(seen[0]) <= 1008 and min(seen[0]) >= 448

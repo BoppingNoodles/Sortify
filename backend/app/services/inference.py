@@ -209,6 +209,10 @@ class ModelService:
                     raise ValueError(f"Invalid image dimensions: {raw_img.size}")
                 if raw_img.width > 8192 or raw_img.height > 8192:
                     raise ValueError("Image dimensions exceed the 8192x8192 limit")
+                # Decode JPEGs at a reduced DCT scale (no smaller than 448px).
+                # A full 12 MP phone photo decodes to ~36 MB per copy, which
+                # pushed the 512 MB Render instance over its memory limit.
+                raw_img.draft("RGB", (448, 448))
                 try:
                     img = ImageOps.exif_transpose(raw_img)
                 except (TypeError, ValueError, OSError):
