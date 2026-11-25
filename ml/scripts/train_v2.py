@@ -36,7 +36,11 @@ def exif_pil_loader(path: str) -> Image.Image:
     with open(path, "rb") as f:
         img = Image.open(f)
         img.load()
-    return ImageOps.exif_transpose(img).convert("RGB")
+    try:
+        img = ImageOps.exif_transpose(img)
+    except (TypeError, ValueError, OSError):
+        pass
+    return img.convert("RGB")
 
 
 class RandomRightAngleRotation:
