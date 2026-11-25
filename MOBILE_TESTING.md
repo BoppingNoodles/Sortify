@@ -9,7 +9,7 @@ This guide covers everything you need to run Sortify on a real phone, test it, a
 | Code to test | Latest `main` (Expo SDK 58). Record the commit with `git rev-parse --short HEAD` |
 | Backend (shared, on Render) | `https://sortify-backend-uhc6.onrender.com` |
 | Health check | `https://sortify-backend-uhc6.onrender.com/health` should show `{"status":"ok"}` |
-| Model | `sortify_v2.pth` (MobileNetV2, classes compost, glass, landfill, paper, plastic), SHA-256 `16abd93ff8e486c57891d03ad3a10e72f975dbcf892b3e7955ba3a8dc133f34a` |
+| Model | `sortify_v2.pth` (MobileNetV2, classes compost, glass, landfill, paper, plastic), SHA-256 `7721393a893f3232cb2c017a336bf74343f61cbb2eebdd958f7ea61b6917baf2` |
 | Phone client | Expo Go for **SDK 58** |
 | Computer | Node.js 22.13 or newer, Git. Python 3.11+ only for the optional local backend |
 | Cities | Berkeley, San Francisco, Oakland, San Jose, Sunnyvale |
