@@ -1,0 +1,354 @@
+{
+  "seed": 42,
+  "pytorch": "2.14.0+cpu",
+  "base_checkpoint_sha256": "7721393a893f3232cb2c017a336bf74343f61cbb2eebdd958f7ea61b6917baf2",
+  "candidate_sha256": "06c326143905f7d7c8a7591de1fb18d3b0469e52d494c93f5a1764d5deca58d7",
+  "manifest_sha256": "b580bab978570e6cb29cac1924c60b513bd74683411da96139d7c15b369423d0",
+  "calibration_order": [
+    "pc46_val",
+    "fresh_waste",
+    "fresh_non_waste"
+  ],
+  "training": {
+    "replay": {
+      "compost": 110,
+      "glass": 110,
+      "landfill": 110,
+      "paper": 110,
+      "plastic": 110
+    },
+    "fresh": {
+      "compost": 7,
+      "glass": 28,
+      "landfill": 6,
+      "paper": 8,
+      "plastic": 29
+    }
+  },
+  "fresh_test_by_label": {
+    "glass": 12,
+    "plastic": 12
+  },
+  "fresh_test_waste_source_groups": 23,
+  "selected": {
+    "learning_rate": 0.00012,
+    "anchor_weight": 0.3,
+    "epoch": 3,
+    "cutoff": 0.6,
+    "calibration_penalty": 1,
+    "baseline_calibration": [
+      {
+        "total": 516,
+        "correct": 454,
+        "wrong": 25,
+        "non_waste_accepted": 0,
+        "abstained": 37
+      },
+      {
+        "total": 12,
+        "correct": 11,
+        "wrong": 0,
+        "non_waste_accepted": 0,
+        "abstained": 1
+      },
+      {
+        "total": 16,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 4,
+        "abstained": 12
+      }
+    ],
+    "candidate_calibration": [
+      {
+        "total": 516,
+        "correct": 454,
+        "wrong": 24,
+        "non_waste_accepted": 0,
+        "abstained": 38
+      },
+      {
+        "total": 12,
+        "correct": 11,
+        "wrong": 0,
+        "non_waste_accepted": 0,
+        "abstained": 1
+      },
+      {
+        "total": 16,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 5,
+        "abstained": 11
+      }
+    ]
+  },
+  "comparisons": {
+    "pc46_test": {
+      "baseline": {
+        "total": 594,
+        "correct": 481,
+        "wrong": 41,
+        "non_waste_accepted": 0,
+        "abstained": 72
+      },
+      "candidate": {
+        "total": 594,
+        "correct": 490,
+        "wrong": 39,
+        "non_waste_accepted": 0,
+        "abstained": 65
+      },
+      "paired": {
+        "wrong → wrong": 33,
+        "abstained → abstained": 53,
+        "correct → correct": 476,
+        "abstained → correct": 14,
+        "wrong → abstained": 8,
+        "abstained → wrong": 5,
+        "correct → abstained": 4,
+        "correct → wrong": 1
+      }
+    },
+    "pc46_field": {
+      "baseline": {
+        "total": 110,
+        "correct": 64,
+        "wrong": 13,
+        "non_waste_accepted": 0,
+        "abstained": 33
+      },
+      "candidate": {
+        "total": 110,
+        "correct": 68,
+        "wrong": 12,
+        "non_waste_accepted": 0,
+        "abstained": 30
+      },
+      "paired": {
+        "abstained → abstained": 26,
+        "correct → correct": 63,
+        "correct → abstained": 1,
+        "wrong → abstained": 3,
+        "wrong → wrong": 10,
+        "abstained → correct": 5,
+        "abstained → wrong": 2
+      }
+    },
+    "fresh_waste": {
+      "baseline": {
+        "total": 24,
+        "correct": 15,
+        "wrong": 3,
+        "non_waste_accepted": 0,
+        "abstained": 6
+      },
+      "candidate": {
+        "total": 24,
+        "correct": 16,
+        "wrong": 3,
+        "non_waste_accepted": 0,
+        "abstained": 5
+      },
+      "paired": {
+        "correct → correct": 15,
+        "abstained → abstained": 4,
+        "abstained → correct": 1,
+        "wrong → wrong": 2,
+        "abstained → wrong": 1,
+        "wrong → abstained": 1
+      }
+    },
+    "stress": {
+      "baseline": {
+        "total": 30,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 12,
+        "abstained": 18
+      },
+      "candidate": {
+        "total": 30,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 12,
+        "abstained": 18
+      },
+      "paired": {
+        "abstained → abstained": 18,
+        "wrong → wrong": 12
+      }
+    },
+    "reviewed_non_waste": {
+      "baseline": {
+        "total": 47,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 18,
+        "abstained": 29
+      },
+      "candidate": {
+        "total": 47,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 17,
+        "abstained": 30
+      },
+      "paired": {
+        "abstained → abstained": 28,
+        "wrong → wrong": 16,
+        "wrong → abstained": 2,
+        "abstained → wrong": 1
+      }
+    },
+    "fresh_non_waste": {
+      "baseline": {
+        "total": 28,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 10,
+        "abstained": 18
+      },
+      "candidate": {
+        "total": 28,
+        "correct": 0,
+        "wrong": 0,
+        "non_waste_accepted": 6,
+        "abstained": 22
+      },
+      "paired": {
+        "wrong → wrong": 6,
+        "abstained → abstained": 18,
+        "wrong → abstained": 4
+      }
+    }
+  },
+  "pc46_test_by_bin": {
+    "compost": {
+      "baseline": {
+        "total": 93,
+        "correct": 86,
+        "wrong": 1,
+        "non_waste_accepted": 0,
+        "abstained": 6
+      },
+      "candidate": {
+        "total": 93,
+        "correct": 85,
+        "wrong": 1,
+        "non_waste_accepted": 0,
+        "abstained": 7
+      },
+      "paired": {
+        "wrong → wrong": 1,
+        "abstained → abstained": 6,
+        "correct → correct": 85,
+        "correct → abstained": 1
+      }
+    },
+    "glass": {
+      "baseline": {
+        "total": 112,
+        "correct": 83,
+        "wrong": 9,
+        "non_waste_accepted": 0,
+        "abstained": 20
+      },
+      "candidate": {
+        "total": 112,
+        "correct": 93,
+        "wrong": 5,
+        "non_waste_accepted": 0,
+        "abstained": 14
+      },
+      "paired": {
+        "correct → correct": 83,
+        "abstained → correct": 10,
+        "abstained → abstained": 10,
+        "wrong → wrong": 5,
+        "wrong → abstained": 4
+      }
+    },
+    "landfill": {
+      "baseline": {
+        "total": 100,
+        "correct": 73,
+        "wrong": 14,
+        "non_waste_accepted": 0,
+        "abstained": 13
+      },
+      "candidate": {
+        "total": 100,
+        "correct": 70,
+        "wrong": 17,
+        "non_waste_accepted": 0,
+        "abstained": 13
+      },
+      "paired": {
+        "abstained → abstained": 9,
+        "wrong → wrong": 12,
+        "correct → correct": 70,
+        "abstained → wrong": 4,
+        "correct → abstained": 2,
+        "correct → wrong": 1,
+        "wrong → abstained": 2
+      }
+    },
+    "paper": {
+      "baseline": {
+        "total": 168,
+        "correct": 145,
+        "wrong": 8,
+        "non_waste_accepted": 0,
+        "abstained": 15
+      },
+      "candidate": {
+        "total": 168,
+        "correct": 144,
+        "wrong": 6,
+        "non_waste_accepted": 0,
+        "abstained": 18
+      },
+      "paired": {
+        "correct → correct": 144,
+        "abstained → abstained": 15,
+        "correct → abstained": 1,
+        "wrong → wrong": 6,
+        "wrong → abstained": 2
+      }
+    },
+    "plastic": {
+      "baseline": {
+        "total": 121,
+        "correct": 94,
+        "wrong": 9,
+        "non_waste_accepted": 0,
+        "abstained": 18
+      },
+      "candidate": {
+        "total": 121,
+        "correct": 98,
+        "wrong": 10,
+        "non_waste_accepted": 0,
+        "abstained": 13
+      },
+      "paired": {
+        "correct → correct": 94,
+        "wrong → wrong": 9,
+        "abstained → abstained": 13,
+        "abstained → correct": 4,
+        "abstained → wrong": 1
+      }
+    }
+  },
+  "checks": {
+    "calibration_constraints": false,
+    "fresh_coverage": true,
+    "correct_field": true,
+    "correct_fresh": true,
+    "correct_full": true,
+    "per_bin": false,
+    "wrong_and_non_waste": true
+  },
+  "eligible_for_release_checks": false
+}

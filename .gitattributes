@@ -1,1 +1,2 @@
 *.onnx binary
+docs/ml/field-finetune-inputs.csv text eol=lf

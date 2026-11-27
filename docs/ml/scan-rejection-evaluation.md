@@ -2,6 +2,8 @@
 
 The production scan path now asks for a retake on nearly black, nearly white, and nearly uniform photos before running the model. It retains the rounded top-softmax cutoff of 0.60. Retake and uncertain outcomes do not enter mobile History or earn points.
 
+The [field-photo fine-tune](field-finetune-evaluation.md) reports the follow-up experiment using more waste photos and the same production scan path.
+
 ## Results on the bundled checkpoint
 
 Each cell counts images that would produce an accepted scan. Accepted waste photos can still have an incorrect bin.
