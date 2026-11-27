@@ -1,6 +1,7 @@
 // src/screens/ResultScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, useColorScheme } from 'react-native';
+import { RETAKE_MESSAGES } from '../services/confidence';
 import { createThemedStyles, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function ResultScreen({ route, navigation }) {
@@ -18,8 +19,27 @@ export default function ResultScreen({ route, navigation }) {
     uncertain = false,
     historySaved,
     savedScan = false,
+    retakeReason = null,
   } = route?.params || {};
   const notSure = uncertain === true;
+
+  if (retakeReason) {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {photoUri && <Image source={{ uri: photoUri }} style={styles.thumbnail} />}
+        <Text style={styles.itemName} accessibilityRole="header">Retake photo</Text>
+        <Text style={styles.notSureBody}>{RETAKE_MESSAGES[retakeReason]}</Text>
+        <Text style={styles.historyWarning}>Not added to History.</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.primaryButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.primaryButtonText}>Open camera</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  }
 
   const effectiveTip = disposalTip || tip || 'No disposal guidance is available for this scan.';
   // API bin_color values are display labels ("Green"), not native style colors.

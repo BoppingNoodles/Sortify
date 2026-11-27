@@ -6,6 +6,7 @@ const { loadSource } = require('./load-source.cjs');
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 const theme = loadSource('src/styles/theme.js');
+const confidence = loadSource('src/services/confidence.js');
 const native = Object.fromEntries([
   'Text', 'View', 'TouchableOpacity', 'Image', 'SafeAreaView', 'ActivityIndicator', 'ScrollView',
 ].map((name) => [name, name]));
@@ -86,7 +87,7 @@ async function scan(t, classifyImage, {
     '../services/storage': { saveScanRecord },
     '../services/municipalities': loadSource('src/services/municipalities.js'),
     '../services/CityPreference': { useCityPreference: () => React.useState('berkeley') },
-    '../services/confidence': loadSource('src/services/confidence.js'),
+    '../services/confidence': confidence,
   }).default;
   let renderer;
   await act(async () => {
@@ -420,7 +421,11 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   assert.deepEqual(requests[0], ['file:///photo.jpg', 'san-francisco']);
   assert.equal(app.renderer.root.findAllByType('ActivityIndicator').length, 1);
   await act(async () => {
-    prediction.resolve({ ...predictionFixture, disposal_tips: { notes: 'San Francisco accepts empty rigid bottles.' } });
+    prediction.resolve({
+      ...predictionFixture,
+      outcome: 'accepted',
+      disposal_tips: { notes: 'San Francisco accepts empty rigid bottles.' },
+    });
     await saveStarted.promise;
   });
   assert.equal(app.destinations.length, 0);
@@ -628,6 +633,7 @@ test('a history save failure still renders the classification with a warning', a
   assert.equal(params.historySaved, false);
 
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': native,
     '../styles/theme': theme,
   }).default;
@@ -649,6 +655,7 @@ test('a history save failure still renders the classification with a warning', a
 
 test('result styles use native-compatible category colors for every backend color label', async () => {
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': native, '../styles/theme': theme,
   }).default;
   for (const [category, binColor] of Object.entries({
@@ -671,6 +678,7 @@ test('result styles use native-compatible category colors for every backend colo
 test('result item name and background follow the current appearance', async (t) => {
   let scheme = 'dark';
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': { ...native, useColorScheme: () => scheme },
     '../styles/theme': theme,
   }).default;
@@ -698,6 +706,7 @@ test('result item name and background follow the current appearance', async (t) 
 
 test('result bounds confidence and displays the backend disposal guidance', async () => {
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': native,
     '../styles/theme': theme,
   }).default;
@@ -727,6 +736,53 @@ test('result bounds confidence and displays the backend disposal guidance', asyn
   }
 });
 
+test('capture retake opens the camera without a bin, History entry, or points', async (t) => {
+  const saveScanRecord = t.mock.fn();
+  const app = await scan(t, async () => ({ outcome: 'retake', reason: 'too_dark' }), { saveScanRecord });
+  await act(async () => { await app.handler('handleCapture')(); });
+  await act(async () => { await app.handler('handleAnalyze')(); });
+  assert.equal(saveScanRecord.mock.callCount(), 0);
+  const [destination, params] = app.destinations[0];
+  assert.equal(destination, 'ResultModal');
+  assert.equal(params.retakeReason, 'too_dark');
+  assert.equal(params.category, undefined);
+
+  const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
+    'react-native': native,
+    '../styles/theme': theme,
+  }).default;
+  const goBack = t.mock.fn();
+  let renderer;
+  await act(async () => {
+    renderer = create(React.createElement(ResultScreen, { route: { params }, navigation: { goBack } }));
+  });
+  t.after(async () => { await act(async () => renderer.unmount()); });
+  const labels = renderer.root.findAllByType('Text')
+    .map(({ props }) => React.Children.toArray(props.children).join(''));
+  assert.ok(labels.includes('The photo is too dark. Try again with more light.'));
+  assert.ok(labels.includes('Not added to History.'));
+  assert.ok(!labels.includes('Detection Confidence'));
+  await act(async () => { renderer.root.findByType('TouchableOpacity').props.onPress(); });
+  assert.equal(goBack.mock.callCount(), 1);
+});
+
+test('server uncertainty and invalid outcomes never save a scan', async (t) => {
+  for (const outcome of ['uncertain', 'unknown', null]) {
+    const saveScanRecord = t.mock.fn();
+    const app = await scan(t, async () => ({ ...predictionFixture, outcome }), { saveScanRecord });
+    await act(async () => { await app.handler('handleCapture')(); });
+    await act(async () => { await app.handler('handleAnalyze')(); });
+    assert.equal(saveScanRecord.mock.callCount(), 0);
+    if (outcome === 'uncertain') {
+      assert.equal(app.destinations[0][1].uncertain, true);
+    } else {
+      assert.equal(app.destinations.length, 0);
+      assert.equal(app.alerts[0][0], 'Scan Failed');
+    }
+  }
+});
+
 test('confidence cutoff flags results strictly below 0.60', () => {
   const { isUncertain, UNCERTAIN_BELOW } = loadSource('src/services/confidence.js');
   assert.equal(UNCERTAIN_BELOW, 0.6);
@@ -740,6 +796,7 @@ test('confidence cutoff flags results strictly below 0.60', () => {
 
 test('not-sure result shows the best guess, alternatives and a retake path', async (t) => {
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': native,
     '../styles/theme': theme,
   }).default;
@@ -784,6 +841,7 @@ test('not-sure result shows the best guess, alternatives and a retake path', asy
 
 test('confident results keep the normal layout', async (t) => {
   const ResultScreen = loadSource('src/screens/ResultScreen.js', {
+    '../services/confidence': confidence,
     'react-native': native,
     '../styles/theme': theme,
   }).default;

@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createThemedStyles, SPACING } from '../styles/theme';
 import { classifyImage, isServerAwake, wakeServer } from '../services/api';
 import { saveScanRecord } from '../services/storage';
-import { isUncertain } from '../services/confidence';
+import { isUncertain, RETAKE_MESSAGES } from '../services/confidence';
 import { MUNICIPALITIES } from '../services/municipalities';
 import { useCityPreference } from '../services/CityPreference';
 
@@ -350,8 +350,22 @@ export default function ScanScreen({ navigation }) {
       const result = await classifyImage(capturedPhoto.uri, selectedCity);
       if (!isCurrent(pending.generation)) return;
 
+      if (result?.outcome === 'retake') {
+        if (typeof result.reason !== 'string' || !Object.hasOwn(RETAKE_MESSAGES, result.reason)) {
+          throw new Error('Classification server returned an invalid response.');
+        }
+        setCapturedPhoto(null);
+        navigation.navigate('ResultModal', {
+          photoUri: capturedPhoto.uri,
+          retakeReason: result.reason,
+        });
+        void playHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
+        return;
+      }
+
       if (
         !result ||
+        (Object.hasOwn(result, 'outcome') && result.outcome !== 'accepted' && result.outcome !== 'uncertain') ||
         typeof result.item_name !== 'string' ||
         !result.item_name.trim() ||
         typeof result.category !== 'string' ||
@@ -373,7 +387,9 @@ export default function ScanScreen({ navigation }) {
       const disposalTip = typeof localNotes === 'string' && localNotes.trim()
         ? localNotes.trim()
         : result.disposal_tip;
-      const uncertain = isUncertain(result.confidence);
+      const uncertain = Object.hasOwn(result, 'outcome')
+        ? result.outcome === 'uncertain'
+        : isUncertain(result.confidence);
       let savedRecord = null;
       if (!uncertain) {
         pending.saving = true;
