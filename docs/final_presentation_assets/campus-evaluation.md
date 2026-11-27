@@ -2,7 +2,7 @@
 
 ## Release candidate
 
-The candidate evaluation is blocked. The selected PyTorch checkpoint, its release manifest, and the frozen labeled campus photos were unavailable in the checkout and connected Drive search on November 16, 2026. The ML owner and campus dataset owner need to supply the artifact and frozen sample set. Keep the reporting set out of model selection and tuning.
+The [current PyTorch checkpoint](../release/model-release.md) is bundled. Campus evaluation is pending a matching release manifest and the frozen labeled campus photos. Keep the reporting set out of model selection and tuning.
 
 With Python dependencies installed, run from the repository root using the checksum-verified checkpoint and manifest from plan 04. Put shareable evaluation images under `compost`, `glass`, `landfill`, `paper`, `plastic` inside the labeled dataset directory. Give the frozen dataset revision a stable identifier.
 
