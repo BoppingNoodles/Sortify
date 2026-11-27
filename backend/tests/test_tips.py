@@ -83,7 +83,18 @@ def test_wrapper_items_match_landfill_tips(item_name):
     assert "landfill" in guidance["item_tip"].lower()
 
 
-def test_classify_response_includes_compost_tip_for_the_mock_carton():
+def test_classify_response_includes_compost_tip_for_a_carton(monkeypatch):
+    from backend.app.services.inference import ModelService
+
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image, *, check_quality: {
+            "category": "compost",
+            "item_name": "Almond Milk Carton",
+            "confidence": 0.91,
+        },
+    )
     image = io.BytesIO()
     Image.new("RGB", (16, 16), "green").save(image, format="JPEG")
     response = client.post(
@@ -128,12 +139,11 @@ def test_classify_response_uses_client_item_name_hint(monkeypatch):
     monkeypatch.setattr(
         ModelService,
         "predict",
-        lambda self, image_bytes: {
+        lambda self, image_bytes, *, check_quality=False: {
             "category": "plastic",
             "item_name": "can",
             "confidence": 0.95,
             "alternatives": [],
-            "is_mock": True,
             "latency_ms": 1.0,
         },
     )

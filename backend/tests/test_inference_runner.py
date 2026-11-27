@@ -72,7 +72,7 @@ def test_concurrent_http_timeouts_never_exceed_worker_limit(monkeypatch):
     lock = threading.Lock()
     active = peak = 0
 
-    def slow_predict(self, _):
+    def slow_predict(self, _, *, check_quality=False):
         nonlocal active, peak
         with lock:
             active += 1

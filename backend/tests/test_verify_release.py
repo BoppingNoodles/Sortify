@@ -52,7 +52,16 @@ def test_success_records_first_and_warm_requests_without_history_writes(sample_i
 
 
 @pytest.mark.parametrize(
-    "failure", ["timeout", "503", "invalid-json", "invalid-schema", "fallback"]
+    "failure",
+    [
+        "timeout",
+        "503",
+        "invalid-json",
+        "invalid-schema",
+        "fallback",
+        "retake",
+        "uncertain",
+    ],
 )
 def test_classification_failures_are_reported_without_retry(sample_image, failure):
     classify_calls = 0
@@ -72,6 +81,10 @@ def test_classification_failures_are_reported_without_retry(sample_image, failur
             return httpx.Response(200, text="<html>Busy</html>")
         if failure == "invalid-schema":
             return httpx.Response(200, json={**PREDICTION, "confidence": "0.92"})
+        if failure == "retake":
+            return httpx.Response(200, json={"outcome": "retake", "reason": "too_dark"})
+        if failure == "uncertain":
+            return httpx.Response(200, json={**PREDICTION, "outcome": "uncertain"})
         return httpx.Response(
             200, json={**PREDICTION, "item_name": "Almond Milk Carton (Scaffold)"}
         )
@@ -109,7 +122,7 @@ def test_explicit_staging_check_exercises_real_history_routes(
     sample_image, monkeypatch
 ):
     class ControlledModel:
-        def predict(self, _image):
+        def predict(self, _image, *, check_quality=False):
             return {"category": "plastic", "item_name": "Plastic", "confidence": 0.92}
 
     monkeypatch.setitem(

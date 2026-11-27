@@ -1,10 +1,12 @@
 """Pydantic v2 Schemas and Contracts for Sortify API."""
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import AwareDatetime, BaseModel, Field, field_validator, model_validator
+
+from backend.app.services.photo_quality import RetakeReason
 
 # Canonical 5 waste categories and corresponding color associations
 ALLOWED_CATEGORIES: set[str] = {"compost", "glass", "landfill", "paper", "plastic"}
@@ -52,12 +54,20 @@ class DisposalTip(BaseModel):
     notes: str | None = None
 
 
+class ClassifyRetake(BaseModel):
+    """Capture quality prevented a classification."""
+
+    outcome: Literal["retake"]
+    reason: RetakeReason
+
+
 class ClassifyResponse(BaseModel):
     """API response model for item classification."""
 
     item_name: str
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
+    outcome: Literal["accepted", "uncertain"] = "accepted"
     disposal_tip: str = ""
     bin_color: str = ""
     bin: str | None = None

@@ -190,7 +190,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassifyResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ClassifyResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ClassifyRetake"
+                    }
+                  ],
+                  "title": "Response Classify Item Api Classify Post"
                 }
               }
             }
@@ -1446,6 +1454,15 @@
             "minimum": 0.0,
             "title": "Confidence"
           },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "uncertain"
+            ],
+            "title": "Outcome",
+            "default": "accepted"
+          },
           "disposal_tip": {
             "type": "string",
             "title": "Disposal Tip",
@@ -1498,6 +1515,31 @@
         ],
         "title": "ClassifyResponse",
         "description": "API response model for item classification."
+      },
+      "ClassifyRetake": {
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "const": "retake",
+            "title": "Outcome"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "too_dark",
+              "too_bright",
+              "no_visible_detail"
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcome",
+          "reason"
+        ],
+        "title": "ClassifyRetake",
+        "description": "Capture quality prevented a classification."
       },
       "DisposalTip": {
         "properties": {

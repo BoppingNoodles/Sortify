@@ -36,7 +36,7 @@ def test_classify_preserves_municipal_rules(city, category, monkeypatch):
     monkeypatch.setattr(
         ModelService,
         "predict",
-        lambda self, image: {
+        lambda self, image, *, check_quality=False: {
             "category": category,
             "confidence": 0.9,
             "item_name": "Bottle",
@@ -63,7 +63,10 @@ def test_classify_reports_the_city_used_for_guidance(location, expected, monkeyp
     monkeypatch.setattr(
         ModelService,
         "predict",
-        lambda self, image: {"category": "plastic", "confidence": 0.9},
+        lambda self, image, *, check_quality=False: {
+            "category": "plastic",
+            "confidence": 0.9,
+        },
     )
     response = client.post(
         "/api/classify",
@@ -84,7 +87,10 @@ def test_disposal_data_failure_is_reported_as_an_internal_error(monkeypatch):
     monkeypatch.setattr(
         ModelService,
         "predict",
-        lambda self, image: {"category": "plastic", "confidence": 0.9},
+        lambda self, image, *, check_quality=False: {
+            "category": "plastic",
+            "confidence": 0.9,
+        },
     )
 
     def unavailable(*args):
@@ -110,9 +116,66 @@ def create_test_image(
         "green" if mode == "RGB" else (0, 255, 0, 255) if mode == "RGBA" else 128
     )
     img = Image.new(mode, size, color=color)
+    patch_color = 80 if mode == "L" else (220, 100, 200)
+    if mode == "RGBA":
+        patch_color = (220, 100, 200, 255)
+    img.paste(patch_color, (0, 0, max(1, size[0] // 2), max(1, size[1] // 2)))
     buffer = io.BytesIO()
     img.save(buffer, format=img_format)
     return buffer.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("color", "reason"),
+    [("black", "too_dark"), ("white", "too_bright"), ("#404040", "no_visible_detail")],
+)
+def test_classify_retakes_obviously_unusable_frames(color, reason, monkeypatch):
+    from backend.app.routers.classify import get_model_service
+
+    def unexpected_transform(image):
+        raise AssertionError("Retake should skip model preprocessing")
+
+    monkeypatch.setattr(get_model_service(), "transform", unexpected_transform)
+    payload = io.BytesIO()
+    Image.new("RGB", (192, 160), color).save(payload, format="PNG")
+    response = client.post(
+        "/api/classify", files={"file": ("frame.png", payload.getvalue(), "image/png")}
+    )
+    assert response.status_code == 200
+    assert response.json() == {"outcome": "retake", "reason": reason}
+
+
+@pytest.mark.parametrize(
+    ("confidence", "outcome"),
+    [(0.5999, "uncertain"), (0.6, "accepted"), (float("nan"), "uncertain")],
+)
+def test_classify_returns_server_acceptance(confidence, outcome, monkeypatch):
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image, *, check_quality: {
+            "category": "plastic",
+            "confidence": confidence,
+        },
+    )
+    response = client.post(
+        "/api/classify",
+        files={"file": ("frame.jpg", create_test_image(), "image/jpeg")},
+    )
+    assert response.status_code == 200
+    assert response.json()["outcome"] == outcome
+
+
+def test_classify_reports_unavailable_model(monkeypatch):
+    from backend.app.routers.classify import get_model_service
+
+    monkeypatch.setattr(get_model_service(), "model", None)
+    response = client.post(
+        "/api/classify",
+        files={"file": ("frame.jpg", create_test_image(), "image/jpeg")},
+    )
+    assert response.status_code == 503
+    assert "category" not in response.json()
 
 
 def test_classify_standard_image():
@@ -203,7 +266,7 @@ def test_classify_empty_payload():
 def test_classify_timeout_protection(monkeypatch):
     """Verify inference taking longer than timeout raises HTTP 504 Gateway Timeout."""
 
-    def slow_predict(self, image_bytes: bytes):
+    def slow_predict(self, image_bytes: bytes, *, check_quality=False):
         import time
 
         time.sleep(0.3)
@@ -224,7 +287,7 @@ def test_classify_timeout_protection(monkeypatch):
 def test_classify_runtime_error_resilience(monkeypatch):
     """Verify PyTorch / CUDA RuntimeError returns HTTP 500 instead of crashing server."""
 
-    def failing_predict(self, image_bytes: bytes):
+    def failing_predict(self, image_bytes: bytes, *, check_quality=False):
         raise RuntimeError("CUDA device out of memory or kernel launch failure")
 
     monkeypatch.setattr(ModelService, "predict", failing_predict)
@@ -240,7 +303,7 @@ def test_classify_runtime_error_resilience(monkeypatch):
 def test_classify_unexpected_exception_resilience(monkeypatch):
     """Verify completely unexpected internal exception returns HTTP 500 without crashing."""
 
-    def exploding_predict(self, image_bytes: bytes):
+    def exploding_predict(self, image_bytes: bytes, *, check_quality=False):
         raise ZeroDivisionError("Unexpected mathematical error in pipeline")
 
     monkeypatch.setattr(ModelService, "predict", exploding_predict)
@@ -256,7 +319,7 @@ def test_classify_unexpected_exception_resilience(monkeypatch):
 def test_classify_deduplicates_alternatives(monkeypatch):
     """Verify alternatives filtering eliminates duplicate categories and primary category."""
 
-    def mock_predict(self, image_bytes: bytes):
+    def mock_predict(self, image_bytes: bytes, *, check_quality=False):
         return {
             "category": "plastic",
             "item_name": "Plastic Bottle",
@@ -286,7 +349,7 @@ def test_classify_deduplicates_alternatives(monkeypatch):
 def test_classify_null_alternatives_metadata(monkeypatch):
     """Verify model prediction with null or omitted alternatives validates cleanly."""
 
-    def mock_predict(self, image_bytes: bytes):
+    def mock_predict(self, image_bytes: bytes, *, check_quality=False):
         return {
             "category": "paper",
             "confidence": 0.88,
@@ -306,7 +369,7 @@ def test_classify_null_alternatives_metadata(monkeypatch):
 def test_classify_unknown_model_label_fallback(monkeypatch):
     """Verify unrecognized model labels safely fall back to landfill category."""
 
-    def mock_predict(self, image_bytes: bytes):
+    def mock_predict(self, image_bytes: bytes, *, check_quality=False):
         return {
             "category": "unrecognized_electronic_gadget",
             "confidence": 0.55,

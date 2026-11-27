@@ -143,7 +143,9 @@ def test_classify_endpoint_rejects_unsupported_mime():
 
 def test_classify_endpoint_ignores_query_pollution():
     image = io.BytesIO()
-    Image.new("RGB", (16, 16)).save(image, format="JPEG")
+    photo = Image.new("RGB", (16, 16), "green")
+    photo.paste("blue", (0, 0, 8, 8))
+    photo.save(image, format="JPEG")
     response = client.post(
         "/api/classify?return_bytes=true",
         files={"file": ("valid.jpg", image.getvalue(), "image/jpeg")},

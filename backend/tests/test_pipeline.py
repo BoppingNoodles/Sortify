@@ -29,7 +29,7 @@ class FrozenDatetime(datetime):
 
 
 class ControlledInference:
-    def predict(self, image_bytes):
+    def predict(self, image_bytes, *, check_quality=False):
         with Image.open(BytesIO(image_bytes)) as image:
             pixel = image.convert("RGB").getpixel((0, 0))
         category = "plastic" if pixel == (255, 0, 0) else "paper"

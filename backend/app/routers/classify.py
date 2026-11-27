@@ -1,6 +1,8 @@
 """Classification API router with timeout protection and hardened error resilience."""
 
 import logging
+from functools import partial
+from math import isfinite
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from PIL import UnidentifiedImageError
@@ -11,6 +13,7 @@ from backend.app.core.exceptions import InvalidImageError, ModelInferenceError
 from backend.app.schemas import (
     ClassificationAlternative,
     ClassifyResponse,
+    ClassifyRetake,
     DisposalTip,
 )
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
@@ -28,6 +31,7 @@ from backend.app.utils.validators import validate_image_upload
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+UNCERTAIN_BELOW = 0.60
 
 IMAGE_DECODE_ERRORS = (
     UnidentifiedImageError,
@@ -65,13 +69,13 @@ def get_model_service() -> ModelService:
     return model_service
 
 
-@router.post("/classify", response_model=ClassifyResponse)
+@router.post("/classify", response_model=ClassifyResponse | ClassifyRetake)
 async def classify_item(
     location: str = Query(DEFAULT_CITY, description="Municipality name"),
     item_name: str | None = Query(default=None),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
-) -> ClassifyResponse:
+) -> ClassifyResponse | ClassifyRetake:
     """Ingest image upload, run model inference with timeout resilience, and return classification."""
     # 1. Read uploaded image bytes and immediately release file descriptor
     try:
@@ -96,7 +100,7 @@ async def classify_item(
     timeout_seconds = getattr(settings, "INFERENCE_TIMEOUT_SECONDS", 10.0)
     try:
         prediction = await inference_runner.run(
-            service.predict, image_bytes, timeout_seconds
+            partial(service.predict, check_quality=True), image_bytes, timeout_seconds
         )
     except InferenceBusyError as exc:
         raise HTTPException(
@@ -114,6 +118,14 @@ async def classify_item(
         raise InvalidImageError() from exc
     except (RuntimeError, MemoryError) as exc:
         raise ModelInferenceError() from exc
+
+    if prediction.get("outcome") == "retake":
+        return ClassifyRetake.model_validate(prediction)
+    if prediction.get("is_mock") is True:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The classification model is unavailable.",
+        )
 
     # 3. Normalize the prediction and build disposal guidance.
     label = str(prediction.get("category", "")).strip().lower()
@@ -165,13 +177,16 @@ async def classify_item(
 
     raw_conf = prediction.get("confidence", 0.0)
     primary_conf = float(raw_conf) if isinstance(raw_conf, (int, float)) else 0.0
-    primary_conf = max(0.0, min(1.0, primary_conf))
+    if not isfinite(primary_conf):
+        primary_conf = 0.0
+    primary_conf = round(max(0.0, min(1.0, primary_conf)), 4)
 
     # 5. Build validated response payload
     return ClassifyResponse(
         item_name=resolved_item_name,
         category=category,
-        confidence=round(primary_conf, 4),
+        confidence=primary_conf,
+        outcome="uncertain" if primary_conf < UNCERTAIN_BELOW else "accepted",
         location=city,
         disposal_tip=get_disposal_tip(category, resolved_item_name, city),
         bin_color=bin_color,

@@ -86,8 +86,12 @@ streaming starts; a failure after headers are sent cannot replace the response.
   - `file` *(binary upload, required)*: Waste item image (`JPEG`, `PNG`, `WEBP`). Maximum size: 10MB.
 
 #### Response (HTTP 200 OK)
+
+The `outcome` field controls how the app handles a scan. `accepted` may be saved to local History and earn points. `uncertain` includes the best guess for scores strictly below 0.60. Mobile shows it with a retake option and skips History and points.
+
 ```json
 {
+  "outcome": "accepted",
   "item_name": "Plastic Water Bottle",
   "category": "plastic",
   "confidence": 0.94,
@@ -113,13 +117,15 @@ streaming starts; a failure after headers are sent cannot replace the response.
 }
 ```
 
+A decoded photo with an obvious capture problem receives `{"outcome":"retake","reason":"too_dark"}` without running the classifier. Other reasons include `too_bright` and `no_visible_detail`. The app shows a reason-specific retake prompt and skips History and points.
+
 #### Error Responses
 - **HTTP 400 Bad Request:** Empty file or malformed multipart request.
 - **HTTP 413 Payload Too Large:** File exceeds the 10MB upload limit.
 - **HTTP 415 Unsupported Media Type:** Unsupported MIME/signature/extension, corrupt image, or unsafe image dimensions (`INVALID_IMAGE_FORMAT`).
 - **HTTP 422 Unprocessable Entity:** Missing file field or invalid request parameters (`VALIDATION_ERROR`).
 - **HTTP 500 Internal Server Error:** Model execution or unexpected pipeline failure; no private exception detail.
-- **HTTP 503 Service Unavailable:** All inference workers are occupied; retry later.
+- **HTTP 503 Service Unavailable:** All inference workers are occupied or the classification model is unavailable.
 - **HTTP 504 Gateway Timeout:** Inference exceeded the configured timeout.
 
 ---

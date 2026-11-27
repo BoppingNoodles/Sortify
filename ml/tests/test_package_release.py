@@ -20,7 +20,9 @@ def release(tmp_path, monkeypatch):
     checkpoint = tmp_path / "fixture.pth"
     output = tmp_path / "package"
     image = tmp_path / "fixture.png"
-    Image.new("RGB", (12, 8), "green").save(image)
+    photo = Image.new("RGB", (12, 8), "green")
+    photo.paste("blue", (0, 0, 6, 4))
+    photo.save(image)
 
     def run(digest=None, *, images=None):
         return package_release(

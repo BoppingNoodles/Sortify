@@ -13,7 +13,7 @@
 
 ## Run against the selected deployment
 
-Install root `requirements.txt` and run from the repository root. Ask the deployment owner for the application SHA, model manifest and startup load evidence, storage mode, and the approved test URL. Use a shareable JPEG, PNG, or WebP sample whose digest can be matched to the model manifest.
+Install root `requirements.txt` and run from the repository root. Ask the deployment owner for the application SHA, model manifest and startup load evidence, storage mode, and the approved test URL. Use a shareable JPEG, PNG, or WebP photo with a matching manifest digest that produces an `accepted` classification for the selected checkpoint.
 
 ```bash
 python -m backend.scripts.verify_release --base-url "$SORTIFY_API" \

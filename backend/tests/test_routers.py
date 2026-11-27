@@ -6,13 +6,24 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from backend.app.main import app
+from backend.app.services.inference import ModelService
 
 client = TestClient(app)
 
 AUTH_HEADERS = {"Authorization": "Bearer test-valid-token"}
 
 
-def test_classify_endpoint_success():
+def test_classify_endpoint_success(monkeypatch):
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image, *, check_quality: {
+            "category": "compost",
+            "item_name": "Compost",
+            "confidence": 0.91,
+            "alternatives": [{"category": "paper", "confidence": 0.06}],
+        },
+    )
     fake_image = io.BytesIO()
     Image.new("RGB", (16, 16), "green").save(fake_image, format="JPEG")
     fake_image.seek(0)
@@ -24,6 +35,7 @@ def test_classify_endpoint_success():
     assert response.status_code == 200
     data = response.json()
     assert data["category"] == "compost"
+    assert data["outcome"] == "accepted"
     assert data["bin_color"] == "Green"
     assert "bin" in data
     assert "disposal_tips" in data

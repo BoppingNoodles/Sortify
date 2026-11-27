@@ -87,7 +87,7 @@ def test_unhandled_failures_are_logged_privately_and_server_recovers(source, cap
 
 
 def test_unhandled_classification_failure_preserves_cors_headers(monkeypatch):
-    def fail_prediction(self, image_bytes):
+    def fail_prediction(self, image_bytes, *, check_quality=False):
         raise ZeroDivisionError("private inference details")
 
     monkeypatch.setattr(ModelService, "predict", fail_prediction)

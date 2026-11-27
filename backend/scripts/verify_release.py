@@ -86,6 +86,10 @@ def validate_health(body):
 
 
 def validate_classification(body, location):
+    if isinstance(body, dict) and body.get("outcome", "accepted") != "accepted":
+        raise ValueError(
+            "Release smoke image did not produce an accepted classification"
+        )
     result = ClassifyResponse.model_validate(body, strict=True)
     if not result.item_name.strip() or not str(body.get("disposal_tip", "")).strip():
         raise ValueError("Classification is missing item name or disposal guidance")

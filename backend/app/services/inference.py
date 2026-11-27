@@ -13,6 +13,7 @@ from PIL.Image import DecompressionBombError
 from torchvision import transforms
 
 from backend.app.core.config import DEFAULT_MODEL_PATH, settings
+from backend.app.services.photo_quality import get_retake_reason
 
 logger = logging.getLogger(__name__)
 Image.MAX_IMAGE_PIXELS = 25_000_000
@@ -60,6 +61,42 @@ def build_model(arch: str, num_classes: int) -> torch.nn.Module:
     else:
         raise ValueError(f"Unsupported architecture: {arch}")
     return model
+
+
+def decode_image(image_bytes: bytes) -> Image.Image:
+    """Decode a scan using the production pixel limits and EXIF handling."""
+    # Validate and open image bytes, handling EXIF orientation and color formats
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as raw_img:
+            if raw_img.width <= 0 or raw_img.height <= 0:
+                raise ValueError(f"Invalid image dimensions: {raw_img.size}")
+            if raw_img.width > 8192 or raw_img.height > 8192:
+                raise ValueError("Image dimensions exceed the 8192x8192 limit")
+            # Decode JPEGs at a reduced DCT scale (no smaller than 448px).
+            # A full 12 MP phone photo decodes to ~36 MB per copy, which
+            # pushed the 512 MB Render instance over its memory limit.
+            raw_img.draft("RGB", (448, 448))
+            # draft() shrinks JPEG sizes; anything still this large is a
+            # PNG/WebP (or bomb) that would be decoded at full resolution.
+            if raw_img.width * raw_img.height > MAX_DECODED_PIXELS:
+                raise ValueError("Image resolution is too large to process")
+            raw_img.load()
+            try:
+                # In place: avoid a second full-size copy when no rotation.
+                ImageOps.exif_transpose(raw_img, in_place=True)
+            except (TypeError, ValueError, OSError):
+                pass
+            img = raw_img if raw_img.mode == "RGB" else raw_img.convert("RGB")
+    except (
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+        SyntaxError,
+        DecompressionBombError,
+    ) as err:
+        logger.warning("[INFERENCE] Corrupted or invalid image payload: %s", err)
+        raise
+    return img
 
 
 class ModelService:
@@ -197,45 +234,19 @@ class ModelService:
             )
             self.model = None
 
-    def predict(self, image_bytes: bytes) -> dict[str, Any]:
+    def predict(
+        self, image_bytes: bytes, *, check_quality: bool = False
+    ) -> dict[str, Any]:
         """Runs inference on uploaded image bytes.
 
         Returns:
-            dict containing category, item_name, confidence, alternatives, and latency_ms.
+            Classification data, or a retake outcome when capture checks are enabled.
         """
         start_time = time.perf_counter()
 
-        # Validate and open image bytes, handling EXIF orientation and color formats
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as raw_img:
-                if raw_img.width <= 0 or raw_img.height <= 0:
-                    raise ValueError(f"Invalid image dimensions: {raw_img.size}")
-                if raw_img.width > 8192 or raw_img.height > 8192:
-                    raise ValueError("Image dimensions exceed the 8192x8192 limit")
-                # Decode JPEGs at a reduced DCT scale (no smaller than 448px).
-                # A full 12 MP phone photo decodes to ~36 MB per copy, which
-                # pushed the 512 MB Render instance over its memory limit.
-                raw_img.draft("RGB", (448, 448))
-                # draft() shrinks JPEG sizes; anything still this large is a
-                # PNG/WebP (or bomb) that would be decoded at full resolution.
-                if raw_img.width * raw_img.height > MAX_DECODED_PIXELS:
-                    raise ValueError("Image resolution is too large to process")
-                raw_img.load()
-                try:
-                    # In place: avoid a second full-size copy when no rotation.
-                    ImageOps.exif_transpose(raw_img, in_place=True)
-                except (TypeError, ValueError, OSError):
-                    pass
-                img = raw_img if raw_img.mode == "RGB" else raw_img.convert("RGB")
-        except (
-            UnidentifiedImageError,
-            OSError,
-            ValueError,
-            SyntaxError,
-            DecompressionBombError,
-        ) as err:
-            logger.warning("[INFERENCE] Corrupted or invalid image payload: %s", err)
-            raise
+        img = decode_image(image_bytes)
+        if check_quality and (reason := get_retake_reason(img)) is not None:
+            return {"outcome": "retake", "reason": reason}
 
         if self.model is None:
             elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
@@ -262,6 +273,8 @@ class ModelService:
             with torch.no_grad():
                 outputs = self.model(tensor)
                 probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
+                if not torch.isfinite(probabilities).all().item():
+                    raise RuntimeError("Model produced non-finite probabilities")
                 if probabilities.shape[0] != len(self.class_names):
                     raise RuntimeError("Model outputs do not match checkpoint labels")
                 k = min(3, len(self.class_names))
