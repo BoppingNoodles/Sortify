@@ -206,18 +206,20 @@ async function requestWithRetry(url, createOptions, maxRetries = MAX_RETRIES) {
 }
 
 export async function classifyImage(imageUri, location = 'berkeley', maxRetries = MAX_RETRIES) {
-  let filename = imageUri.split('/').pop() || 'photo.jpg';
-  const extension = filename.split('.').pop()?.toLowerCase();
+  let filename = imageUri.split(/[?#]/, 1)[0].split('/').pop() || 'photo.jpg';
+  const extension = filename.match(/\.([^.]+)$/)?.[1].toLowerCase();
 
   const mimeTypes = {
     jpg: 'image/jpeg',
     jpeg: 'image/jpeg',
     png: 'image/png',
     webp: 'image/webp',
-    heic: 'image/heic',
   };
 
-  const type = mimeTypes[extension] || 'image/jpeg';
+  if (Platform.OS !== 'web' && extension && !Object.hasOwn(mimeTypes, extension)) {
+    throw new Error('Unsupported image format. Use a JPEG, PNG, or WebP photo.');
+  }
+  const type = extension && Object.hasOwn(mimeTypes, extension) ? mimeTypes[extension] : 'image/jpeg';
 
   const url = `${API_BASE_URL}/api/classify?location=${encodeURIComponent(location)}`;
 

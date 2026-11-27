@@ -82,6 +82,14 @@ test('native upload retries transient errors using fresh multipart bodies', asyn
   assert.equal(new TextDecoder().decode(await bodies[0].file.bytes()), 'bytes of file:///photo.jpg');
 });
 
+test('native HEIC and HEIF are rejected before upload', async (t) => {
+  const fetch = t.mock.fn();
+  const { classifyImage } = client('ios', { fetch });
+  await assert.rejects(classifyImage('file:///photo.HEIC?cache=1'), /JPEG, PNG, or WebP/);
+  await assert.rejects(classifyImage('file:///photo.heif'), /JPEG, PNG, or WebP/);
+  assert.equal(fetch.mock.callCount(), 0);
+});
+
 test('4xx errors are readable and never retried', async () => {
   for (const [status, body, message] of [
     [413, { detail: 'Too large' }, /Too large/],
