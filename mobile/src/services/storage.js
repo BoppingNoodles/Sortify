@@ -157,6 +157,20 @@ export function clearHistory() {
   });
 }
 
+export function deleteScanRecord(id) {
+  return enqueueHistoryOperation(async () => {
+    const scans = await readHistory();
+    const remaining = scans.filter((scan) => scan.id !== id);
+    if (remaining.length !== scans.length) {
+      await AsyncStorage.setItem(SCANS_STORAGE_KEY, JSON.stringify(remaining));
+    }
+    return true;
+  }).catch((error) => {
+    console.warn('Could not delete scan.', error);
+    return false;
+  });
+}
+
 async function initializeDeviceUuid() {
   const storedUuid = await AsyncStorage.getItem(DEVICE_UUID_KEY);
   if (isUuid(storedUuid)) return storedUuid;

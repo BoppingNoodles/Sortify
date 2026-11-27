@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadSavedScans } from '../services/storage';
+import { clearHistory, deleteScanRecord, loadSavedScans } from '../services/storage';
 import { createThemedStyles, SPACING, TYPOGRAPHY } from '../styles/theme';
 
 export default function HistoryScreen({ navigation }) {
@@ -21,6 +21,10 @@ export default function HistoryScreen({ navigation }) {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deletion, setDeletion] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const deleteInProgress = useRef(false);
   const requestVersion = useRef(0);
 
   const fetchHistory = useCallback(async () => {
@@ -53,6 +57,25 @@ export default function HistoryScreen({ navigation }) {
     fetchHistory();
   };
 
+  const confirmDeletion = async () => {
+    if (!deletion || deleteInProgress.current) return;
+    deleteInProgress.current = true;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const deleted = deletion.all ? await clearHistory() : await deleteScanRecord(deletion.id);
+      if (!deleted) {
+        setDeleteError('Could not delete scan history. Try again.');
+        return;
+      }
+      setDeletion(null);
+      await fetchHistory();
+    } finally {
+      deleteInProgress.current = false;
+      setDeleting(false);
+    }
+  };
+
   const renderItem = ({ item }) => {
     const itemName = item.item_name || item.itemName || 'Waste Item';
     const category = (item.category || item.bin || 'landfill').toLowerCase();
@@ -60,31 +83,52 @@ export default function HistoryScreen({ navigation }) {
     const formattedDate = item.timestamp
       ? new Date(item.timestamp).toLocaleString()
       : 'Today';
+    const photoUri = item.thumbnail ? 'data:image/jpeg;base64,' + item.thumbnail : null;
 
     return (
       <View style={styles.scanCard}>
-        {item.thumbnail ? (
-          <Image
-            source={{ uri: 'data:image/jpeg;base64,' + item.thumbnail }}
-            style={styles.cardImage}
-          />
-        ) : (
-          <View style={[styles.cardPlaceholder, { borderColor: binColor }]}>
-            <Text style={styles.placeholderEmoji}>♻️</Text>
+        <TouchableOpacity
+          style={styles.scanDetails}
+          accessibilityRole="button"
+          accessibilityLabel={`View ${itemName} scan from ${formattedDate}`}
+          disabled={deleting}
+          onPress={() => navigation.navigate('ResultModal', {
+            itemName,
+            category,
+            confidence: item.confidence,
+            disposalTip: item.disposal_tip,
+            location: item.location ?? null,
+            photoUri,
+            savedScan: true,
+          })}
+        >
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} style={styles.cardImage} />
+          ) : (
+            <View style={[styles.cardPlaceholder, { borderColor: binColor }]}>
+              <Text style={styles.placeholderEmoji}>♻️</Text>
+            </View>
+          )}
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle} numberOfLines={1}>{itemName}</Text>
+            <View style={[styles.categoryBadge, { backgroundColor: binColor }]}>
+              <Text style={styles.categoryBadgeText}>{category.toUpperCase()}</Text>
+            </View>
+            <Text style={styles.cardDate}>{formattedDate}</Text>
           </View>
-        )}
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {itemName}
-          </Text>
-          <View style={[styles.categoryBadge, { backgroundColor: binColor }]}>
-            <Text style={styles.categoryBadgeText}>{category.toUpperCase()}</Text>
+          <View style={styles.pointsBadge}>
+            <Text style={styles.pointsText}>+10 pts</Text>
           </View>
-          <Text style={styles.cardDate}>{formattedDate}</Text>
-        </View>
-        <View style={styles.pointsBadge}>
-          <Text style={styles.pointsText}>+10 pts</Text>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${itemName} scan from ${formattedDate}`}
+          disabled={deleting}
+          onPress={() => { setDeleteError(null); setDeletion({ id: item.id, itemName }); }}
+        >
+          <Text style={styles.deleteText}>Delete</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -105,6 +149,34 @@ export default function HistoryScreen({ navigation }) {
           </TouchableOpacity>
         )}
       </View>
+
+      {!loading && scans.length > 0 && (
+        <View style={styles.historyActions}>
+          {deletion ? (
+            <>
+              <Text accessibilityRole="header" style={styles.cardTitle}>
+                {deletion.all ? 'Clear all scan history?' : `Delete the ${deletion.itemName} scan?`}
+              </Text>
+              <Text style={styles.cardDate}>This updates your local history, points, and streak.</Text>
+              <View style={styles.confirmActions}>
+                <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} disabled={deleting}
+                  onPress={() => { setDeletion(null); setDeleteError(null); }}>
+                  <Text style={styles.statsCtaText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} disabled={deleting}
+                  onPress={confirmDeletion}>
+                  <Text style={styles.deleteText}>{deleting ? 'Deleting…' : deletion.all ? 'Clear all scans' : 'Delete scan'}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} onPress={() => setDeletion({ all: true })}>
+              <Text style={styles.deleteText}>Clear history</Text>
+            </TouchableOpacity>
+          )}
+          {deleteError && <Text accessibilityRole="alert" style={styles.deleteText}>{deleteError}</Text>}
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -173,6 +245,10 @@ const getStyles = createThemedStyles((colors) => StyleSheet.create({
     borderColor: colors.design.border,
   },
   statsCtaText: { fontSize: 13, fontWeight: '700', color: colors.accent.berkeleyBlue },
+  historyActions: { paddingHorizontal: SPACING.md, backgroundColor: colors.background.card },
+  confirmActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  deleteButton: { minHeight: 44, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
+  deleteText: { fontSize: 13, fontWeight: '700', color: colors.text.primary },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: SPACING.md },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
@@ -190,6 +266,7 @@ const getStyles = createThemedStyles((colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.design.border,
   },
+  scanDetails: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   cardImage: { width: 56, height: 56, borderRadius: 10, marginRight: SPACING.md },
   cardPlaceholder: {
     width: 56,

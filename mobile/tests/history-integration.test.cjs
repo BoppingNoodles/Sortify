@@ -130,6 +130,7 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   const asyncStorage = {
     getItem: async (key) => persisted.get(key) ?? null,
     setItem: async (key, value) => { persisted.set(key, value); },
+    removeItem: async (key) => { persisted.delete(key); },
   };
   const openStorage = () => loadSource('src/services/storage.js', {
     '@react-native-async-storage/async-storage': asyncStorage,
@@ -143,6 +144,7 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
   });
   const firstLaunch = openStorage();
   const saved = await firstLaunch.saveScanRecord(classification);
+  const other = await firstLaunch.saveScanRecord({ ...classification, item_name: 'Paper', category: 'paper' });
   assert.ok(saved);
 
   const nextLaunch = openStorage();
@@ -153,13 +155,35 @@ test('History displays saved scan metadata after a simulated app relaunch', asyn
     '../styles/theme': theme,
     '../services/storage': nextLaunch,
   }).default;
-  const renderer = await mount(t, HistoryScreen);
+  const navigate = t.mock.fn();
+  const renderer = await mount(t, () => React.createElement(HistoryScreen, { navigation: { navigate } }));
   const { data, renderItem } = renderer.root.findByType('FlatList').props;
-  assert.equal(data.length, 1);
-  assert.deepEqual({ ...data[0] }, { ...saved });
-  const row = await mount(t, () => renderItem({ item: data[0] }));
+  assert.equal(data.length, 2);
+  assert.deepEqual({ ...data[1] }, { ...saved });
+  const row = await mount(t, () => renderItem({ item: data[1] }));
   assert.ok(row.root.findAllByType('Text').some(({ props }) =>
     props.children === classification.item_name));
+  const rowButton = (label) => row.root.findAllByType('TouchableOpacity')
+    .find(({ props }) => props.accessibilityLabel.startsWith(label));
+  await act(async () => { rowButton('View Bottle').props.onPress(); });
+  const [route, params] = navigate.mock.calls[0].arguments;
+  assert.equal(route, 'ResultModal');
+  assert.equal(params.disposalTip, classification.disposal_tip);
+  assert.equal(params.savedScan, true);
+
+  const button = (label) => renderer.root.findAllByType('TouchableOpacity')
+    .find(({ props }) => props.children?.props.children === label);
+  await act(async () => { rowButton('Delete Bottle').props.onPress(); });
+  await act(async () => { button('Cancel').props.onPress(); });
+  assert.equal((await nextLaunch.loadSavedScans()).length, 2);
+  await act(async () => { rowButton('Delete Bottle').props.onPress(); });
+  await act(async () => { await button('Delete scan').props.onPress(); });
+  assert.equal((await nextLaunch.loadSavedScans())[0].id, other.id);
+  assert.equal(renderer.root.findByType('FlatList').props.data.length, 1);
+
+  await act(async () => { button('Clear history').props.onPress(); });
+  await act(async () => { await button('Clear all scans').props.onPress(); });
+  assert.equal((await nextLaunch.loadSavedScans()).length, 0);
 });
 
 test('Profile updates guest streak and points from saved scans on focus', async (t) => {

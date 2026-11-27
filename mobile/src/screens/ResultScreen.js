@@ -17,10 +17,11 @@ export default function ResultScreen({ route, navigation }) {
     alternatives = [],
     uncertain = false,
     historySaved,
+    savedScan = false,
   } = route?.params || {};
   const notSure = uncertain === true;
 
-  const effectiveTip = disposalTip || tip || 'Compostable in Berkeley if certified BPI or lining is plant-based.';
+  const effectiveTip = disposalTip || tip || 'No disposal guidance is available for this scan.';
   // API bin_color values are display labels ("Green"), not native style colors.
   const binColor = colors.bins[category?.toLowerCase()] || colors.bins.landfill;
   const confidenceScore = typeof confidence === 'number' || typeof confidence === 'string'
@@ -41,7 +42,10 @@ export default function ResultScreen({ route, navigation }) {
         .split('-')
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ')
-    : 'Berkeley';
+    : null;
+  const tipHeading = notSure
+    ? `If it is ${categoryLabel(category || 'landfill')}`
+    : 'Disposal Guideline';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -64,7 +68,7 @@ export default function ResultScreen({ route, navigation }) {
           <View style={[styles.tipCard, styles.notSureCard]}>
             <Text style={[styles.tipTitle, styles.notSureTitle]}>Try another photo</Text>
             <Text style={styles.tipBody}>
-              {`Fill most of the frame with one item, in good light, against a plain background. If it's still unclear, check the Municipal Rules tab for ${locationLabel}.`}
+              {`Fill most of the frame with one item, in good light, against a plain background. If it's still unclear, check the Municipal Rules tab for ${locationLabel || 'your city'}.`}
             </Text>
           </View>
         </>
@@ -93,11 +97,7 @@ export default function ResultScreen({ route, navigation }) {
 
       {/* Disposal Recommendation Card */}
       <View style={styles.tipCard}>
-        <Text style={styles.tipTitle}>
-          {notSure
-            ? `If it is ${categoryLabel(category || 'landfill')} (${locationLabel} 📍)`
-            : `Disposal Guideline (${locationLabel} 📍)`}
-        </Text>
+        <Text style={styles.tipTitle}>{locationLabel ? `${tipHeading} (${locationLabel} 📍)` : tipHeading}</Text>
         <Text style={styles.tipBody}>{effectiveTip}</Text>
       </View>
 
@@ -115,9 +115,10 @@ export default function ResultScreen({ route, navigation }) {
       <TouchableOpacity 
         style={styles.primaryButton}
         onPress={() => navigation.goBack()}
+        accessibilityRole="button"
         activeOpacity={0.8}
       >
-        <Text style={styles.primaryButtonText}>{notSure ? 'Retake Photo' : 'Scan Another Item'}</Text>
+        <Text style={styles.primaryButtonText}>{savedScan ? 'Back to History' : notSure ? 'Retake Photo' : 'Scan Another Item'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
