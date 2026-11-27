@@ -1,6 +1,8 @@
 # Firestore schema
 
-Sortify stores people on `users/{uid}` and their classifications on a subcollection. The flat `scans/{scanId}` collection is the same scan document, kept so a console view can list every scan without walking users. `backend/scripts/init_firestore.py` seeds both. The read/write service uses the subcollection.
+Guest history and stats use [`GuestScanRecord`](../backend/app/schemas/history.py) and [`HistoryService`](../backend/app/services/history_service.py). With Firestore configured, the service stores rows at `users/{deviceUuid}/scans/{scanId}` with a canonical `category` and a Firestore timestamp. Stats are computed from those rows. The mobile guest app currently keeps its history on the device.
+
+The account prototype below uses `predicted_category` and stores points and streak on the account document. `backend/scripts/init_firestore.py` seeds this schema and a flat copy of prototype scans at `scans/{scanId}`. Guest routes use the guest record shape above.
 
 ## `users/{uid}`
 
