@@ -7,7 +7,7 @@ import { summarizeScans } from '../services/scanStats';
 import { loadSavedScans } from '../services/storage';
 import { createThemedStyles } from '../styles/theme';
 
-const POINTS_MILESTONE = 100;
+const MILESTONE_STEP = 100;
 
 export default function ProfileScreen({ navigation }) {
   const { colors, styles } = getStyles(useColorScheme());
@@ -21,6 +21,8 @@ export default function ProfileScreen({ navigation }) {
   }, []));
 
   const { currentStreak, ecoPoints, totalScans } = summarizeScans(scans);
+  const milestone = Math.max(1, Math.ceil(ecoPoints / MILESTONE_STEP)) * MILESTONE_STEP;
+  const milestoneProgress = ecoPoints - (milestone - MILESTONE_STEP);
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
@@ -39,9 +41,9 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.total}>{totalScans}</Text>
           <View style={styles.row}>
             <Text style={styles.bold}>{ecoPoints}</Text>
-            <Text style={styles.caption}>{POINTS_MILESTONE} point milestone</Text>
+            <Text style={styles.caption}>{milestone} point milestone</Text>
           </View>
-          <ProgressBar value={ecoPoints} max={POINTS_MILESTONE} label="Points milestone" />
+          <ProgressBar value={milestoneProgress} max={MILESTONE_STEP} label={`Progress toward ${milestone} points`} />
         </View>
         <View style={styles.row}>
           <Text accessibilityRole="header" style={styles.section}>Recent History</Text>

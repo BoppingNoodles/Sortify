@@ -216,5 +216,11 @@ test('Profile updates guest streak and points from saved scans on focus', async 
   await act(async () => { blur(); blur = focus(); });
   assert.ok(labels().includes('1 Day'));
   assert.ok(labels().includes('20'));
+  scans = Array.from({ length: 11 }, (_, index) => ({
+    ...classification, id: `scan-${index}`, timestamp: new Date().toISOString(),
+  }));
+  await act(async () => { blur(); blur = focus(); });
+  assert.ok(labels().includes('200 point milestone'));
+  assert.equal(renderer.root.findByType('ProgressBar').props.value, 10);
   blur();
 });
