@@ -80,7 +80,7 @@ streaming starts; a failure after headers are sent cannot replace the response.
 
 #### Request Parameters
 - **Query Parameters:**
-  - `location` *(string, optional, default: `"berkeley"`)*: Municipality identifier for location-specific disposal rules.
+  - `location` *(string, optional, default: `"berkeley"`)*: Municipality identifier for location-specific disposal rules. Classification normalizes supported city names and falls back to Berkeley for unrecognized locations. The response identifies the city used.
   - `item_name` *(string, optional)*: Item hint used when it matches the predicted category's supported hints.
 - **Form Data (Multipart):**
   - `file` *(binary upload, required)*: Waste item image (`JPEG`, `PNG`, `WEBP`). Maximum size: 10MB.

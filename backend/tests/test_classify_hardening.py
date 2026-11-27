@@ -53,6 +53,53 @@ def test_classify_preserves_municipal_rules(city, category, monkeypatch):
     )
 
 
+@pytest.mark.parametrize(
+    ("location", "expected"),
+    [("San Francisco", "san-francisco"), ("san_jose", "san-jose"), ("foo", "berkeley")],
+)
+def test_classify_reports_the_city_used_for_guidance(location, expected, monkeypatch):
+    from backend.app.services.municipal_rules import get_category_rule
+
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image: {"category": "plastic", "confidence": 0.9},
+    )
+    response = client.post(
+        "/api/classify",
+        params={"location": location},
+        files={"file": ("photo.jpg", create_test_image(), "image/jpeg")},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location"] == expected
+    assert get_category_rule("plastic", expected) in data["disposal_tips"]["notes"]
+
+
+def test_disposal_data_failure_is_reported_as_an_internal_error(monkeypatch):
+    from backend.app.routers import classify
+    from backend.app.services.tips_service import TipsDataError
+
+    monkeypatch.setattr(
+        ModelService,
+        "predict",
+        lambda self, image: {"category": "plastic", "confidence": 0.9},
+    )
+
+    def unavailable(*args):
+        raise TipsDataError("private configuration detail")
+
+    monkeypatch.setattr(classify, "get_disposal_guidance", unavailable)
+    response = client.post(
+        "/api/classify",
+        files={"file": ("photo.jpg", create_test_image(), "image/jpeg")},
+    )
+    assert response.status_code == 500
+    assert response.json()["code"] == "INTERNAL_SERVER_ERROR"
+    assert "private configuration detail" not in response.text
+
+
 def create_test_image(
     size: tuple[int, int] = (100, 100),
     mode: str = "RGB",

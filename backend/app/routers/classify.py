@@ -16,7 +16,12 @@ from backend.app.schemas import (
 from backend.app.schemas.schemas import ALLOWED_CATEGORIES, BIN_COLORS
 from backend.app.services.inference_runner import InferenceBusyError, inference_runner
 from backend.app.services.model_service import ModelService, model_service
-from backend.app.services.municipal_rules import get_category_rule
+from backend.app.services.municipal_rules import (
+    DEFAULT_CITY,
+    get_category_rule,
+    get_city,
+    normalize_city,
+)
 from backend.app.services.tips_service import get_disposal_guidance, get_disposal_tip
 from backend.app.utils.validators import validate_image_upload
 
@@ -62,7 +67,7 @@ def get_model_service() -> ModelService:
 
 @router.post("/classify", response_model=ClassifyResponse)
 async def classify_item(
-    location: str = Query("berkeley", description="Municipality name"),
+    location: str = Query(DEFAULT_CITY, description="Municipality name"),
     item_name: str | None = Query(default=None),
     file: UploadFile = Depends(validate_image_upload),  # noqa: B008
     service: ModelService = Depends(get_model_service),  # noqa: B008
@@ -110,74 +115,71 @@ async def classify_item(
     except (RuntimeError, MemoryError) as exc:
         raise ModelInferenceError() from exc
 
-    # 3. Post-inference defensive processing
-    # 3. Post-inference defensive processing
-    try:
-        label = str(prediction.get("category", "")).strip().lower()
-        category = LABEL_TO_CATEGORY.get(label, "landfill")
-        inferred_item_name = prediction.get("item_name") or label.title()
-        hint = (item_name or "").strip().lower()
+    # 3. Normalize the prediction and build disposal guidance.
+    label = str(prediction.get("category", "")).strip().lower()
+    category = LABEL_TO_CATEGORY.get(label, "landfill")
+    inferred_item_name = prediction.get("item_name") or label.title()
+    hint = (item_name or "").strip().lower()
 
-        resolved_item_name = (
-            hint
-            if hint in ITEM_HINTS_BY_CATEGORY.get(category, ())
-            else inferred_item_name
-        )
+    resolved_item_name = (
+        hint if hint in ITEM_HINTS_BY_CATEGORY.get(category, ()) else inferred_item_name
+    )
 
-        guidance = get_disposal_guidance(category, resolved_item_name, location)
+    city = normalize_city(location)
+    if get_city(city) is None:
+        city = DEFAULT_CITY
+    guidance = get_disposal_guidance(category, resolved_item_name, city)
 
-        notes = guidance.get("notes", "")
-        city_rule = get_category_rule(category, location)
-        if city_rule:
-            clean_notes = notes.strip().lower()
-            clean_rule = city_rule.strip().lower()
-            if clean_rule not in clean_notes and clean_notes not in clean_rule:
-                separator = " " if notes.endswith(".") else ". "
-                notes = f"{notes}{separator}Local rules: {city_rule}"
-        bin_color = BIN_COLORS.get(category, "Green")
+    notes = guidance.get("notes", "")
+    city_rule = get_category_rule(category, city)
+    if city_rule:
+        clean_notes = notes.strip().lower()
+        clean_rule = city_rule.strip().lower()
+        if clean_rule not in clean_notes and clean_notes not in clean_rule:
+            separator = " " if notes.endswith(".") else ". "
+            notes = f"{notes}{separator}Local rules: {city_rule}"
+    bin_color = BIN_COLORS.get(category, "Green")
 
-        # 4. Map alternative candidates through taxonomy normalization, filtering duplicates
-        raw_alternatives = prediction.get("alternatives") or []
-        alternatives: list[ClassificationAlternative] = []
-        seen_categories: set[str] = {category}
+    # 4. Map alternative candidates through taxonomy normalization, filtering duplicates
+    raw_alternatives = prediction.get("alternatives") or []
+    alternatives: list[ClassificationAlternative] = []
+    seen_categories: set[str] = {category}
 
-        for alt in raw_alternatives:
-            if not isinstance(alt, dict):
+    for alt in raw_alternatives:
+        if not isinstance(alt, dict):
+            continue
+        raw_cat = str(alt.get("category", "")).strip().lower()
+        mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
+        if mapped_cat in ALLOWED_CATEGORIES and mapped_cat not in seen_categories:
+            conf = alt.get("confidence")
+            if conf is None or not isinstance(conf, (int, float)):
                 continue
-            raw_cat = str(alt.get("category", "")).strip().lower()
-            mapped_cat = LABEL_TO_CATEGORY.get(raw_cat, raw_cat)
-            if mapped_cat in ALLOWED_CATEGORIES and mapped_cat not in seen_categories:
-                conf = alt.get("confidence")
-                if conf is None or not isinstance(conf, (int, float)):
-                    continue
-                bounded_conf = max(0.0, min(1.0, float(conf)))
-                alternatives.append(
-                    ClassificationAlternative(
-                        category=mapped_cat,
-                        confidence=round(bounded_conf, 4),
-                    )
+            bounded_conf = max(0.0, min(1.0, float(conf)))
+            alternatives.append(
+                ClassificationAlternative(
+                    category=mapped_cat,
+                    confidence=round(bounded_conf, 4),
                 )
-                seen_categories.add(mapped_cat)
+            )
+            seen_categories.add(mapped_cat)
 
-        raw_conf = prediction.get("confidence", 0.0)
-        primary_conf = float(raw_conf) if isinstance(raw_conf, (int, float)) else 0.0
-        primary_conf = max(0.0, min(1.0, primary_conf))
+    raw_conf = prediction.get("confidence", 0.0)
+    primary_conf = float(raw_conf) if isinstance(raw_conf, (int, float)) else 0.0
+    primary_conf = max(0.0, min(1.0, primary_conf))
 
-        # 5. Build validated response payload
-        return ClassifyResponse(
-            item_name=resolved_item_name,
-            category=category,
-            confidence=round(primary_conf, 4),
-            location=location.lower(),
-            disposal_tip=get_disposal_tip(category, resolved_item_name, location),
-            bin_color=bin_color,
-            bin=f"{bin_color} {category.capitalize()} Bin",
-            disposal_tips=DisposalTip(
-                action=guidance["action"],
-                bin_type=guidance["bin_type"],
-                notes=notes,
-            ),
-            alternatives=alternatives,
-        )
-    except Exception as exc:
-        raise ModelInferenceError() from exc
+    # 5. Build validated response payload
+    return ClassifyResponse(
+        item_name=resolved_item_name,
+        category=category,
+        confidence=round(primary_conf, 4),
+        location=city,
+        disposal_tip=get_disposal_tip(category, resolved_item_name, city),
+        bin_color=bin_color,
+        bin=f"{bin_color} {category.capitalize()} Bin",
+        disposal_tips=DisposalTip(
+            action=guidance["action"],
+            bin_type=guidance["bin_type"],
+            notes=notes,
+        ),
+        alternatives=alternatives,
+    )
