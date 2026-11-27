@@ -5,6 +5,8 @@ Issue [#66](https://github.com/BoppingNoodles/Sortify/issues/66). Runner:
 Test-set builder: [`ml/scripts/build_ood_testset.py`](../../ml/scripts/build_ood_testset.py).
 Historical machine-readable output: [`robustness_stress_test_results.json`](robustness_stress_test_results.json).
 
+See the [scan rejection evaluation](scan-rejection-evaluation.md) for the production PyTorch comparison of photo checks, softmax, and energy.
+
 ## November 27 retest of the bundled checkpoint
 
 The [current ONNX export](onnx_export_metrics.json) was evaluated on the 30-image
