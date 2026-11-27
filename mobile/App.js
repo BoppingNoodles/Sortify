@@ -7,6 +7,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import AppNavigator from './src/navigation/AppNavigator';
 import { wakeServer } from './src/services/api';
 import { getOrCreateDeviceUuid } from './src/services/storage';
+import { CityPreferenceProvider } from './src/services/CityPreference';
 import { getAppColors } from './src/styles/theme';
 
 function createNavigationTheme(theme, colors) {
@@ -44,7 +45,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={isDark ? darkNavigationTheme : lightNavigationTheme}>
-        <AppNavigator />
+        <CityPreferenceProvider><AppNavigator /></CityPreferenceProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </NavigationContainer>
     </SafeAreaProvider>

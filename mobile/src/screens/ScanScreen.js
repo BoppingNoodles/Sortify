@@ -26,6 +26,7 @@ import { classifyImage, isServerAwake, wakeServer } from '../services/api';
 import { saveScanRecord } from '../services/storage';
 import { isUncertain } from '../services/confidence';
 import { MUNICIPALITIES } from '../services/municipalities';
+import { useCityPreference } from '../services/CityPreference';
 
 async function playHaptic(feedback) {
   try {
@@ -121,7 +122,7 @@ export default function ScanScreen({ navigation }) {
   const [isBusy, setIsBusy] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isActive, setIsActive] = useState(AppState.currentState === 'active');
-  const [selectedCity, setSelectedCity] = useState('berkeley');
+  const [selectedCity, setSelectedCity] = useCityPreference();
   const mounted = useRef(false);
   const screen = useRef({ focused: false, active: isActive, generation: 0 });
   const operation = useRef(null);
@@ -368,11 +369,15 @@ export default function ScanScreen({ navigation }) {
       }
 
       // Low-confidence guesses are shown as "not sure" and kept out of History and stats.
+      const localNotes = result.disposal_tips?.notes;
+      const disposalTip = typeof localNotes === 'string' && localNotes.trim()
+        ? localNotes.trim()
+        : result.disposal_tip;
       const uncertain = isUncertain(result.confidence);
       let savedRecord = null;
       if (!uncertain) {
         pending.saving = true;
-        savedRecord = await saveScanRecord(result, capturedPhoto);
+        savedRecord = await saveScanRecord({ ...result, disposal_tip: disposalTip }, capturedPhoto);
         if (!isCurrent(pending.generation)) return;
       }
       const resultParams = {
@@ -381,8 +386,8 @@ export default function ScanScreen({ navigation }) {
         confidence: result.confidence,
         bin: result.bin || result.bin_color || null,
         binColor: result.bin_color || null,
-        disposalTip: result.disposal_tip,
-        tip: result.disposal_tip,
+        disposalTip,
+        tip: disposalTip,
         location: result.location || selectedCity,
         alternatives: result.alternatives || [],
         photoUri: capturedPhoto.uri,

@@ -54,6 +54,7 @@ test('startup initializes guest identity while the navigator renders', async (t)
     './src/navigation/AppNavigator': 'AppNavigator',
     './src/services/api': { wakeServer },
     './src/services/storage': { getOrCreateDeviceUuid },
+    './src/services/CityPreference': { CityPreferenceProvider: React.Fragment },
     './src/styles/theme': theme,
   }).default;
 

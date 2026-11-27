@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/DesignPrimitives';
 import { fetchLocationRules, isServerAwake, wakeServer } from '../services/api';
 import { MUNICIPALITIES } from '../services/municipalities';
+import { useCityPreference } from '../services/CityPreference';
 import { createThemedStyles } from '../styles/theme';
 
 const GROUPS = [
@@ -15,25 +16,27 @@ const GROUPS = [
 
 export default function RulesScreen() {
   const { colors, styles } = getStyles(useColorScheme());
-  const [city, setCity] = useState('berkeley');
+  const [city, setCity] = useCityPreference();
   const [choosingCity, setChoosingCity] = useState(false);
   const [group, setGroup] = useState(null);
-  const [rules, setRules] = useState(null);
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [waking, setWaking] = useState(false);
+  const rules = result?.city === city ? result.rules : null;
+  const sourceUrl = result?.city === city ? result.sourceUrl : null;
 
   const search = async () => {
     setLoading(true);
     setError(null);
-    setRules(null);
+    setResult(null);
     try {
       if (!isServerAwake()) {
         setWaking(true);
         const awake = await wakeServer();
         setWaking(false);
         if (!awake) {
-          setError('Could not reach the Sortify server. Check your internet connection and try again.');
+          setError({ city, message: 'Could not reach the Sortify server. Check your internet connection and try again.' });
           return;
         }
       }
@@ -41,12 +44,24 @@ export default function RulesScreen() {
       if (!response?.rules || typeof response.rules !== 'object' || Array.isArray(response.rules)) {
         throw new Error('Invalid municipal rules response.');
       }
-      setRules(response.rules);
+      const sourceUrl = typeof response.source_url === 'string' && /^https:\/\/[^/\s]+\S*$/i.test(response.source_url)
+        ? response.source_url
+        : null;
+      setResult({ city, rules: response.rules, sourceUrl });
     } catch {
-      setError('Could not load municipal rules. Try again.');
+      setError({ city, message: 'Could not load municipal rules. Try again.' });
     } finally {
       setWaking(false);
       setLoading(false);
+    }
+  };
+
+  const openSource = async () => {
+    setError(null);
+    try {
+      await Linking.openURL(sourceUrl);
+    } catch {
+      setError({ city, message: 'Could not open the official city guide.' });
     }
   };
 
@@ -74,7 +89,7 @@ export default function RulesScreen() {
             accessibilityRole="button"
             accessibilityState={{ selected: city === value }}
             disabled={loading}
-            onPress={() => { setCity(value); setChoosingCity(false); setRules(null); setError(null); }}
+            onPress={() => { setCity(value); setChoosingCity(false); setResult(null); setError(null); }}
             style={styles.row}
           >
             <Text style={styles.label}>{name}</Text>
@@ -97,7 +112,7 @@ export default function RulesScreen() {
         </View>
 
         <PrimaryButton disabled={loading} onPress={search}>{waking ? 'Waking up the server…' : loading ? 'Loading rules…' : 'Search'}</PrimaryButton>
-        {error && <Text accessibilityRole="alert" style={styles.caption}>{error}</Text>}
+        {error?.city === city && <Text accessibilityRole="alert" style={styles.caption}>{error.message}</Text>}
         {rules && (group ? [group] : GROUPS).map((entry) => (
           <View key={entry.label} style={styles.details}>
             <Text accessibilityRole="header" style={styles.label}>{entry.label}</Text>
@@ -109,6 +124,12 @@ export default function RulesScreen() {
             ))}
           </View>
         ))}
+        {sourceUrl && (
+          <TouchableOpacity accessibilityRole="link" style={styles.row} onPress={openSource}>
+            <Text style={styles.link}>Official {MUNICIPALITIES[city]} sorting guide</Text>
+            <Ionicons name="open-outline" size={20} color={colors.accent.berkeleyBlue} />
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -129,4 +150,5 @@ const getStyles = createThemedStyles((colors) => StyleSheet.create({
   label: { color: colors.text.primary, fontWeight: '800' },
   details: { padding: 14, borderColor: colors.design.border, borderWidth: 1, borderRadius: 13, gap: 8 },
   rule: { color: colors.text.secondary, lineHeight: 21 },
+  link: { flex: 1, color: colors.accent.berkeleyBlue, fontWeight: '700' },
 }));

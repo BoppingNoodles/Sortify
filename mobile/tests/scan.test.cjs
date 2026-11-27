@@ -85,6 +85,7 @@ async function scan(t, classifyImage, {
     '../services/api': { classifyImage, isServerAwake, wakeServer },
     '../services/storage': { saveScanRecord },
     '../services/municipalities': loadSource('src/services/municipalities.js'),
+    '../services/CityPreference': { useCityPreference: () => React.useState('berkeley') },
     '../services/confidence': loadSource('src/services/confidence.js'),
   }).default;
   let renderer;
@@ -419,21 +420,21 @@ test('capture and live scan prevent overlap, map the API contract, and reset pre
   assert.deepEqual(requests[0], ['file:///photo.jpg', 'san-francisco']);
   assert.equal(app.renderer.root.findAllByType('ActivityIndicator').length, 1);
   await act(async () => {
-    prediction.resolve(predictionFixture);
+    prediction.resolve({ ...predictionFixture, disposal_tips: { notes: 'San Francisco accepts empty rigid bottles.' } });
     await saveStarted.promise;
   });
   assert.equal(app.destinations.length, 0);
   await act(async () => { await analyze(); });
   assert.equal(requests.length, 1);
   assert.equal(saveScanRecord.mock.callCount(), 1);
-  assert.equal(saveScanRecord.mock.calls[0].arguments[0], predictionFixture);
+  assert.equal(saveScanRecord.mock.calls[0].arguments[0].disposal_tip, 'San Francisco accepts empty rigid bottles.');
 
   await act(async () => { pendingSave.resolve({ id: 'saved' }); await analyzeTask; });
   assert.equal(app.destinations.length, 1);
   const [route, params] = app.destinations[0];
   assert.equal(route, 'ResultModal');
   assert.equal(params.itemName, 'Bottle');
-  assert.equal(params.disposalTip, 'Empty and rinse.');
+  assert.equal(params.disposalTip, 'San Francisco accepts empty rigid bottles.');
   assert.equal(params.confidence, 0.91);
   assert.equal(params.bin, 'Blue Plastic Bin');
   assert.equal(params.location, 'san-francisco');
