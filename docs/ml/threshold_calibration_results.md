@@ -1,6 +1,8 @@
 # Confidence Threshold Calibration Results
 
-Checkpoint: `ml/models/sortify_v2.pth`
+This historical run recorded `ml/models/sortify_v2.pth` as its input path.
+The checkpoint digest was not recorded. Calibration for the current backend
+checkpoint remains pending.
 
 | Cutoff | Precision | Rejection Rate | Accepted |
 |--------|-----------|----------------|----------|

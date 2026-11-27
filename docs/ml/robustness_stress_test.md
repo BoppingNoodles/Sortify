@@ -3,12 +3,29 @@
 Issue [#66](https://github.com/BoppingNoodles/Sortify/issues/66). Runner:
 [`ml/scripts/stress_test_ood.py`](../../ml/scripts/stress_test_ood.py).
 Test-set builder: [`ml/scripts/build_ood_testset.py`](../../ml/scripts/build_ood_testset.py).
-Machine-readable output: [`robustness_stress_test_results.json`](robustness_stress_test_results.json).
+Historical machine-readable output: [`robustness_stress_test_results.json`](robustness_stress_test_results.json).
 
-## 1. Executive summary
+## November 27 retest of the bundled checkpoint
+
+The [current ONNX export](onnx_export_metrics.json) was evaluated on the 30-image
+stress set with backend preprocessing and the mobile cutoff of 0.60. It flagged
+14/30 (46.7%) as uncertain and accepted 16/30 (53.3%). Excluding the five
+near-domain samples, it flagged 11/25 (44.0%). All images were scored and the
+run fell short of the 90% rejection target. The app uses the cutoff to show a
+low-confidence result. The backend still returns a bin prediction.
+
+The input manifest SHA-256 was
+`d6fe61f49f66884d3f54a4aefaa5d867867290b654336daa89f64109ab9468ea`.
+
+```bash
+python -m ml.scripts.stress_test_ood --model ml/models/sortify_v2.onnx \
+  --data-dir data/ood_test --threshold 0.60 --preprocess backend
+```
+
+## 1. November 19 historical summary
 
 - **Evaluation date:** 2026-11-19
-- **Model:** `ml/models/sortify_v2.onnx` (MobileNetV2, SHA256
+- **Model:** [Archived `sortify_v2.onnx`](https://github.com/BoppingNoodles/Sortify/blob/2ebda2595d03f0cab351c6560a5fc4bd77ba52f5/ml/models/sortify_v2.onnx) (MobileNetV2, SHA256
   `26395d7e631d42eb3ce0f33a2eb0d520059350587a3433ccf6541c5b3e30fc31`), exported
   from `sortify_v2.pth` (SHA256
   `0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6`)
@@ -285,7 +302,7 @@ is unchanged.
   (compost, 0.91, `is_mock: true`). The `backend` column is `sortify_v2`
   with the backend's preprocessing. It matches production only once
   `MODEL_PATH` points at `sortify_v2.pth`. PyTorch-to-ONNX parity for that
-  checkpoint is below 1e-4 per [onnx_export_report.md](onnx_export_report.md).
+  checkpoint is below 1e-4 per the [archived parity report](https://github.com/BoppingNoodles/Sortify/blob/2ebda2595d03f0cab351c6560a5fc4bd77ba52f5/docs/ml/onnx_export_metrics.json).
 
 Related evidence: [`ml/scripts/domain_gap.py`](../../ml/scripts/domain_gap.py)
 measures how confidence on *in-domain* items shifts under lighting and clutter.
@@ -293,14 +310,16 @@ measures how confidence on *in-domain* items shifts under lighting and clutter.
 chose the 0.50 cutoff from in-domain and blurry images. This report covers
 the complementary case: inputs that are not waste at all.
 
-## 7. Reproduce
+## 7. Reproduce the historical run
 
 ```bash
 python -m pip install -r requirements.txt -r ml/requirements-onnx.txt
 python -m pip install scikit-image matplotlib      # builder only
 python ml/scripts/build_ood_testset.py            # writes data/ood_test/
 python ml/scripts/stress_test_ood.py \
-  --json-out docs/ml/robustness_stress_test_results.json \
+  --model /path/to/archived/sortify_v2.onnx \
+  --threshold 0.50 --preprocess both \
+  --json-out /tmp/historical_ood.json \
   --markdown-out /tmp/ood_tables.md               # exits 1 because the target is missed
 pytest ml/tests/test_stress_test_ood.py -q
 ```

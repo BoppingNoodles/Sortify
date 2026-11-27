@@ -8,36 +8,35 @@ Every tested element must have absolute difference **strictly below 1e-4**.
 
 ## Measured artifact
 
-The checked-in [`sortify_v2.onnx`](../../ml/models/sortify_v2.onnx) uses the
-retrained **MobileNetV2 v2** checkpoint, `sortify_v2.pth`, shared by Caden
-during review. The checkpoint records epoch 10 as the best epoch.
+The checked-in [`sortify_v2.onnx`](../../ml/models/sortify_v2.onnx) was exported
+on November 27, 2026 from the **MobileNetV2 v2** checkpoint bundled with the backend.
 
 The source checkpoint SHA256 is
-`0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6`.
+`7721393a893f3232cb2c017a336bf74343f61cbb2eebdd958f7ea61b6917baf2`.
 The [machine-readable report](onnx_export_metrics.json) records artifact size,
 SHA256, runtime versions, image filenames/content hashes, and per-case results.
 
 | Input case | Batch size | Maximum absolute logit difference |
 |---|---:|---:|
-| Seeded synthetic tensors | 1 | 5.4836273e-6 |
-| Seeded synthetic tensors | 2 | 2.8610229e-6 |
-| Seeded synthetic tensors | 4 | 4.0531158e-6 |
-| Real validation photos | 10 | 1.4543533e-5 |
+| Seeded synthetic tensors | 1 | 1.9073486e-6 |
+| Seeded synthetic tensors | 2 | 2.6226044e-6 |
+| Seeded synthetic tensors | 4 | 5.7220459e-6 |
+| Real validation photos | 10 | 7.3909760e-6 |
 
-All cases passed. The real image case uses the same ten photos as the baseline
-export, sampled deterministically from the original validation split across
-all five categories.
+All cases passed. The photos were sampled deterministically from `data/processed_v2/val`.
+The [previous parity results](https://github.com/BoppingNoodles/Sortify/blob/2ebda2595d03f0cab351c6560a5fc4bd77ba52f5/docs/ml/onnx_export_metrics.json)
+record the earlier checkpoint and sample set.
 
 ## Reproduce
 
-Place the shared checkpoint at `ml/models/sortify_v2.pth` and run the exporter
-with the repository requirements and optional export tools installed.
+Run the exporter from the repository root with the bundled checkpoint, the
+recorded validation split, and the repository and optional export tools installed.
 
 ```bash
 python -m pip install -r requirements.txt -r ml/requirements-onnx.txt
 python ml/scripts/export_onnx.py \
-  --checkpoint ml/models/sortify_v2.pth \
-  --image-dir data/processed/val \
+  --checkpoint backend/app/models/sortify_v2.pth \
+  --image-dir data/processed_v2/val \
   --output ml/models/sortify_v2.onnx \
   --report docs/ml/onnx_export_metrics.json
 ```

@@ -2,7 +2,7 @@
   "passed": true,
   "architecture": "mobilenet_v2",
   "source_checkpoint": "sortify_v2.pth",
-  "source_checkpoint_sha256": "0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6",
+  "source_checkpoint_sha256": "7721393a893f3232cb2c017a336bf74343f61cbb2eebdd958f7ea61b6917baf2",
   "class_names": [
     "compost",
     "glass",
@@ -33,77 +33,77 @@
   "opset": 18,
   "provider": "CPUExecutionProvider",
   "versions": {
-    "torch": "2.14.0",
+    "torch": "2.14.0+cpu",
     "onnx": "1.23.2",
-    "onnxruntime": "1.31.1"
+    "onnxruntime": "1.32.0"
   },
   "onnx_file": "sortify_v2.onnx",
-  "onnx_bytes": 9106282,
-  "onnx_sha256": "26395d7e631d42eb3ce0f33a2eb0d520059350587a3433ccf6541c5b3e30fc31",
+  "onnx_bytes": 9117990,
+  "onnx_sha256": "692d2d36bdd361c798165b3e7a7cdb166f658ef05d12ddda94dfed4e7ac50ec6",
   "tolerance": 0.0001,
-  "max_abs_diff": 1.4543533325195312e-05,
+  "max_abs_diff": 7.3909759521484375e-06,
   "cases": [
     {
       "name": "synthetic_1",
       "batch_size": 1,
-      "max_abs_diff": 5.4836273193359375e-06
+      "max_abs_diff": 1.9073486328125e-06
     },
     {
       "name": "synthetic_2",
       "batch_size": 2,
-      "max_abs_diff": 2.86102294921875e-06
+      "max_abs_diff": 2.6226043701171875e-06
     },
     {
       "name": "synthetic_4",
       "batch_size": 4,
-      "max_abs_diff": 4.0531158447265625e-06
+      "max_abs_diff": 5.7220458984375e-06
     },
     {
       "name": "real_images",
       "batch_size": 10,
-      "max_abs_diff": 1.4543533325195312e-05
+      "max_abs_diff": 7.3909759521484375e-06
     }
   ],
   "real_images": [
     {
-      "file": "compost/compost_0001.jpg",
-      "sha256": "de252151f31bbcb1c180fdc6c69a86b98d26c33b0981984c4bea649d1d1a2274"
+      "file": "compost/commons-field-4bea4855549f.jpg",
+      "sha256": "e4f9ba55fc6bc07221f3b533bda6a1c5a9bbf32d597c0d13872d740f403dd366"
     },
     {
-      "file": "compost/compost_0351.jpg",
-      "sha256": "61652fd02684d2089e5e754aa5707c3571a5baba13fd70b4889f63f239c01db5"
+      "file": "compost/commons-field-b7db80f5a716.jpg",
+      "sha256": "b3ece15692ed1764c3a266d37dbce7580d8b532029cac30859f65b9bf97816f0"
     },
     {
-      "file": "glass/glass260.jpg",
-      "sha256": "96999175109f22eb335e0752b0cd1f0c4ab9c0730c11fa476329dd5d328e6133"
+      "file": "glass/commons-field-234dc6eeef9c.jpg",
+      "sha256": "465ad09fd4064e5f1eb1650058cee4854ec51c79387903461f5763cc0a411fd1"
     },
     {
-      "file": "landfill/metal115.jpg",
-      "sha256": "98401b1ac8dc2b35b718d8040e3b1da7368f4da100e2810cef8ea3bbd1ef562e"
+      "file": "glass/commons-field-866bb1e55014.jpg",
+      "sha256": "5687c7f10b343f397cee39e34aeac5446473afd48f2dd2c5b87e01bd8afa894a"
     },
     {
-      "file": "landfill/metal40.jpg",
-      "sha256": "47afd8d1d7b0f71943d294e01f0fa9d74cd51cbef9f68253571b67cf464f2c96"
+      "file": "landfill/commons-field-1221572c16d7.jpg",
+      "sha256": "d38b1330b4760c1f1588c51ff18b5c827a6d6ad19fd7ea9157052c9c31c82438"
     },
     {
-      "file": "paper/cardboard21.jpg",
-      "sha256": "c88a3125a0ea20bd1fa0fdc9f9bd9db14c442d9aadee5ea8becf2b8b4e3c9501"
+      "file": "landfill/commons-field-879d4ef5d1b5.jpg",
+      "sha256": "4232618851b649cbbe91572a7bfdf7e7f38be9bb7c1255e5b273a23fa6ed2739"
     },
     {
-      "file": "paper/paper212.jpg",
-      "sha256": "ad479ba3e468ce8e87452cc74f0ae4793fc90e9997d8ac6f1f8e884b12abecce"
+      "file": "paper/commons-field-4a9b86bff93d.jpg",
+      "sha256": "2932e3893427cf598e1391a35c18e6726631729023e7d0b625e10678f19ccd64"
     },
     {
-      "file": "paper/paper485.jpg",
-      "sha256": "15689a583d9009343d08a377104f10252cc6e8be05e04d0107d785f260ffbd14"
+      "file": "paper/commons-field-f1c6f8b64d12.jpg",
+      "sha256": "597b707937c4ad8d15f92111b4aeb3d7b104800d73ffb65c638158ea1567c3cc"
     },
     {
-      "file": "plastic/plastic242.jpg",
-      "sha256": "20aafaf017587a3fa54a2967bfb76fc7eeddab2f0f25c209b74540da5b093fea"
+      "file": "plastic/commons-field-338cd2a968e2.jpg",
+      "sha256": "f744f3a6e3e7595795f63da8ff67812796ba3b6fa03009235c0966a01433d37f"
     },
     {
-      "file": "plastic/plastic99.jpg",
-      "sha256": "9e1c27aef8c0af4ff4bbeb7d404eadd8e5077f1588f975937f4cfb83af21b489"
+      "file": "plastic/commons-field-f04d48f820c4.jpg",
+      "sha256": "d40f0a9a6a5ab019d056b14e1f7add8a2698758fc3ff2d0902fc3b4cef94670f"
     }
   ]
 }

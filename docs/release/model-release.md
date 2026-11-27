@@ -1,6 +1,6 @@
 # Model release reproduction
 
-**Selected checkpoint (November 19, 2026):** `backend/app/models/sortify_v2.pth`, the default `MODEL_PATH`. Caden supplied it from the team Drive. Its SHA-256 `0f35a570c16d3f5abef216097549ad0146b1fcf24cb600b9500b2dd07b9b60f6` matches the source checkpoint in the [ONNX export report](../ml/onnx_export_metrics.json). It is a MobileNetV2 dict checkpoint with ordered `class_names` `compost, glass, landfill, paper, plastic` and validation accuracy 0.909. It is committed so the backend Docker image ships it, an exception to the weights-outside-Git rule below. Through `ModelService` on CPU it returns the same top class as `sortify_v2.onnx` with backend preprocessing on all 30 images of the OOD stress set, with confidence within 5e-5.
+The backend Docker image bundles `backend/app/models/sortify_v2.pth` as the default `MODEL_PATH`. The retrained checkpoint was added in `b938f98` and has SHA-256 `7721393a893f3232cb2c017a336bf74343f61cbb2eebdd958f7ea61b6917baf2`. It is a MobileNetV2 checkpoint with ordered `class_names` `compost, glass, landfill, paper, plastic` and recorded validation accuracy of 0.92248. The [ONNX parity report](../ml/onnx_export_report.md) records the export from these exact bytes.
 
 The packaging steps below remain the procedure for any later checkpoint.
 
@@ -34,4 +34,4 @@ curl --fail http://127.0.0.1:8000/health
 curl --fail -F "file=@$KNOWN_IMAGE_1;type=$KNOWN_IMAGE_1_MIME" 'http://127.0.0.1:8000/api/classify?location=berkeley'
 ```
 
-The API runtime applies EXIF orientation, converts to RGB, and resizes directly to 224×224 before tensor conversion and ImageNet normalization. The historical ONNX evaluation path instead resizes the short edge to 256 and center-crops to 224. Confidence is a rounded softmax score. The [calibration report](../ml/threshold_calibration_results.md) records no approved rejection cutoff, and [#66](https://github.com/BoppingNoodles/Sortify/issues/66) tracks OOD behavior. Fixture coverage establishes package validation. Actual checkpoint inference and direct/API parity remain pending until the selected weights and representative images are supplied.
+The API runtime applies EXIF orientation, converts to RGB, and resizes directly to 224×224 before tensor conversion and ImageNet normalization. The ONNX export parity run uses a short-edge resize to 256 and center-crops to 224. Confidence is a rounded softmax score. The [historical calibration report](../ml/threshold_calibration_results.md) records no approved rejection cutoff. The [OOD stress test](../ml/robustness_stress_test.md) records the current checkpoint's local stress result. Deployed checkpoint identity, direct/API comparisons for release images, and campus performance still require acceptance evidence.
